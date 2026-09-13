@@ -5,4 +5,4 @@
 - [x] Login, home, calendar, clients, staff, conversations, billing, account, and support routes
 - [x] Detail views for clients, staff, and conversations
 - [x] Requested mock dialogs, filters, forms, status states, and downloads
-- [x] Final desktop, tablet, and mobile interaction verification
+- [ ] Final desktop, tablet, and mobile interaction verification
