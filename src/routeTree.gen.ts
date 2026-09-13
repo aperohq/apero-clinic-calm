@@ -10,33 +10,190 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AccountRouteImport } from './routes/account'
+import { Route as BillingRouteImport } from './routes/billing'
+import { Route as CalendarRouteImport } from './routes/calendar'
+import { Route as ClientsRouteImport } from './routes/clients'
+import { Route as ConversationsRouteImport } from './routes/conversations'
+import { Route as HomeRouteImport } from './routes/home'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as StaffRouteImport } from './routes/staff'
+import { Route as SupportRouteImport } from './routes/support'
+import { Route as ClientsIdRouteImport } from './routes/clients.$id'
+import { Route as ConversationsIdRouteImport } from './routes/conversations.$id'
+import { Route as StaffIdRouteImport } from './routes/staff.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AccountRoute = AccountRouteImport.update({
+  id: '/account',
+  path: '/account',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BillingRoute = BillingRouteImport.update({
+  id: '/billing',
+  path: '/billing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CalendarRoute = CalendarRouteImport.update({
+  id: '/calendar',
+  path: '/calendar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClientsRoute = ClientsRouteImport.update({
+  id: '/clients',
+  path: '/clients',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConversationsRoute = ConversationsRouteImport.update({
+  id: '/conversations',
+  path: '/conversations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HomeRoute = HomeRouteImport.update({
+  id: '/home',
+  path: '/home',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StaffRoute = StaffRouteImport.update({
+  id: '/staff',
+  path: '/staff',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SupportRoute = SupportRouteImport.update({
+  id: '/support',
+  path: '/support',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClientsIdRoute = ClientsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => ClientsRoute,
+} as any)
+const ConversationsIdRoute = ConversationsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => ConversationsRoute,
+} as any)
+const StaffIdRoute = StaffIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => StaffRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/account': typeof AccountRoute
+  '/billing': typeof BillingRoute
+  '/calendar': typeof CalendarRoute
+  '/clients': typeof ClientsRouteWithChildren
+  '/conversations': typeof ConversationsRouteWithChildren
+  '/home': typeof HomeRoute
+  '/login': typeof LoginRoute
+  '/staff': typeof StaffRouteWithChildren
+  '/support': typeof SupportRoute
+  '/clients/$id': typeof ClientsIdRoute
+  '/conversations/$id': typeof ConversationsIdRoute
+  '/staff/$id': typeof StaffIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/account': typeof AccountRoute
+  '/billing': typeof BillingRoute
+  '/calendar': typeof CalendarRoute
+  '/clients': typeof ClientsRouteWithChildren
+  '/conversations': typeof ConversationsRouteWithChildren
+  '/home': typeof HomeRoute
+  '/login': typeof LoginRoute
+  '/staff': typeof StaffRouteWithChildren
+  '/support': typeof SupportRoute
+  '/clients/$id': typeof ClientsIdRoute
+  '/conversations/$id': typeof ConversationsIdRoute
+  '/staff/$id': typeof StaffIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/account': typeof AccountRoute
+  '/billing': typeof BillingRoute
+  '/calendar': typeof CalendarRoute
+  '/clients': typeof ClientsRouteWithChildren
+  '/conversations': typeof ConversationsRouteWithChildren
+  '/home': typeof HomeRoute
+  '/login': typeof LoginRoute
+  '/staff': typeof StaffRouteWithChildren
+  '/support': typeof SupportRoute
+  '/clients/$id': typeof ClientsIdRoute
+  '/conversations/$id': typeof ConversationsIdRoute
+  '/staff/$id': typeof StaffIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/account'
+    | '/billing'
+    | '/calendar'
+    | '/clients'
+    | '/conversations'
+    | '/home'
+    | '/login'
+    | '/staff'
+    | '/support'
+    | '/clients/$id'
+    | '/conversations/$id'
+    | '/staff/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/account'
+    | '/billing'
+    | '/calendar'
+    | '/clients'
+    | '/conversations'
+    | '/home'
+    | '/login'
+    | '/staff'
+    | '/support'
+    | '/clients/$id'
+    | '/conversations/$id'
+    | '/staff/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/account'
+    | '/billing'
+    | '/calendar'
+    | '/clients'
+    | '/conversations'
+    | '/home'
+    | '/login'
+    | '/staff'
+    | '/support'
+    | '/clients/$id'
+    | '/conversations/$id'
+    | '/staff/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AccountRoute: typeof AccountRoute
+  BillingRoute: typeof BillingRoute
+  CalendarRoute: typeof CalendarRoute
+  ClientsRoute: typeof ClientsRouteWithChildren
+  ConversationsRoute: typeof ConversationsRouteWithChildren
+  HomeRoute: typeof HomeRoute
+  LoginRoute: typeof LoginRoute
+  StaffRoute: typeof StaffRouteWithChildren
+  SupportRoute: typeof SupportRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +205,137 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/account': {
+      id: '/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AccountRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/billing': {
+      id: '/billing'
+      path: '/billing'
+      fullPath: '/billing'
+      preLoaderRoute: typeof BillingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/calendar': {
+      id: '/calendar'
+      path: '/calendar'
+      fullPath: '/calendar'
+      preLoaderRoute: typeof CalendarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/clients': {
+      id: '/clients'
+      path: '/clients'
+      fullPath: '/clients'
+      preLoaderRoute: typeof ClientsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/conversations': {
+      id: '/conversations'
+      path: '/conversations'
+      fullPath: '/conversations'
+      preLoaderRoute: typeof ConversationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/home': {
+      id: '/home'
+      path: '/home'
+      fullPath: '/home'
+      preLoaderRoute: typeof HomeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/staff': {
+      id: '/staff'
+      path: '/staff'
+      fullPath: '/staff'
+      preLoaderRoute: typeof StaffRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/support': {
+      id: '/support'
+      path: '/support'
+      fullPath: '/support'
+      preLoaderRoute: typeof SupportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/clients/$id': {
+      id: '/clients/$id'
+      path: '/$id'
+      fullPath: '/clients/$id'
+      preLoaderRoute: typeof ClientsIdRouteImport
+      parentRoute: typeof ClientsRoute
+    }
+    '/conversations/$id': {
+      id: '/conversations/$id'
+      path: '/$id'
+      fullPath: '/conversations/$id'
+      preLoaderRoute: typeof ConversationsIdRouteImport
+      parentRoute: typeof ConversationsRoute
+    }
+    '/staff/$id': {
+      id: '/staff/$id'
+      path: '/$id'
+      fullPath: '/staff/$id'
+      preLoaderRoute: typeof StaffIdRouteImport
+      parentRoute: typeof StaffRoute
+    }
   }
 }
 
+interface ClientsRouteChildren {
+  ClientsIdRoute: typeof ClientsIdRoute
+}
+
+const ClientsRouteChildren: ClientsRouteChildren = {
+  ClientsIdRoute: ClientsIdRoute,
+}
+
+const ClientsRouteWithChildren =
+  ClientsRoute._addFileChildren(ClientsRouteChildren)
+
+interface ConversationsRouteChildren {
+  ConversationsIdRoute: typeof ConversationsIdRoute
+}
+
+const ConversationsRouteChildren: ConversationsRouteChildren = {
+  ConversationsIdRoute: ConversationsIdRoute,
+}
+
+const ConversationsRouteWithChildren = ConversationsRoute._addFileChildren(
+  ConversationsRouteChildren,
+)
+
+interface StaffRouteChildren {
+  StaffIdRoute: typeof StaffIdRoute
+}
+
+const StaffRouteChildren: StaffRouteChildren = {
+  StaffIdRoute: StaffIdRoute,
+}
+
+const StaffRouteWithChildren = StaffRoute._addFileChildren(StaffRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AccountRoute: AccountRoute,
+  BillingRoute: BillingRoute,
+  CalendarRoute: CalendarRoute,
+  ClientsRoute: ClientsRouteWithChildren,
+  ConversationsRoute: ConversationsRouteWithChildren,
+  HomeRoute: HomeRoute,
+  LoginRoute: LoginRoute,
+  StaffRoute: StaffRouteWithChildren,
+  SupportRoute: SupportRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
