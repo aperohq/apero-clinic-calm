@@ -3,11 +3,11 @@ import { clients as baseClients, staff as baseStaff } from "@/lib/apero-data";
 
 export type Client = {
   id: string; name: string; initials: string; phone: string; email: string; language: string;
-  status: string; bookings: number; lastContact: string; notes?: string;
+  status: string; bookings: number; lastContact: string; notes?: string | undefined;
 };
 export type StaffMember = {
   id: string; name: string; initials: string; specialty: string; role: string; phone: string;
-  email: string; services: string[]; days?: string;
+  email: string; services: string[]; days?: string | undefined;
 };
 
 const CLIENT_KEY = "apero.clients.v1";
