@@ -220,7 +220,8 @@ create trigger guard_profile_sensitive_fields
   before update on public.profiles
   for each row execute function public.guard_profile_sensitive_fields();
 
--- Clinic-owned data: full access strictly inside your own clinic.
+-- Clinic-owned data: tenant isolation by clinic_id PLUS role permissions,
+-- enforced in the database. Drop any previous generic policy first.
 do $$
 declare t text;
 begin
@@ -228,10 +229,202 @@ begin
                            'conversations','client_notes','notifications']
   loop
     execute format('drop policy if exists "clinic isolation" on public.%I', t);
-    execute format(
-      'create policy "clinic isolation" on public.%I for all to authenticated
-         using (clinic_id = public.current_clinic_id())
-         with check (clinic_id = public.current_clinic_id())', t);
+  end loop;
+end $$;
+
+create or replace function public.current_profile_id()
+returns uuid
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select id from public.profiles where auth_user_id = auth.uid() limit 1
+$$;
+
+-- helper: same clinic shorthand used by every policy below
+-- (clinic_id = public.current_clinic_id())
+
+-- ---- clients: everyone reads; owner/manager write; staff may update only
+drop policy if exists "clients select" on public.clients;
+create policy "clients select" on public.clients
+  for select to authenticated using (clinic_id = public.current_clinic_id());
+drop policy if exists "clients insert" on public.clients;
+create policy "clients insert" on public.clients
+  for insert to authenticated
+  with check (clinic_id = public.current_clinic_id()
+              and public.current_profile_role() in ('owner','manager'));
+drop policy if exists "clients update" on public.clients;
+create policy "clients update" on public.clients
+  for update to authenticated
+  using (clinic_id = public.current_clinic_id())
+  with check (clinic_id = public.current_clinic_id());
+drop policy if exists "clients delete" on public.clients;
+create policy "clients delete" on public.clients
+  for delete to authenticated
+  using (clinic_id = public.current_clinic_id()
+         and public.current_profile_role() in ('owner','manager'));
+
+-- ---- staff: everyone reads; only owner/manager may write
+drop policy if exists "staff select" on public.staff;
+create policy "staff select" on public.staff
+  for select to authenticated using (clinic_id = public.current_clinic_id());
+drop policy if exists "staff write" on public.staff;
+create policy "staff write" on public.staff
+  for all to authenticated
+  using (clinic_id = public.current_clinic_id()
+         and public.current_profile_role() in ('owner','manager'))
+  with check (clinic_id = public.current_clinic_id()
+              and public.current_profile_role() in ('owner','manager'));
+
+-- ---- staff availability: everyone reads; only owner/manager may write
+drop policy if exists "staff availability select" on public.staff_availability;
+create policy "staff availability select" on public.staff_availability
+  for select to authenticated using (clinic_id = public.current_clinic_id());
+drop policy if exists "staff availability write" on public.staff_availability;
+create policy "staff availability write" on public.staff_availability
+  for all to authenticated
+  using (clinic_id = public.current_clinic_id()
+         and public.current_profile_role() in ('owner','manager'))
+  with check (clinic_id = public.current_clinic_id()
+              and public.current_profile_role() in ('owner','manager'));
+
+-- ---- appointments: all roles read/create/update; only owner/manager delete
+drop policy if exists "appointments select" on public.appointments;
+create policy "appointments select" on public.appointments
+  for select to authenticated using (clinic_id = public.current_clinic_id());
+drop policy if exists "appointments insert" on public.appointments;
+create policy "appointments insert" on public.appointments
+  for insert to authenticated
+  with check (clinic_id = public.current_clinic_id());
+drop policy if exists "appointments update" on public.appointments;
+create policy "appointments update" on public.appointments
+  for update to authenticated
+  using (clinic_id = public.current_clinic_id())
+  with check (clinic_id = public.current_clinic_id());
+drop policy if exists "appointments delete" on public.appointments;
+create policy "appointments delete" on public.appointments
+  for delete to authenticated
+  using (clinic_id = public.current_clinic_id()
+         and public.current_profile_role() in ('owner','manager'));
+
+-- ---- conversations: all roles read; only owner may write (call records)
+drop policy if exists "conversations select" on public.conversations;
+create policy "conversations select" on public.conversations
+  for select to authenticated using (clinic_id = public.current_clinic_id());
+drop policy if exists "conversations write" on public.conversations;
+create policy "conversations write" on public.conversations
+  for all to authenticated
+  using (clinic_id = public.current_clinic_id()
+         and public.current_profile_role() = 'owner')
+  with check (clinic_id = public.current_clinic_id()
+              and public.current_profile_role() = 'owner');
+
+-- ---- client notes: all roles read/write; only owner/manager delete
+drop policy if exists "client notes select" on public.client_notes;
+create policy "client notes select" on public.client_notes
+  for select to authenticated using (clinic_id = public.current_clinic_id());
+drop policy if exists "client notes insert" on public.client_notes;
+create policy "client notes insert" on public.client_notes
+  for insert to authenticated
+  with check (clinic_id = public.current_clinic_id());
+drop policy if exists "client notes update" on public.client_notes;
+create policy "client notes update" on public.client_notes
+  for update to authenticated
+  using (clinic_id = public.current_clinic_id())
+  with check (clinic_id = public.current_clinic_id());
+drop policy if exists "client notes delete" on public.client_notes;
+create policy "client notes delete" on public.client_notes
+  for delete to authenticated
+  using (clinic_id = public.current_clinic_id()
+         and public.current_profile_role() in ('owner','manager'));
+
+-- ---- notifications: read own clinic; staff/manager may only mark own read
+drop policy if exists "notifications select" on public.notifications;
+create policy "notifications select" on public.notifications
+  for select to authenticated using (clinic_id = public.current_clinic_id());
+drop policy if exists "notifications update" on public.notifications;
+create policy "notifications update" on public.notifications
+  for update to authenticated
+  using (clinic_id = public.current_clinic_id()
+         and (public.current_profile_role() = 'owner'
+              or profile_id = public.current_profile_id()))
+  with check (clinic_id = public.current_clinic_id());
+drop policy if exists "notifications owner write" on public.notifications;
+create policy "notifications owner write" on public.notifications
+  for insert to authenticated
+  with check (clinic_id = public.current_clinic_id()
+              and public.current_profile_role() = 'owner');
+drop policy if exists "notifications owner delete" on public.notifications;
+create policy "notifications owner delete" on public.notifications
+  for delete to authenticated
+  using (clinic_id = public.current_clinic_id()
+         and public.current_profile_role() = 'owner');
+
+-- ------------------------------------------- cross-clinic reference guards
+-- Foreign keys alone cannot express "must belong to the same clinic".
+-- These triggers reject any row whose referenced record lives in another clinic.
+create or replace function public.guard_same_clinic_refs()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare ref_clinic uuid;
+begin
+  if to_jsonb(new) ? 'client_id' and (to_jsonb(new) ->> 'client_id') is not null then
+    select clinic_id into ref_clinic from public.clients
+      where id = (to_jsonb(new) ->> 'client_id')::uuid;
+    if ref_clinic is distinct from new.clinic_id then
+      raise exception 'client belongs to a different clinic';
+    end if;
+  end if;
+
+  if to_jsonb(new) ? 'staff_id' and (to_jsonb(new) ->> 'staff_id') is not null then
+    select clinic_id into ref_clinic from public.staff
+      where id = (to_jsonb(new) ->> 'staff_id')::uuid;
+    if ref_clinic is distinct from new.clinic_id then
+      raise exception 'staff member belongs to a different clinic';
+    end if;
+  end if;
+
+  if to_jsonb(new) ? 'appointment_id' and (to_jsonb(new) ->> 'appointment_id') is not null then
+    select clinic_id into ref_clinic from public.appointments
+      where id = (to_jsonb(new) ->> 'appointment_id')::uuid;
+    if ref_clinic is distinct from new.clinic_id then
+      raise exception 'appointment belongs to a different clinic';
+    end if;
+  end if;
+
+  if to_jsonb(new) ? 'author_profile_id' and (to_jsonb(new) ->> 'author_profile_id') is not null then
+    select clinic_id into ref_clinic from public.profiles
+      where id = (to_jsonb(new) ->> 'author_profile_id')::uuid;
+    if ref_clinic is distinct from new.clinic_id then
+      raise exception 'author profile belongs to a different clinic';
+    end if;
+  end if;
+
+  if to_jsonb(new) ? 'profile_id' and (to_jsonb(new) ->> 'profile_id') is not null then
+    select clinic_id into ref_clinic from public.profiles
+      where id = (to_jsonb(new) ->> 'profile_id')::uuid;
+    if ref_clinic is distinct from new.clinic_id then
+      raise exception 'profile belongs to a different clinic';
+    end if;
+  end if;
+
+  return new;
+end $$;
+
+do $$
+declare t text;
+begin
+  foreach t in array array['staff_availability','appointments','conversations',
+                           'client_notes','notifications']
+  loop
+    execute format('drop trigger if exists guard_clinic_refs_%1$s on public.%1$s', t);
+    execute format('create trigger guard_clinic_refs_%1$s
+      before insert or update on public.%1$s
+      for each row execute function public.guard_same_clinic_refs()', t);
   end loop;
 end $$;
 
