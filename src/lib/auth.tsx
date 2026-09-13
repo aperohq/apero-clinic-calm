@@ -1,7 +1,8 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import type { ClinicRow, ProfileRole, ProfileRow } from "@/integrations/supabase/types";
+import { db } from "@/lib/db";
+import type { ClinicRow, ProfileRole, ProfileRow } from "@/lib/db-types";
 
 type AuthState = {
   loading: boolean;
@@ -26,10 +27,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loadProfile = async (userId: string | undefined) => {
     if (!userId) { setProfile(null); setClinic(null); return; }
-    const { data } = await supabase.from("profiles").select("*").eq("auth_user_id", userId).maybeSingle();
+    const { data } = await db.from("profiles").select("*").eq("auth_user_id", userId).maybeSingle();
     setProfile((data as ProfileRow | null) ?? null);
     if (data?.clinic_id) {
-      const { data: c } = await supabase.from("clinics").select("*").eq("id", data.clinic_id).maybeSingle();
+      const { data: c } = await db.from("clinics").select("*").eq("id", data.clinic_id).maybeSingle();
       setClinic((c as ClinicRow | null) ?? null);
     } else setClinic(null);
   };
