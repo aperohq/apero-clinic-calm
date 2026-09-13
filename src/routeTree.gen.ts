@@ -19,8 +19,11 @@ import { Route as HomeRouteImport } from './routes/home'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as StaffRouteImport } from './routes/staff'
 import { Route as SupportRouteImport } from './routes/support'
+import { Route as ClientsIndexRouteImport } from './routes/clients.index'
 import { Route as ClientsIdRouteImport } from './routes/clients.$id'
+import { Route as ConversationsIndexRouteImport } from './routes/conversations.index'
 import { Route as ConversationsIdRouteImport } from './routes/conversations.$id'
+import { Route as StaffIndexRouteImport } from './routes/staff.index'
 import { Route as StaffIdRouteImport } from './routes/staff.$id'
 
 const IndexRoute = IndexRouteImport.update({
@@ -73,15 +76,30 @@ const SupportRoute = SupportRouteImport.update({
   path: '/support',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ClientsIndexRoute = ClientsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ClientsRoute,
+} as any)
 const ClientsIdRoute = ClientsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
   getParentRoute: () => ClientsRoute,
 } as any)
+const ConversationsIndexRoute = ConversationsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ConversationsRoute,
+} as any)
 const ConversationsIdRoute = ConversationsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
   getParentRoute: () => ConversationsRoute,
+} as any)
+const StaffIndexRoute = StaffIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => StaffRoute,
 } as any)
 const StaffIdRoute = StaffIdRouteImport.update({
   id: '/$id',
@@ -103,21 +121,24 @@ export interface FileRoutesByFullPath {
   '/clients/$id': typeof ClientsIdRoute
   '/conversations/$id': typeof ConversationsIdRoute
   '/staff/$id': typeof StaffIdRoute
+  '/clients/': typeof ClientsIndexRoute
+  '/conversations/': typeof ConversationsIndexRoute
+  '/staff/': typeof StaffIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/account': typeof AccountRoute
   '/billing': typeof BillingRoute
   '/calendar': typeof CalendarRoute
-  '/clients': typeof ClientsRouteWithChildren
-  '/conversations': typeof ConversationsRouteWithChildren
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
-  '/staff': typeof StaffRouteWithChildren
   '/support': typeof SupportRoute
   '/clients/$id': typeof ClientsIdRoute
   '/conversations/$id': typeof ConversationsIdRoute
   '/staff/$id': typeof StaffIdRoute
+  '/clients': typeof ClientsIndexRoute
+  '/conversations': typeof ConversationsIndexRoute
+  '/staff': typeof StaffIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -134,6 +155,9 @@ export interface FileRoutesById {
   '/clients/$id': typeof ClientsIdRoute
   '/conversations/$id': typeof ConversationsIdRoute
   '/staff/$id': typeof StaffIdRoute
+  '/clients/': typeof ClientsIndexRoute
+  '/conversations/': typeof ConversationsIndexRoute
+  '/staff/': typeof StaffIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -151,21 +175,24 @@ export interface FileRouteTypes {
     | '/clients/$id'
     | '/conversations/$id'
     | '/staff/$id'
+    | '/clients/'
+    | '/conversations/'
+    | '/staff/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/account'
     | '/billing'
     | '/calendar'
-    | '/clients'
-    | '/conversations'
     | '/home'
     | '/login'
-    | '/staff'
     | '/support'
     | '/clients/$id'
     | '/conversations/$id'
     | '/staff/$id'
+    | '/clients'
+    | '/conversations'
+    | '/staff'
   id:
     | '__root__'
     | '/'
@@ -181,6 +208,9 @@ export interface FileRouteTypes {
     | '/clients/$id'
     | '/conversations/$id'
     | '/staff/$id'
+    | '/clients/'
+    | '/conversations/'
+    | '/staff/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -268,6 +298,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SupportRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/clients/': {
+      id: '/clients/'
+      path: '/'
+      fullPath: '/clients/'
+      preLoaderRoute: typeof ClientsIndexRouteImport
+      parentRoute: typeof ClientsRoute
+    }
     '/clients/$id': {
       id: '/clients/$id'
       path: '/$id'
@@ -275,12 +312,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ClientsIdRouteImport
       parentRoute: typeof ClientsRoute
     }
+    '/conversations/': {
+      id: '/conversations/'
+      path: '/'
+      fullPath: '/conversations/'
+      preLoaderRoute: typeof ConversationsIndexRouteImport
+      parentRoute: typeof ConversationsRoute
+    }
     '/conversations/$id': {
       id: '/conversations/$id'
       path: '/$id'
       fullPath: '/conversations/$id'
       preLoaderRoute: typeof ConversationsIdRouteImport
       parentRoute: typeof ConversationsRoute
+    }
+    '/staff/': {
+      id: '/staff/'
+      path: '/'
+      fullPath: '/staff/'
+      preLoaderRoute: typeof StaffIndexRouteImport
+      parentRoute: typeof StaffRoute
     }
     '/staff/$id': {
       id: '/staff/$id'
@@ -294,10 +345,12 @@ declare module '@tanstack/react-router' {
 
 interface ClientsRouteChildren {
   ClientsIdRoute: typeof ClientsIdRoute
+  ClientsIndexRoute: typeof ClientsIndexRoute
 }
 
 const ClientsRouteChildren: ClientsRouteChildren = {
   ClientsIdRoute: ClientsIdRoute,
+  ClientsIndexRoute: ClientsIndexRoute,
 }
 
 const ClientsRouteWithChildren =
@@ -305,10 +358,12 @@ const ClientsRouteWithChildren =
 
 interface ConversationsRouteChildren {
   ConversationsIdRoute: typeof ConversationsIdRoute
+  ConversationsIndexRoute: typeof ConversationsIndexRoute
 }
 
 const ConversationsRouteChildren: ConversationsRouteChildren = {
   ConversationsIdRoute: ConversationsIdRoute,
+  ConversationsIndexRoute: ConversationsIndexRoute,
 }
 
 const ConversationsRouteWithChildren = ConversationsRoute._addFileChildren(
@@ -317,10 +372,12 @@ const ConversationsRouteWithChildren = ConversationsRoute._addFileChildren(
 
 interface StaffRouteChildren {
   StaffIdRoute: typeof StaffIdRoute
+  StaffIndexRoute: typeof StaffIndexRoute
 }
 
 const StaffRouteChildren: StaffRouteChildren = {
   StaffIdRoute: StaffIdRoute,
+  StaffIndexRoute: StaffIndexRoute,
 }
 
 const StaffRouteWithChildren = StaffRoute._addFileChildren(StaffRouteChildren)
