@@ -357,7 +357,8 @@ create policy "notifications update" on public.notifications
          and (public.current_profile_role() = 'owner'
               or profile_id = public.current_profile_id()))
   with check (clinic_id = public.current_clinic_id()
-              and profile_id = public.current_profile_id());
+              and (public.current_profile_role() = 'owner'
+                   or profile_id = public.current_profile_id()));
 drop policy if exists "notifications owner write" on public.notifications;
 create policy "notifications owner write" on public.notifications
   for insert to authenticated
