@@ -306,3 +306,16 @@ export function AccountPage() {
 }
 
 export { initialsOf };
+
+// ---------------------------------------------------------------- support
+const supportCategories = ["Appointment issue", "Call quality", "Client records", "Staff & scheduling", "Billing question", "Account access", "Feature request", "Bug report", "Something else"] as const;
+
+export function SupportPage() {
+  const { profile } = useAuth();
+  const clinicName = useClinicName();
+  const [category, setCategory] = useState<string>(supportCategories[0]);
+  const [subject, setSubject] = useState(""); const [message, setMessage] = useState("");
+  const [sent, setSent] = useState(false); const [error, setError] = useState("");
+  if (sent) return <><PageHeader title="Support" description={`We’ve received your request for ${clinicName}.`} /><Panel className="text-center"><CheckCircle2 className="mx-auto size-12 text-success" /><h2 className="mt-4 text-lg font-semibold">Request sent</h2><p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">Our team replies within one business day at {profile?.email ?? "your email address"}.</p><Button className="mt-6" variant="outline" onClick={() => { setSent(false); setSubject(""); setMessage(""); }}>Send another request</Button></Panel></>;
+  return <><PageHeader title="Support" description="Tell us what you need and the Apero team will help." /><div className="grid gap-6 xl:grid-cols-[1.4fr_.6fr]"><Panel><PanelTitle>New support request</PanelTitle>{error && <div className="mb-4 rounded-[10px] border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">{error}</div>}<div className="grid gap-4"><div><Label htmlFor="support-category">Category</Label><Select value={category} onValueChange={setCategory}><SelectTrigger id="support-category" className="mt-2"><SelectValue /></SelectTrigger><SelectContent>{supportCategories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select></div><div><Label htmlFor="support-subject">Subject</Label><Input id="support-subject" className={cn(field, "mt-2")} value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Short summary" /></div><div><Label htmlFor="support-message">How can we help?</Label><Textarea id="support-message" className="mt-2 min-h-[140px]" value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Describe what happened" /></div><Button className="justify-self-end" onClick={() => { if (!subject.trim() || !message.trim()) { setError("Add a subject and a short description."); return; } setError(""); setSent(true); toast.success("Support request sent"); }}>Send request</Button></div></Panel><Panel><PanelTitle>Contact Apero</PanelTitle><p className="text-sm text-muted-foreground">Prefer email? Reach our team directly.</p><Button variant="outline" className="mt-4 w-full" asChild><a href="mailto:apero.hq@gmail.com"><Mail />apero.hq@gmail.com</a></Button><p className="mt-5 text-xs text-muted-foreground">Support hours: Sunday–Thursday, 9:00–18:00.</p></Panel></div></>;
+}
