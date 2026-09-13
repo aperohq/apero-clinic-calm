@@ -1,12 +1,16 @@
-// Shared Supabase client for the Apero frontend.
-// Manually wired to the external "Apero AI" Supabase project (no Lovable Cloud).
-// The publishable key is safe for browser use — no secret/service-role key here.
+// One shared Supabase client for the Apero frontend (external Supabase project).
+// Values come from frontend environment variables; only the publishable key is
+// ever used here — never a secret or service-role key.
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 import { brokeredPreviewStorage } from './previewAuthStorage';
 
-const SUPABASE_URL = 'https://svoybvzvmygszklcmudh.supabase.co';
-const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_s9aPxDAeDTfG3OG8TardeA_Gh3g4Zo2';
+const SUPABASE_URL =
+  (import.meta.env['VITE_SUPABASE_URL'] as string | undefined) ??
+  (typeof process !== 'undefined' ? process.env['SUPABASE_URL'] : undefined);
+const SUPABASE_PUBLISHABLE_KEY =
+  (import.meta.env['VITE_SUPABASE_PUBLISHABLE_KEY'] as string | undefined) ??
+  (typeof process !== 'undefined' ? process.env['SUPABASE_PUBLISHABLE_KEY'] : undefined);
 
 function createSupabaseFetch(supabaseKey: string): typeof fetch {
   return (input, init) => {
@@ -29,6 +33,11 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
 }
 
 function createSupabaseClient() {
+  if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+    throw new Error(
+      'Missing VITE_SUPABASE_URL or VITE_SUPABASE_PUBLISHABLE_KEY environment variable.',
+    );
+  }
   return createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     global: {
       fetch: createSupabaseFetch(SUPABASE_PUBLISHABLE_KEY),
