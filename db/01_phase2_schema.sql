@@ -327,29 +327,38 @@ create policy "client notes select" on public.client_notes
 drop policy if exists "client notes insert" on public.client_notes;
 create policy "client notes insert" on public.client_notes
   for insert to authenticated
-  with check (clinic_id = public.current_clinic_id());
+  with check (clinic_id = public.current_clinic_id()
+              and author_profile_id = public.current_profile_id());
 drop policy if exists "client notes update" on public.client_notes;
 create policy "client notes update" on public.client_notes
   for update to authenticated
   using (clinic_id = public.current_clinic_id())
-  with check (clinic_id = public.current_clinic_id());
+  with check (clinic_id = public.current_clinic_id()
+              and author_profile_id = public.current_profile_id());
 drop policy if exists "client notes delete" on public.client_notes;
 create policy "client notes delete" on public.client_notes
   for delete to authenticated
   using (clinic_id = public.current_clinic_id()
          and public.current_profile_role() in ('owner','manager'));
 
--- ---- notifications: read own clinic; staff/manager may only mark own read
+-- ---- notifications: owners read all clinic notifications; manager/staff
+-- read only their own. A notification's content (title, message, type,
+-- profile_id, clinic_id) is immutable through the client API — only its
+-- read status may be changed, and manager/staff may only change their own.
 drop policy if exists "notifications select" on public.notifications;
 create policy "notifications select" on public.notifications
-  for select to authenticated using (clinic_id = public.current_clinic_id());
+  for select to authenticated
+  using (clinic_id = public.current_clinic_id()
+         and (public.current_profile_role() = 'owner'
+              or profile_id = public.current_profile_id()));
 drop policy if exists "notifications update" on public.notifications;
 create policy "notifications update" on public.notifications
   for update to authenticated
   using (clinic_id = public.current_clinic_id()
          and (public.current_profile_role() = 'owner'
               or profile_id = public.current_profile_id()))
-  with check (clinic_id = public.current_clinic_id());
+  with check (clinic_id = public.current_clinic_id()
+              and profile_id = public.current_profile_id());
 drop policy if exists "notifications owner write" on public.notifications;
 create policy "notifications owner write" on public.notifications
   for insert to authenticated
