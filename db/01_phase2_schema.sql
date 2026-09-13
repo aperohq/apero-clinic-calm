@@ -327,7 +327,8 @@ create policy "client notes select" on public.client_notes
 drop policy if exists "client notes insert" on public.client_notes;
 create policy "client notes insert" on public.client_notes
   for insert to authenticated
-  with check (clinic_id = public.current_clinic_id());
+  with check (clinic_id = public.current_clinic_id()
+              and author_profile_id = public.current_profile_id());
 drop policy if exists "client notes update" on public.client_notes;
 create policy "client notes update" on public.client_notes
   for update to authenticated
@@ -339,17 +340,25 @@ create policy "client notes delete" on public.client_notes
   using (clinic_id = public.current_clinic_id()
          and public.current_profile_role() in ('owner','manager'));
 
--- ---- notifications: read own clinic; staff/manager may only mark own read
+-- ---- notifications: owners read all clinic notifications; manager/staff
+-- read only their own. A notification's content (title, message, type,
+-- profile_id, clinic_id) is immutable through the client API — only its
+-- read status may be changed, and manager/staff may only change their own.
 drop policy if exists "notifications select" on public.notifications;
 create policy "notifications select" on public.notifications
-  for select to authenticated using (clinic_id = public.current_clinic_id());
+  for select to authenticated
+  using (clinic_id = public.current_clinic_id()
+         and (public.current_profile_role() = 'owner'
+              or profile_id = public.current_profile_id()));
 drop policy if exists "notifications update" on public.notifications;
 create policy "notifications update" on public.notifications
   for update to authenticated
   using (clinic_id = public.current_clinic_id()
          and (public.current_profile_role() = 'owner'
               or profile_id = public.current_profile_id()))
-  with check (clinic_id = public.current_clinic_id());
+  with check (clinic_id = public.current_clinic_id()
+              and (public.current_profile_role() = 'owner'
+                   or profile_id = public.current_profile_id()));
 drop policy if exists "notifications owner write" on public.notifications;
 create policy "notifications owner write" on public.notifications
   for insert to authenticated
@@ -360,6 +369,54 @@ create policy "notifications owner delete" on public.notifications
   for delete to authenticated
   using (clinic_id = public.current_clinic_id()
          and public.current_profile_role() = 'owner');
+
+-- Column immutability guards. RLS policies alone cannot compare a row's old
+-- and new values, so these triggers enforce which columns may never change
+-- through the client-facing API. The service role (trusted server-side
+-- operations) is exempt.
+create or replace function public.guard_notifications_read_only()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if coalesce(auth.jwt() ->> 'role', '') <> 'service_role'
+     and (new.title is distinct from old.title
+          or new.message is distinct from old.message
+          or new.type is distinct from old.type
+          or new.profile_id is distinct from old.profile_id
+          or new.clinic_id is distinct from old.clinic_id) then
+    raise exception 'only the read status of a notification can be changed';
+  end if;
+  return new;
+end $$;
+
+drop trigger if exists guard_notifications_read_only on public.notifications;
+create trigger guard_notifications_read_only
+  before update on public.notifications
+  for each row execute function public.guard_notifications_read_only();
+
+create or replace function public.guard_client_notes_immutable()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if coalesce(auth.jwt() ->> 'role', '') <> 'service_role'
+     and (new.author_profile_id is distinct from old.author_profile_id
+          or new.clinic_id is distinct from old.clinic_id
+          or new.client_id is distinct from old.client_id) then
+    raise exception 'author, clinic and client of a note cannot be changed';
+  end if;
+  return new;
+end $$;
+
+drop trigger if exists guard_client_notes_immutable on public.client_notes;
+create trigger guard_client_notes_immutable
+  before update on public.client_notes
+  for each row execute function public.guard_client_notes_immutable();
 
 -- ------------------------------------------- cross-clinic reference guards
 -- Foreign keys alone cannot express "must belong to the same clinic".
