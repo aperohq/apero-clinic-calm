@@ -333,8 +333,7 @@ drop policy if exists "client notes update" on public.client_notes;
 create policy "client notes update" on public.client_notes
   for update to authenticated
   using (clinic_id = public.current_clinic_id())
-  with check (clinic_id = public.current_clinic_id()
-              and author_profile_id = public.current_profile_id());
+  with check (clinic_id = public.current_clinic_id());
 drop policy if exists "client notes delete" on public.client_notes;
 create policy "client notes delete" on public.client_notes
   for delete to authenticated
