@@ -190,7 +190,35 @@ create policy "read clinic profiles" on public.profiles
 drop policy if exists "update own profile" on public.profiles;
 create policy "update own profile" on public.profiles
   for update to authenticated
-  using (auth_user_id = auth.uid()) with check (auth_user_id = auth.uid());
+  using (auth_user_id = auth.uid())
+  with check (
+    auth_user_id = auth.uid()
+    and clinic_id = public.current_clinic_id()
+  );
+
+-- Prevent users from escalating themselves: role, clinic_id and auth_user_id
+-- can never be changed through the client-facing API. Only the service role
+-- (trusted server-side operations) may modify those columns.
+create or replace function public.guard_profile_sensitive_fields()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if coalesce(auth.jwt() ->> 'role', '') <> 'service_role'
+     and (new.clinic_id is distinct from old.clinic_id
+          or new.role is distinct from old.role
+          or new.auth_user_id is distinct from old.auth_user_id) then
+    raise exception 'clinic_id, role and auth_user_id cannot be changed';
+  end if;
+  return new;
+end $$;
+
+drop trigger if exists guard_profile_sensitive_fields on public.profiles;
+create trigger guard_profile_sensitive_fields
+  before update on public.profiles
+  for each row execute function public.guard_profile_sensitive_fields();
 
 -- Clinic-owned data: full access strictly inside your own clinic.
 do $$
