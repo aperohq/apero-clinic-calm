@@ -92,5 +92,5 @@ const ROLE_ROUTES: Record<ProfileRole, string[]> = {
 
 export function canAccess(role: ProfileRole | null, path: string) {
   if (!role) return false;
-  return ROLE_ROUTES[role].some((allowed) => path === allowed || path.startsWith(allowed + "/"));
+  return (ROLE_ROUTES[role] ?? []).some((allowed) => path === allowed || path.startsWith(allowed + "/"));
 }
