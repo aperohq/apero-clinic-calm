@@ -48,6 +48,9 @@ export const transcript = [
   ["Apero Receptionist", "Thank you, Sarah. You are confirmed for Monday, Sep 14 at 10:30 AM. A confirmation message has been sent.", "00:50"],
 ] as const;
 
-export function clientById(id: string) { return clients.find((client) => client.id === id); }
-export function staffById(id: string) { return staff.find((person) => person.id === id); }
-export function conversationById(id: string) { return conversations.find((conversation) => conversation.id === id); }
+const fallbackClient = { id: "unknown", name: "Unknown client", initials: "?", phone: "—", email: "—", language: "—", status: "Unknown", bookings: 0, lastContact: "—" };
+const fallbackStaff = { id: "unknown", name: "Unassigned", initials: "?", specialty: "—", role: "—", phone: "—", email: "—", services: [] as string[] };
+const fallbackConversation = { id: "unknown", clientId: "unknown", date: "—", time: "—", duration: "—", reason: "Conversation", status: "Needs Review" as Status, summary: "No summary is available." };
+export function clientById(id: string) { return clients.find((client) => client.id === id) ?? fallbackClient; }
+export function staffById(id: string) { return staff.find((person) => person.id === id) ?? fallbackStaff; }
+export function conversationById(id: string) { return conversations.find((conversation) => conversation.id === id) ?? fallbackConversation; }

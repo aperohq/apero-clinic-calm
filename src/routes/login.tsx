@@ -1,0 +1,2 @@
+import { createFileRoute } from "@tanstack/react-router"; import { LoginPage } from "@/components/clinic-pages";
+export const Route=createFileRoute("/login")({head:()=>({meta:[{title:"Sign in — Apero"},{name:"description",content:"Sign in to the Apero clinic workspace."},{property:"og:title",content:"Sign in — Apero"},{property:"og:description",content:"Sign in to the Apero clinic workspace."},{property:"og:type",content:"website"},{name:"twitter:card",content:"summary_large_image"}]}),component:LoginPage});
