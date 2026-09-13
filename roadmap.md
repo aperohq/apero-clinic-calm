@@ -18,3 +18,12 @@
 
 Waiting on a future backend: real payments, live invoices, call audio, visit
 records, and permanent storage for new clients and staff.
+
+## Phase 2 — Supabase backend (this pass)
+- [x] Env-based shared Supabase client (VITE_SUPABASE_URL / VITE_SUPABASE_PUBLISHABLE_KEY)
+- [x] Real auth: sign in, sign out, forgot password, reset password, persistent session, protected routes
+- [x] Multi-clinic schema + RLS SQL in db/01_phase2_schema.sql (clinics, profiles, clients, staff, staff_availability, appointments, conversations, client_notes, notifications)
+- [x] Role-based navigation (owner / manager / staff)
+- [x] localStorage data layer replaced with Supabase queries and mutations
+- [ ] Blocked on user: run db/01_phase2_schema.sql, create the apero.hq@gmail.com auth user, run db/02_link_owner_profile.sql
+- [ ] Still mocked: billing plan, payment method, invoices; call recording playback
