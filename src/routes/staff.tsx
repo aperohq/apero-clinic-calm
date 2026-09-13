@@ -1,2 +1,2 @@
-import { createFileRoute } from "@tanstack/react-router"; import { StaffPage } from "@/components/clinic-pages"; import { RouteShell } from "@/components/route-shell";
-export const Route=createFileRoute("/staff")({head:()=>({meta:[{title:"Staff — Apero"},{name:"description",content:"Dental Zone Clinic team directory."},{property:"og:title",content:"Staff — Apero"},{property:"og:description",content:"Dental Zone Clinic team directory."},{property:"og:type",content:"website"},{name:"twitter:card",content:"summary_large_image"}]}),component:()=> <RouteShell><StaffPage/></RouteShell>});
+import { Outlet, createFileRoute } from "@tanstack/react-router"; import { RouteShell } from "@/components/route-shell";
+export const Route=createFileRoute("/staff")({component:()=> <RouteShell><Outlet/></RouteShell>});

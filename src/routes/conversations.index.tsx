@@ -1,0 +1,2 @@
+import { createFileRoute } from "@tanstack/react-router"; import { ConversationsPage } from "@/components/clinic-pages";
+export const Route=createFileRoute("/conversations/")({head:()=>({meta:[{title:"Conversations — Apero"},{name:"description",content:"Review clinic call logs and outcomes."},{property:"og:title",content:"Conversations — Apero"},{property:"og:description",content:"Review clinic call logs and outcomes."},{property:"og:type",content:"website"},{name:"twitter:card",content:"summary_large_image"}]}),component:ConversationsPage});
