@@ -1,0 +1,22 @@
+{
+  "clinic_id": "11111111-1111-4111-8111-111111111111",
+  "clinic_name": "Dental Zone Clinic",
+  "clinic_name_ar": "دنتل زون",
+  "clinic_address": "Salmiya, Kuwait",
+  "clinic_phone": "+965 2225 4100",
+  "clinic_hours": "Sunday–Thursday and Saturday, 1 PM–9 PM; Friday closed",
+  "timezone": "Asia/Kuwait",
+  "languages": "Arabic (Kuwaiti/Gulf) or English",
+  "clinic_type": "dental clinic",
+  "knowledge_base_id": "knowledge_base_5e52df7d832025dc",
+  "agent_id": "agent_b84b2766efeb85afc809147d7a",
+  "conversation_flow_id": "conversation_flow_43f53e5e8531",
+  "workspace_id": "org_Ybi3pl9fq16wgTf6",
+  "tool_url": "https://svoybvzvmygszklcmudh.supabase.co/functions/v1/clinic-operations",
+  "transfer_number": null,
+  "booking_duration_minutes": 45,
+  "pricing_policy": "Pricing is determined after consultation; quote no treatment prices.",
+  "insurance_policy": "Do not claim any named plan is accepted until staff confirms it.",
+  "current_time_variable": "{{current_time_Asia/Kuwait}}",
+  "current_calendar_variable": "{{current_calendar_Asia/Kuwait}}"
+}

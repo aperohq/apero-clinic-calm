@@ -1,16 +1,23 @@
-"""Build the Dental Zone Conversation Flow from a saved Retell flow.
+"""Generate a clinic flow from common Apero behavior and clinic configuration.
 
-Usage: python3 retell/build_flow.py [path/to/flow-backup.json]
-Without a path, the committed flow supplies the existing model and KB settings.
-Output contains no old Cal.com credentials.
+Usage: python3 retell/build_flow.py --config retell/config/dental-zone.json --output /tmp/flow.json
+No external resources are created or published.
 """
+import argparse
 import json
-import sys
 from pathlib import Path
 
-source = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("retell/dental-zone-flow.json")
-old = json.loads(source.read_text())
-URL = "https://svoybvzvmygszklcmudh.supabase.co/functions/v1/clinic-operations"
+parser = argparse.ArgumentParser()
+parser.add_argument("--config", default="retell/config/dental-zone.json")
+parser.add_argument("--source", default="retell/dental-zone-flow.json", help="Saved flow used for model defaults")
+parser.add_argument("--output", default="retell/dental-zone-flow.json")
+args = parser.parse_args()
+config = json.loads(Path(args.config).read_text())
+required = ("clinic_id", "clinic_name", "clinic_name_ar", "clinic_address", "clinic_phone", "clinic_hours", "timezone", "languages", "clinic_type", "knowledge_base_id", "tool_url")
+missing = [key for key in required if not config.get(key)]
+if missing: parser.error("Missing clinic config: " + ", ".join(missing))
+old = json.loads(Path(args.source).read_text())
+URL = config["tool_url"]
 
 def prompt(text): return {"type": "prompt", "prompt": text}
 def equation(*parts):
@@ -52,7 +59,7 @@ tools = [
  tool("check_availability", "availability", {"service_name":S("Final requested service."),"practitioner_name":S("Requested name; omit for any qualified practitioner."),
       "practitioner_id":S("Canonical staff ID when known; omit for any qualified practitioner."),
       "practitioner_mode":{"type":"string","enum":["specific","any"],"description":"Specific only when caller prefers a named practitioner; any only when they accept any qualified practitioner. Never silently switch."},
-      "requested_date":S("YYYY-MM-DD in Kuwait time."),
+      "requested_date":S("YYYY-MM-DD in the clinic time zone."),
       "requested_time":S("Optional exact time, HH:mm."),"window_start":S("Optional earliest accepted time, HH:mm."),"window_end":S("Optional latest accepted time, HH:mm."),
       "appointment_id":S("Only for a verified reschedule: exact existing appointment ID from lookup."),
       "client_name":S("Required with appointment_id: verified existing patient's name."),
@@ -92,10 +99,10 @@ for kind in ("message","callback","urgent"):
     tools.append(tool("persist_"+kind,kind,{"caller_name":S("Caller name."),"patient_name":S("Patient name if different."),
         "caller_phone":S("Confirmed callback number."),"reason":S("Concise request or message for staff.")},["caller_phone","reason"],
         {kind+"_success":"success",kind+"_request_id":"request_id",kind+"_error_type":"error_type"},
-        "Persist this request before promising staff follow-up. No live transfer destination is configured.","tool-apero-"+kind))
+        "Persist this request before promising staff follow-up. {transfer_policy}","tool-apero-"+kind))
 
 nodes = [
- convo("node_greeting","Greeting","هلا فيك، معك سارة من دنتل زون. شلون أقدر أساعدك اليوم؟",[
+ convo("node_greeting","Greeting","هلا فيك، معك سارة من {clinic_name_ar}. شلون أقدر أساعدك اليوم؟",[
    edge("node_service",prompt("Caller wants a new appointment or only wants to check new appointment availability"),"greeting_book"),
    edge("node_existing_identity",prompt("Caller wants to change or cancel an existing appointment"),"greeting_existing"),
    edge("node_faq",prompt("Caller asks a general clinic question"),"greeting_faq"),
@@ -109,7 +116,7 @@ nodes = [
    [edge("node_service",prompt("Caller clarifies the service"),"service_clarified")]),
  convo("node_doctor_preference","Doctor Preference","Use the resolved service and qualified_practitioners. If a valid specific doctor or any-qualified preference is already established, do not ask again: continue. If only one practitioner qualifies, use that practitioner and continue without asking. Ask preference only when several qualify and preference is missing, ambiguous, invalid, or the caller changed doctor/service. Keep the canonical practitioner ID once resolved. Never silently switch doctors.",
    [edge("node_date_time",prompt("A specific doctor preference or any-qualified preference is clear; or only one qualified practitioner exists"),"doctor_chosen")]),
- convo("node_date_time","Date and Time Preference","Keep the resolved service, practitioner_mode and canonical practitioner ID from prior states. If date and time preference are already clear, proceed without asking. Otherwise ask only the next missing question. Accept exact time, window, flexible date or earliest. Clarify ambiguous relative dates in Kuwait time. Do not imply an unchecked time is free.",
+ convo("node_date_time","Date and Time Preference","Keep the resolved service, practitioner_mode and canonical practitioner ID from prior states. If date and time preference are already clear, proceed without asking. Otherwise ask only the next missing question. Accept exact time, window, flexible date or earliest. Clarify ambiguous relative dates in the clinic time zone. Do not imply an unchecked time is free.",
    [edge("node_check",prompt("There is enough information to check: canonical service, doctor preference mode, and date or earliest search mode"),"date_check")]),
  fn("node_check","Check Qualified Availability","tool-1789478621144",[
    edge("node_offer",equation(("availability_success","==","true"),("available","==","true")),"availability_yes"),
@@ -192,20 +199,20 @@ nodes = [
  convo("node_cancel_failed","Cancellation Not Completed","Say the appointment was NOT cancelled. Briefly apologize; offer to verify details or submit a staff callback.",
    [edge("node_existing_identity",prompt("Caller wants to correct patient details"),"cancel_retry"),
     edge("node_callback_collect",prompt("Caller wants staff follow-up"),"cancel_callback")]),
- convo("node_faq","Clinic Questions","Answer briefly using approved clinic facts only. This is a dental clinic. Pricing is determined after consultation; quote no treatment prices. Do not assert an insurer is accepted without approved evidence. Ask if anything else is needed.",
+ convo("node_faq","Clinic Questions","Answer briefly using approved clinic facts only. This is a {clinic_type}. {pricing_policy} {insurance_policy} Ask if anything else is needed.",
    [edge("node_anything_else",prompt("Question answered"),"faq_done")]),
  convo("node_global_faq","Brief Question During Another Task","Answer the short clinic question from approved facts, then return to the previous booking or existing-appointment state. Do not interpret the question as consent. Do not lose the patient's existing details.",
    global_condition="Caller briefly asks a general clinic question such as hours, location, price or insurance in the middle of another request, and does not abandon that request."),
- convo("node_global_urgent","Urgent Concern","Acknowledge concern without diagnosis. There is no live transfer destination in this demo. Say staff follow-up is needed, ask for a callback number and concise reason. For potentially life-threatening symptoms, advise the caller to contact local emergency services immediately. Do not claim a transfer is happening.",
+ convo("node_global_urgent","Urgent Concern","Acknowledge concern without diagnosis. {transfer_policy} Say staff follow-up is needed, ask for a callback number and concise reason. For potentially life-threatening symptoms, advise the caller to contact local emergency services immediately. Do not claim a transfer is happening.",
    global_condition="Caller describes urgent or potentially emergency dental or medical symptoms.",always_to="node_urgent_collect"),
- convo("node_global_human","Human Request","Acknowledge the request. No live transfer destination is configured. Offer a real persisted staff callback; do not say a transfer is occurring.",
+ convo("node_global_human","Human Request","Acknowledge the request. {transfer_policy} Offer a real persisted staff callback; do not say a transfer is occurring.",
    global_condition="Caller explicitly requests a human, manager or receptionist, or is frustrated and asks for staff.",always_to="node_callback_collect"),
  convo("node_message_collect","Take Message","Ask for caller name, callback phone and message, one at a time. Read back uncertain details. Do not promise delivery before persistence.",
    [edge("node_message_tool",prompt("Caller confirms message and contact details"),"message_submit")]),
  fn("node_message_tool","Persist Message","tool-apero-message",[
    edge("node_message_saved",equation(("message_success","==","true")),"message_saved")],"node_request_failed"),
  convo("node_message_saved","Message Submitted","The message was saved. Tell caller staff can follow up; do not promise an exact time.",always_to="node_anything_else"),
- convo("node_callback_collect","Collect Callback","Ask for caller name, confirmed callback phone and concise reason. Explain no live transfer is configured for this demo. Do not promise follow-up until saved.",
+ convo("node_callback_collect","Collect Callback","Ask for caller name, confirmed callback phone and concise reason. {transfer_policy} Do not promise follow-up until saved.",
    [edge("node_callback_tool",prompt("Callback details confirmed"),"callback_submit")]),
  fn("node_callback_tool","Persist Callback","tool-apero-callback",[
    edge("node_callback_saved",equation(("callback_success","==","true")),"callback_saved")],"node_request_failed"),
@@ -225,9 +232,9 @@ nodes = [
  {"id":"node_end","name":"End Call","type":"end","skippable":False,"display_position":{"x":0,"y":0}},
 ]
 
-global_prompt = """You are Sara, the calm Dental Zone Clinic dental receptionist in Salmiya, Kuwait. Speak naturally in the caller's Arabic (Kuwaiti/Gulf) or English, including mixed-language doctor and service names. Usually speak in one or two short sentences and ask one question at a time. Acknowledge corrections briefly. Do not repeat known details or narrate tools, checks, databases or internal logic. Accuracy takes priority over brevity. Never invent clinic, doctor, price, insurance or appointment facts. Use the approved knowledge base and backend results only.
+global_prompt = """You are Sara, the calm {clinic_name} receptionist in {clinic_address}. Speak naturally in the caller's {languages}, including mixed-language doctor and service names. Usually speak in one or two short sentences and ask one question at a time. Acknowledge corrections briefly. Do not repeat known details or narrate tools, checks, databases or internal logic. Accuracy takes priority over brevity. Never invent clinic, doctor, price, insurance or appointment facts. Use the approved knowledge base and backend results only.
 
-Clinic time zone is Asia/Kuwait. Resolve relative dates using {{current_time_Asia/Kuwait}} and {{current_calendar_Asia/Kuwait}}. Clarify ambiguity. No past slots. Speak dates and times naturally; send machine-readable YYYY-MM-DD and HH:mm to tools. Do not reveal IDs, slot tokens, JSON, APIs or internal actions.
+Clinic time zone is {timezone}. Resolve relative dates using {current_time_variable} and {current_calendar_variable}. Clarify ambiguity. No past slots. Speak dates and times naturally; send machine-readable YYYY-MM-DD and HH:mm to tools. Do not reveal IDs, slot tokens, JSON, APIs or internal actions.
 
 Service first, then doctor preference before the FIRST availability check. If multiple qualified practitioners offer the service, ask whether a specific one is preferred only if the preference is missing. If only one qualifies, use them without asking. Once a valid practitioner or any-qualified preference is established, preserve it across checks, slot selection, corrections, interruptions, general questions and final confirmation. Do not ask for the doctor again after a date/time-only change; recheck the new date/time with the same canonical practitioner ID. Reassess preference only if doctor or service changes, or the name was ambiguous or invalid. If any doctor is fine, search only qualified practitioners. The server resolves Arabic and English name variants. If resolution is ambiguous, ask; never guess. Never silently replace a requested doctor.
 
@@ -239,14 +246,24 @@ Before book_appointment, read back patient, service, practitioner, date and time
 
 Existing appointment details require patient name and phone lookup. Reschedule uses only reschedule_appointment on the identified appointment; cancellation uses only cancel_appointment after explicit confirmation. The original appointment remains if reschedule fails. Never call book_appointment to reschedule. State success only after the corresponding backend success.
 
-This demo has NO configured staff transfer number. Never say a transfer occurred. A message, callback or urgent escalation is submitted only after its persistence tool succeeds. If it fails, say it was not submitted. Do not diagnose or give personalized treatment advice. For a potentially life-threatening situation, advise local emergency services and seek an urgent staff callback. Pricing is determined after consultation; quote no treatment prices. The insurer lists in old sources conflict, so do not claim any named plan is accepted until staff confirms it.
+{transfer_policy} Never say a transfer occurred. A message, callback or urgent escalation is submitted only after its persistence tool succeeds. If it fails, say it was not submitted. Do not diagnose or give personalized treatment advice. For a potentially life-threatening situation, advise local emergency services and seek an urgent staff callback. {pricing_policy} {insurance_policy}
 
 For a brief general question during scheduling, answer from approved facts and return to the prior state. Do not treat that interruption as confirmation. If a tool is slow, one short 'Let me check' is enough; never announce success before the result."""
 
 output = {"global_prompt":global_prompt,"nodes":nodes,"tools":tools,"components":[],"start_node_id":"node_greeting",
           "start_speaker":"agent","model_choice":old["model_choice"],"model_temperature":0,"tool_call_strict_mode":True,
-          "default_dynamic_variables":{"clinic_name":"Dental Zone Clinic","clinic_address":"Salmiya, Kuwait",
-          "clinic_phone":"+965 2225 4100","clinic_hours":"Sunday–Thursday and Saturday, 1 PM–9 PM; Friday closed"},
-          "knowledge_base_ids":["knowledge_base_5e52df7d832025dc"],"kb_config":old.get("kb_config",{"top_k":3,"filter_score":0.6})}
-Path("retell/dental-zone-flow.json").write_text(json.dumps(output,ensure_ascii=False,indent=2)+"\n")
-print(f"Prepared {len(nodes)} nodes and {len(tools)} tools")
+          "default_dynamic_variables":{key:config[key] for key in ("clinic_name", "clinic_address", "clinic_phone", "clinic_hours")},
+          "knowledge_base_ids":[config["knowledge_base_id"]],"kb_config":old.get("kb_config",{"top_k":3,"filter_score":0.6})}
+# Render clinic wording in the common prompt and nodes. Retell tools use one shared endpoint.
+replacements = {key: str(config[key]) for key in ("clinic_name", "clinic_name_ar", "clinic_address", "timezone", "languages", "clinic_type", "pricing_policy", "insurance_policy", "current_time_variable", "current_calendar_variable")}
+replacements["transfer_policy"] = "No live transfer destination is configured. Offer a persisted staff callback."
+def render(value):
+    if isinstance(value, str):
+        for key, replacement in replacements.items(): value = value.replace("{" + key + "}", replacement)
+        return value
+    if isinstance(value, list): return [render(item) for item in value]
+    if isinstance(value, dict): return {key: render(item) for key, item in value.items()}
+    return value
+output = render(output)
+Path(args.output).write_text(json.dumps(output, ensure_ascii=False, indent=2) + "\n")
+print(f"Prepared {len(nodes)} nodes and {len(tools)} tools for {config['clinic_name']} at {args.output}")

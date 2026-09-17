@@ -1,22 +1,5 @@
 export type Staff = { id: string; full_name: string; specialty: string; services: string[]; aliases: string[] };
 
-const nameAliases: Record<string, string[]> = {
-  "21111111-1111-4111-8111-111111111111": ["Ahmed Kandil", "Ahmed Qandeel", "Dr Qandil", "د احمد قنديل", "احمد قنديل", "أحمد كنديل"],
-  "21111111-1111-4111-8111-111111111112": ["Mohammad Shuqeir", "Mohammed Shukair", "Muhammad Shuqair", "دكتور محمد شقير", "محمد شقير", "محمد شقير"],
-  "21111111-1111-4111-8111-111111111113": ["Fatima Hasan", "Fatma Hassan", "فاطمة حسن", "فاطمه حسن", "دكتورة فاطمة حسن"],
-  "21111111-1111-4111-8111-111111111114": ["Laila Salem", "Leila Salem", "ليلى سالم", "ليلا سالم"],
-};
-const serviceAliases: Record<string, string[]> = {
-  "Dental Cleaning": ["cleaning", "scaling", "تنظيف", "تنظيف اسنان", "تنظيف الأسنان"],
-  "Consultation": ["general consultation", "dental consultation", "استشارة عامة", "كشف اسنان"],
-  "Root Canal": ["root canal treatment", "nerve treatment", "علاج عصب", "سحب عصب"],
-  "Veneers Consultation": ["veneers", "veneer consultation", "فينير", "قشور"],
-  "Teeth Whitening": ["whitening", "bleaching", "تبييض", "تبييض الاسنان"],
-  "Orthodontic Consultation": ["orthodontics consultation", "braces consultation", "استشارة تقويم"],
-  "Braces Review": ["braces follow up", "braces check", "مراجعة تقويم"],
-  "Preventive Care": ["prevention", "preventive visit", "رعاية وقائية"],
-};
-
 export function norm(value: string): string {
   return value.toLowerCase().normalize("NFKD").replace(/[\u064b-\u065f\u0670]/g, "")
     .replace(/[أإآٱ]/g, "ا").replace(/ى/g, "ي").replace(/ة/g, "ه")
@@ -47,14 +30,14 @@ function score(query: string, candidate: string): number {
   return similarity >= 0.82 && d <= 3 ? similarity * 0.88 : 0;
 }
 export function resolveStaff(staff: Staff[], requested: string): { status: string; practitioner?: Staff; candidates?: string[] } {
-  const ranked = staff.map(s => ({ staff: s, value: Math.max(...[s.full_name, ...(s.aliases ?? []), ...(nameAliases[s.id] ?? [])].map(n => score(requested, n))) }))
+  const ranked = staff.map(s => ({ staff: s, value: Math.max(...[s.full_name, ...(s.aliases ?? [])].map(n => score(requested, n))) }))
     .filter(x => x.value >= 0.72).sort((a, b) => b.value - a.value);
   if (!ranked.length) return { status: "not_found" };
   if (ranked.length > 1 && ranked[0].value - ranked[1].value < (ranked[0].value === 1 ? 0.001 : 0.12))
     return { status: "ambiguous", candidates: ranked.slice(0, 3).map(x => x.staff.full_name) };
   return { status: "resolved", practitioner: ranked[0].staff };
 }
-export function resolveService(staff: Staff[], requested: string): { status: string; service?: string; candidates?: string[] } {
+export function resolveService(staff: Staff[], requested: string, serviceAliases: Record<string, string[]> = {}): { status: string; service?: string; candidates?: string[] } {
   const services = [...new Set(staff.flatMap(s => s.services))];
   const ranked = services.map(service => ({ service, value: Math.max(...[service, ...(serviceAliases[service] ?? [])].map(n => score(requested, n))) }))
     .filter(x => x.value >= 0.72).sort((a, b) => b.value - a.value);
@@ -63,11 +46,13 @@ export function resolveService(staff: Staff[], requested: string): { status: str
     return { status: "ambiguous", candidates: ranked.slice(0, 3).map(x => x.service) };
   return { status: "resolved", service: ranked[0].service };
 }
-export function phone(value: unknown): string | null {
+export function phone(value: unknown, prefix = "+965", localLength = 8): string | null {
   if (typeof value !== "string") return null;
   const digits = value.replace(/\D/g, "");
-  if (/^[0-9]{8}$/.test(digits)) return "+965" + digits;
-  if (/^965[0-9]{8}$/.test(digits)) return "+" + digits;
+  const code = prefix.replace(/\D/g, "");
+  if (!/^[0-9]{1,4}$/.test(code) || localLength < 6 || localLength > 14) return null;
+  if (digits.length === localLength) return "+" + code + digits;
+  if (digits.startsWith(code) && digits.length === code.length + localLength) return "+" + digits;
   return null;
 }
 export function value(args: Record<string, unknown>, key: string): string { return typeof args[key] === "string" ? String(args[key]).trim() : ""; }

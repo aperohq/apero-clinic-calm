@@ -1,8 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { withSupabase } from "jsr:@supabase/server@^1";
 
-const CLINIC_ID = "11111111-1111-4111-8111-111111111111";
-const AGENT_ID = "agent_b84b2766efeb85afc809147d7a";
+import { resolveVoiceIntegration } from "../_shared/voice-integration.ts";
 
 function normalizePhone(phone: string | null | undefined) {
   if (!phone) return null;
@@ -25,92 +24,20 @@ function normalizeTranscript(items: any[] | undefined) {
   }));
 }
 
-async function hmacHex(key: string, message: string) {
-  const encoder = new TextEncoder();
-
-  const cryptoKey = await crypto.subtle.importKey(
-    "raw",
-    encoder.encode(key),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"],
-  );
-
-  const signed = await crypto.subtle.sign(
-    "HMAC",
-    cryptoKey,
-    encoder.encode(message),
-  );
-
-  return Array.from(new Uint8Array(signed))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-}
-
-function safeEqual(a: string, b: string) {
-  if (a.length !== b.length) return false;
-
-  let result = 0;
-
-  for (let i = 0; i < a.length; i++) {
-    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  }
-
-  return result === 0;
-}
-
-async function verifyRetellSignature(
-  rawBody: string,
-  signature: string | null,
-  apiKey: string,
-) {
-  if (!signature) return false;
-
-  const match = signature.match(/^v=(\d+),d=([0-9a-fA-F]+)$/);
-
-  if (!match) return false;
-
-  const timestamp = match[1];
-  const digest = match[2].toLowerCase();
-
-  // Reject webhook replays older than 5 minutes.
-  if (Math.abs(Date.now() - Number(timestamp)) > 5 * 60 * 1000) {
-    return false;
-  }
-
-  const expected = await hmacHex(apiKey, rawBody + timestamp);
-
-  return safeEqual(expected.toLowerCase(), digest);
-}
-
 export default {
   fetch: withSupabase({ auth: "none" }, async (req, ctx) => {
     if (req.method !== "POST") {
       return new Response("Method not allowed", { status: 405 });
     }
 
-    const apiKey = Deno.env.get("RETELL_API_KEY");
-
-    if (!apiKey) {
-      console.error("RETELL_API_KEY is missing");
-      return new Response("Server configuration error", { status: 500 });
-    }
-
-    // IMPORTANT: verify the RAW body before parsing JSON.
     const rawBody = await req.text();
-
     const signature = req.headers.get("x-retell-signature");
-
-    const valid = await verifyRetellSignature(
-      rawBody,
-      signature,
-      apiKey,
-    );
-
-    if (!valid) {
-      console.error("Invalid Retell webhook signature");
+    const timestamp = signature?.match(/^v=(\d+),d=[0-9a-fA-F]+$/)?.[1];
+    if (!timestamp || Math.abs(Date.now() - Number(timestamp)) > 5 * 60 * 1000)
       return new Response("Unauthorized", { status: 401 });
-    }
+    const identity = await resolveVoiceIntegration(ctx.supabaseAdmin, rawBody, signature);
+    if (!identity) return new Response("Unauthorized", { status: 401 });
+    const clinicId = identity.integration.clinic_id;
 
     let payload: any;
 
@@ -130,7 +57,11 @@ export default {
     if (!call?.call_id) {
       return new Response("Missing call_id", { status: 400 });
     }
-    if (call.agent_id !== AGENT_ID) return new Response(null, { status: 204 });
+    const { data: existingCall, error: existingCallError } = await ctx.supabaseAdmin
+      .from("conversations").select("clinic_id").eq("retell_call_id", call.call_id).maybeSingle();
+    if (existingCallError) return new Response("Database error", { status: 500 });
+    if (existingCall && existingCall.clinic_id !== clinicId)
+      return new Response("Call clinic mismatch", { status: 403 });
 
     const analysis = call.call_analysis ?? {};
     const custom = analysis.custom_analysis_data ?? {};
@@ -154,7 +85,7 @@ export default {
     const { data: operations, error: operationsError } = await ctx.supabaseAdmin
       .from("voice_operations")
       .select("action,result")
-      .eq("clinic_id", CLINIC_ID)
+      .eq("clinic_id", clinicId)
       .eq("call_id", call.call_id)
       .order("created_at", { ascending: false });
     if (operationsError) {
@@ -164,7 +95,7 @@ export default {
     const completedOperations = (operations ?? []).filter((o: any) => o.result?.success === true);
     const lastOperation = completedOperations[0] ?? null;
     const { data: savedRequests, error: requestsError } = await ctx.supabaseAdmin
-      .from("voice_requests").select("id").eq("clinic_id", CLINIC_ID)
+      .from("voice_requests").select("id").eq("clinic_id", clinicId)
       .eq("call_id", call.call_id).limit(1);
     if (requestsError) {
       console.error("Failed to load Retell requests:", requestsError);
@@ -177,7 +108,7 @@ export default {
     const { data: clients } = await ctx.supabaseAdmin
       .from("clients")
       .select("id, phone")
-      .eq("clinic_id", CLINIC_ID);
+      .eq("clinic_id", clinicId);
 
     if (normalizedCaller && clients) {
       const client = clients.find(
@@ -197,7 +128,7 @@ export default {
         .from("appointments")
         .select("id,client_id")
         .eq("id", collectedAppointmentId)
-        .eq("clinic_id", CLINIC_ID)
+        .eq("clinic_id", clinicId)
         .maybeSingle();
 
       if (appointmentError) {
@@ -248,7 +179,7 @@ export default {
       (booked ? "Appointment Booking Call" : "Phone Call");
 
     const row: Record<string, any> = {
-      clinic_id: CLINIC_ID,
+      clinic_id: clinicId,
       client_id: clientId,
       retell_call_id: call.call_id,
       retell_agent_id: call.agent_id ?? null,

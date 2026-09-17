@@ -1,9 +1,8 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { withSupabase } from "jsr:@supabase/server@^1";
-import { Retell } from "npm:retell-sdk";
+import { resolveVoiceIntegration } from "../_shared/voice-integration.ts";
 import { DateTime } from "npm:luxon@3";
 
-const CLINIC_ID = "11111111-1111-4111-8111-111111111111";
 const SLOT_MINUTES = 30;
 
 function normalizePhone(
@@ -62,27 +61,9 @@ export default {
 
       const rawBody = await req.text();
 
-      const signature = req.headers.get(
-        "x-retell-signature",
-      );
-
-      const apiKey =
-        Deno.env.get("RETELL_API_KEY");
-
-      if (
-        !apiKey ||
-        !signature ||
-        !await Retell.verify(
-          rawBody,
-          apiKey,
-          signature,
-        )
-      ) {
-        return new Response(
-          "Unauthorized",
-          { status: 401 },
-        );
-      }
+      const identity = await resolveVoiceIntegration(ctx.supabaseAdmin, rawBody, req.headers.get("x-retell-signature"));
+      if (!identity) return new Response("Unauthorized", { status: 401 });
+      const clinicId = identity.integration.clinic_id;
 
       let payload: any;
 
@@ -158,7 +139,7 @@ export default {
       } = await ctx.supabaseAdmin
         .from("clinics")
         .select("timezone")
-        .eq("id", CLINIC_ID)
+        .eq("id", clinicId)
         .single();
 
       if (clinicError || !clinic) {
@@ -178,7 +159,7 @@ export default {
       }
 
       const timezone =
-        clinic.timezone || "Asia/Kuwait";
+        clinic.timezone;
 
       // Required:
       // appointment_date = YYYY-MM-DD
@@ -222,7 +203,7 @@ export default {
         .select(
           "id, full_name, specialty, services, aliases",
         )
-        .eq("clinic_id", CLINIC_ID)
+        .eq("clinic_id", clinicId)
         .eq("active", true);
 
       if (staffError || !staffList) {
@@ -273,7 +254,7 @@ export default {
         .select(
           "start_time, end_time",
         )
-        .eq("clinic_id", CLINIC_ID)
+        .eq("clinic_id", clinicId)
         .eq(
           "staff_id",
           practitioner.id,
@@ -342,7 +323,7 @@ export default {
         .select(
           "start_time, end_time",
         )
-        .eq("clinic_id", CLINIC_ID)
+        .eq("clinic_id", clinicId)
         .eq(
           "staff_id",
           practitioner.id,
@@ -394,7 +375,7 @@ export default {
       } = await ctx.supabaseAdmin
         .from("appointments")
         .select("id")
-        .eq("clinic_id", CLINIC_ID)
+        .eq("clinic_id", clinicId)
         .eq(
           "staff_id",
           practitioner.id,
@@ -450,7 +431,7 @@ export default {
       } = await ctx.supabaseAdmin
         .from("clients")
         .select("id, phone")
-        .eq("clinic_id", CLINIC_ID);
+        .eq("clinic_id", clinicId);
 
       if (clientsError) {
         console.error(
@@ -485,7 +466,7 @@ export default {
         } = await ctx.supabaseAdmin
           .from("clients")
           .insert({
-            clinic_id: CLINIC_ID,
+            clinic_id: clinicId,
             full_name: clientName,
             phone: clientPhone,
           })
@@ -522,7 +503,7 @@ export default {
       } = await ctx.supabaseAdmin
         .from("appointments")
         .insert({
-          clinic_id: CLINIC_ID,
+          clinic_id: clinicId,
           client_id: client.id,
           staff_id:
             practitioner.id,

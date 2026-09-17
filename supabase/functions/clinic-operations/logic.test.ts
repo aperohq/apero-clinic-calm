@@ -3,11 +3,12 @@ import test from "node:test";
 import { phone, resolveService, resolveStaff, type Staff } from "./logic.ts";
 
 const staff: Staff[] = [
-  { id: "21111111-1111-4111-8111-111111111111", full_name: "Dr. Ahmed Qandil", specialty: "General Dentistry", services: ["Dental Cleaning", "Consultation", "Root Canal"], aliases: ["أحمد قنديل", "أحمد أنديل"] },
-  { id: "21111111-1111-4111-8111-111111111112", full_name: "Dr. Mohammed Shuqeir", specialty: "Cosmetic Dentistry", services: ["Veneers Consultation", "Teeth Whitening"], aliases: [] },
-  { id: "21111111-1111-4111-8111-111111111113", full_name: "Dr. Fatima Hassan", specialty: "Orthodontics", services: ["Orthodontic Consultation", "Braces Review"], aliases: [] },
-  { id: "21111111-1111-4111-8111-111111111114", full_name: "Layla Salem", specialty: "Dental Hygiene", services: ["Dental Cleaning", "Preventive Care"], aliases: [] },
+  { id: "21111111-1111-4111-8111-111111111111", full_name: "Dr. Ahmed Qandil", specialty: "General Dentistry", services: ["Dental Cleaning", "Consultation", "Root Canal"], aliases: ["أحمد قنديل", "أحمد أنديل", "Ahmed Kandil", "Ahmed Qandeel", "Dr Qandil", "د احمد قنديل", "احمد قنديل", "أحمد كنديل"] },
+  { id: "21111111-1111-4111-8111-111111111112", full_name: "Dr. Mohammed Shuqeir", specialty: "Cosmetic Dentistry", services: ["Veneers Consultation", "Teeth Whitening"], aliases: ["محمد شقير"] },
+  { id: "21111111-1111-4111-8111-111111111113", full_name: "Dr. Fatima Hassan", specialty: "Orthodontics", services: ["Orthodontic Consultation", "Braces Review"], aliases: ["فاطمة حسن"] },
+  { id: "21111111-1111-4111-8111-111111111114", full_name: "Layla Salem", specialty: "Dental Hygiene", services: ["Dental Cleaning", "Preventive Care"], aliases: ["ليلى سالم"] },
 ];
+const serviceAliases = { "Dental Cleaning": ["cleaning", "تنظيف الأسنان"], "Teeth Whitening": ["whitening"] };
 
 test("doctor aliases resolve to canonical staff", () => {
   for (const alias of ["Dr Ahmed", "Ahmed Kandil", "Ahmed Qandeel", "Dr Qandil", "دكتور أحمد قنديل", "د. أحمد قنديل", "احمد قنديل", "أحمد أنديل"]) {
@@ -25,13 +26,21 @@ test("unknown or ambiguous doctors do not resolve", () => {
 });
 
 test("services resolve without inferring from specialty", () => {
-  assert.equal(resolveService(staff, "تنظيف الأسنان").service, "Dental Cleaning");
+  assert.equal(resolveService(staff, "تنظيف الأسنان", serviceAliases).service, "Dental Cleaning");
   assert.equal(resolveService(staff, "teeth whitening").service, "Teeth Whitening");
   assert.equal(resolveService(staff, "Consultation").service, "Consultation");
   assert.equal(resolveService(staff, "implant surgery").status, "not_found");
-  const cleaning = resolveService(staff, "cleaning").service;
+  const cleaning = resolveService(staff, "cleaning", serviceAliases).service;
   assert.deepEqual(staff.filter(s => s.services.includes(cleaning!)).map(s => s.id), [staff[0].id, staff[3].id]);
   assert.equal(staff[1].services.includes("Dental Cleaning"), false);
+});
+
+test("same practitioner name and aliases stay inside the selected clinic staff set", () => {
+  const clinicB: Staff[] = [{ id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", full_name: "Dr. Ahmed Qandil", specialty: "General Dentistry", services: ["Consultation"], aliases: ["Ahmed"] }];
+  assert.equal(resolveStaff(clinicB, "Ahmed").practitioner?.id, clinicB[0].id);
+  assert.equal(resolveStaff(staff, "Ahmed").practitioner?.id, staff[0].id);
+  assert.equal(resolveService(clinicB, "Dental Cleaning").status, "not_found");
+  assert.equal(resolveStaff(clinicB, "Fatima Hassan").status, "not_found");
 });
 
 test("Kuwaiti contact numbers normalize and malformed numbers fail", () => {

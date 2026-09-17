@@ -1,5 +1,7 @@
 import json
 import unittest
+import subprocess
+import tempfile
 from pathlib import Path
 
 flow = json.loads(Path("retell/dental-zone-flow.json").read_text())
@@ -12,6 +14,16 @@ def targets(node):
     ]
 
 class FlowSafety(unittest.TestCase):
+    def test_second_clinic_uses_same_graph_with_its_own_identity(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "clinic-b.json"
+            subprocess.run(["python3", "retell/build_flow.py", "--config", "retell/config/clinic-b.local.json", "--output", str(output)], check=True, capture_output=True)
+            second = json.loads(output.read_text())
+        self.assertEqual([n["id"] for n in second["nodes"]], [n["id"] for n in flow["nodes"]])
+        self.assertEqual(second["knowledge_base_ids"], ["knowledge_base_local_fixture"])
+        self.assertTrue(all(t["url"].startswith("http://localhost:") for t in second["tools"]))
+        self.assertNotIn("Dental Zone", second["global_prompt"])
+
     def test_all_references_exist(self):
         for node in nodes.values():
             for target in targets(node): self.assertIn(target, nodes)

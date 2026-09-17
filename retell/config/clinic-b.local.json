@@ -1,0 +1,21 @@
+{
+  "clinic_id": "22222222-2222-4222-8222-222222222222",
+  "clinic_name": "Clinic B Test",
+  "clinic_name_ar": "العيادة ب",
+  "clinic_address": "Local fixture only",
+  "clinic_phone": "+965 2000 0000",
+  "clinic_hours": "By appointment",
+  "timezone": "Asia/Kuwait",
+  "languages": "Arabic or English",
+  "clinic_type": "dental clinic",
+  "knowledge_base_id": "knowledge_base_local_fixture",
+  "agent_id": "agent_local_clinic_b",
+  "workspace_id": "local-fixture",
+  "tool_url": "http://localhost:54321/functions/v1/clinic-operations",
+  "transfer_number": null,
+  "booking_duration_minutes": 45,
+  "pricing_policy": "Use the approved knowledge base for prices.",
+  "insurance_policy": "Use the approved knowledge base for insurance.",
+  "current_time_variable": "the current time",
+  "current_calendar_variable": "the current calendar"
+}
