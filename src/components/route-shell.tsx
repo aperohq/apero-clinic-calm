@@ -9,10 +9,11 @@ function Centered({ children }: { children: ReactNode }) {
 }
 
 export function RouteShell({ children }: { children: ReactNode }) {
-  const { loading, session, profile, role } = useAuth();
+  const { loading, session, profile, role, authError } = useAuth();
   const path = useRouterState({ select: (s) => s.location.pathname });
 
   if (loading) return <Centered>Loading your clinic workspace…</Centered>;
+  if (authError) return <Centered><div><p>We couldn’t load your account. Please refresh or try again later.</p><Button className="mt-4" variant="outline" onClick={() => window.location.reload()}>Try again</Button></div></Centered>;
   if (!session)
     return <Centered><div><p>You need to sign in to view this page.</p><Button className="mt-4" asChild><Link to="/login">Go to sign in</Link></Button></div></Centered>;
   if (!profile)

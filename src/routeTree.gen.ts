@@ -16,9 +16,11 @@ import { Route as ClientsRouteImport } from './routes/clients'
 import { Route as ConversationsRouteImport } from './routes/conversations'
 import { Route as HomeRouteImport } from './routes/home'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as StaffRouteImport } from './routes/staff'
 import { Route as SupportRouteImport } from './routes/support'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as ClientsIndexRouteImport } from './routes/clients.index'
 import { Route as ClientsIdRouteImport } from './routes/clients.$id'
 import { Route as ConversationsIndexRouteImport } from './routes/conversations.index'
@@ -61,6 +63,11 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
@@ -74,6 +81,11 @@ const StaffRoute = StaffRouteImport.update({
 const SupportRoute = SupportRouteImport.update({
   id: '/support',
   path: '/support',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ClientsIndexRoute = ClientsIndexRouteImport.update({
@@ -115,9 +127,11 @@ export interface FileRoutesByFullPath {
   '/conversations': typeof ConversationsRouteWithChildren
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
+  '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/staff': typeof StaffRouteWithChildren
   '/support': typeof SupportRoute
+  '/terms': typeof TermsRoute
   '/clients/$id': typeof ClientsIdRoute
   '/conversations/$id': typeof ConversationsIdRoute
   '/staff/$id': typeof StaffIdRoute
@@ -131,8 +145,10 @@ export interface FileRoutesByTo {
   '/calendar': typeof CalendarRoute
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
+  '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/support': typeof SupportRoute
+  '/terms': typeof TermsRoute
   '/clients/$id': typeof ClientsIdRoute
   '/conversations/$id': typeof ConversationsIdRoute
   '/staff/$id': typeof StaffIdRoute
@@ -149,9 +165,11 @@ export interface FileRoutesById {
   '/conversations': typeof ConversationsRouteWithChildren
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
+  '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/staff': typeof StaffRouteWithChildren
   '/support': typeof SupportRoute
+  '/terms': typeof TermsRoute
   '/clients/$id': typeof ClientsIdRoute
   '/conversations/$id': typeof ConversationsIdRoute
   '/staff/$id': typeof StaffIdRoute
@@ -169,9 +187,11 @@ export interface FileRouteTypes {
     | '/conversations'
     | '/home'
     | '/login'
+    | '/privacy'
     | '/reset-password'
     | '/staff'
     | '/support'
+    | '/terms'
     | '/clients/$id'
     | '/conversations/$id'
     | '/staff/$id'
@@ -185,8 +205,10 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/home'
     | '/login'
+    | '/privacy'
     | '/reset-password'
     | '/support'
+    | '/terms'
     | '/clients/$id'
     | '/conversations/$id'
     | '/staff/$id'
@@ -202,9 +224,11 @@ export interface FileRouteTypes {
     | '/conversations'
     | '/home'
     | '/login'
+    | '/privacy'
     | '/reset-password'
     | '/staff'
     | '/support'
+    | '/terms'
     | '/clients/$id'
     | '/conversations/$id'
     | '/staff/$id'
@@ -221,9 +245,11 @@ export interface RootRouteChildren {
   ConversationsRoute: typeof ConversationsRouteWithChildren
   HomeRoute: typeof HomeRoute
   LoginRoute: typeof LoginRoute
+  PrivacyRoute: typeof PrivacyRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   StaffRoute: typeof StaffRouteWithChildren
   SupportRoute: typeof SupportRoute
+  TermsRoute: typeof TermsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -277,6 +303,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reset-password': {
       id: '/reset-password'
       path: '/reset-password'
@@ -296,6 +329,13 @@ declare module '@tanstack/react-router' {
       path: '/support'
       fullPath: '/support'
       preLoaderRoute: typeof SupportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/clients/': {
@@ -390,9 +430,11 @@ const rootRouteChildren: RootRouteChildren = {
   ConversationsRoute: ConversationsRouteWithChildren,
   HomeRoute: HomeRoute,
   LoginRoute: LoginRoute,
+  PrivacyRoute: PrivacyRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   StaffRoute: StaffRouteWithChildren,
   SupportRoute: SupportRoute,
+  TermsRoute: TermsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

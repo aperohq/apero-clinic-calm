@@ -5,6 +5,7 @@ import { AperoMark, ClinicBadge } from "@/components/apero-brand";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 const main = [
   { to: "/home", label: "Home", icon: Home },
@@ -30,7 +31,7 @@ function Nav({ compact, onSelect }: { compact?: boolean; onSelect?: () => void }
     return <Link key={item.to} to={item.to} onClick={onSelect} title={compact ? item.label : undefined} className={cn("flex h-10 items-center gap-3 rounded-[10px] px-3 text-sm font-medium transition-colors", active ? "bg-nav-active text-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground", compact && "justify-center px-0")}><item.icon className="size-4" />{!compact && <span>{item.label}</span>}{active && !compact && <span className="ml-auto size-1.5 rounded-full bg-success" />}</Link>;
   };
   const operations = main.slice(1, 5).filter(allowed);
-  return <><div className="space-y-1">{row(main[0])}</div>{!compact && <p className="mb-2 mt-6 px-3 text-[10px] font-semibold uppercase text-muted-foreground">Operations</p>}<div className={cn("space-y-1", compact && "mt-3")}>{operations.map(row)}</div><div className="mt-auto space-y-1 border-t border-border pt-3">{footer.map(row)}<button type="button" onClick={async () => { onSelect?.(); await signOut(); void navigate({ to: "/login" }); }} className={cn("flex h-10 w-full items-center gap-3 rounded-[10px] px-3 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground", compact && "justify-center px-0")} aria-label="Log out"><LogOut className="size-4" />{!compact && "Log out"}</button></div></>;
+  return <><div className="space-y-1">{row(main[0])}</div>{!compact && <p className="mb-2 mt-6 px-3 text-[10px] font-semibold uppercase text-muted-foreground">Operations</p>}<div className={cn("space-y-1", compact && "mt-3")}>{operations.map(row)}</div><div className="mt-auto space-y-1 border-t border-border pt-3">{footer.map(row)}<button type="button" onClick={async () => { const { error } = await signOut(); if (error) { toast.error(error); return; } onSelect?.(); void navigate({ to: "/login" }); }} className={cn("flex h-10 w-full items-center gap-3 rounded-[10px] px-3 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground", compact && "justify-center px-0")} aria-label="Log out"><LogOut className="size-4" />{!compact && "Log out"}</button></div></>;
 }
 
 export function AppLayout({ children }: { children: ReactNode }) {
@@ -43,7 +44,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
       <div className="mb-6 rounded-xl border border-border bg-card p-2"><ClinicBadge compact={collapsed} name={clinic?.name} /></div><Nav compact={collapsed} />
     </aside>
     <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-border bg-card/95 px-4 backdrop-blur lg:hidden"><AperoMark /><Button variant="ghost" size="icon" onClick={() => setMobile(true)} aria-label="Open menu"><Menu /></Button></header>
-    {mobile && <div className="fixed inset-0 z-50 lg:hidden"><div className="absolute inset-0 bg-overlay" onClick={() => setMobile(false)} /><aside className="absolute inset-y-0 left-0 flex w-[280px] flex-col bg-sidebar p-4 shadow-modal"><div className="mb-6 flex items-center justify-between"><AperoMark /><Button variant="ghost" size="icon" onClick={() => setMobile(false)} aria-label="Close menu"><X /></Button></div><div className="mb-6 rounded-xl border border-border bg-card p-2"><ClinicBadge name={clinic?.name} /></div><Nav onSelect={() => setMobile(false)} /></aside></div>}
+    {mobile && <div className="fixed inset-0 z-50 lg:hidden"><div className="absolute inset-0 bg-overlay" onClick={() => setMobile(false)} /><aside className="absolute inset-y-0 left-0 flex w-[min(280px,100vw)] flex-col overflow-y-auto bg-sidebar p-4 shadow-modal"><div className="mb-6 flex items-center justify-between"><AperoMark /><Button variant="ghost" size="icon" onClick={() => setMobile(false)} aria-label="Close menu"><X /></Button></div><div className="mb-6 rounded-xl border border-border bg-card p-2"><ClinicBadge name={clinic?.name} /></div><Nav onSelect={() => setMobile(false)} /></aside></div>}
     <main className={cn("min-h-screen transition-[margin]", collapsed ? "lg:ml-16" : "lg:ml-[260px]")}><div className="mx-auto max-w-[1600px] p-4 sm:p-6 lg:p-8">{children}</div></main>
   </div>;
 }

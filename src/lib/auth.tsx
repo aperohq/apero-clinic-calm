@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { db } from "@/lib/db";
@@ -10,9 +10,11 @@ type AuthState = {
   profile: ProfileRow | null;
   clinic: ClinicRow | null;
   role: ProfileRole | null;
+  authError: boolean;
+  recoveringPassword: boolean;
   refreshProfile: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
-  signOut: () => Promise<void>;
+  signOut: () => Promise<{ error: string | null }>;
   sendPasswordReset: (email: string) => Promise<{ error: string | null }>;
   updatePassword: (password: string) => Promise<{ error: string | null }>;
 };
@@ -24,30 +26,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<ProfileRow | null>(null);
   const [clinic, setClinic] = useState<ClinicRow | null>(null);
+  const [authError, setAuthError] = useState(false);
+  const [recoveringPassword, setRecoveringPassword] = useState(false);
+  const requestId = useRef(0);
 
-  const loadProfile = async (userId: string | undefined) => {
-    if (!userId) { setProfile(null); setClinic(null); return; }
-    const { data } = await db.from("profiles").select("*").eq("auth_user_id", userId).maybeSingle();
+  const loadProfile = async (userId: string | undefined, id = ++requestId.current) => {
+    if (!userId) { setProfile(null); setClinic(null); setAuthError(false); return; }
+    const { data, error } = await db.from("profiles").select("*").eq("auth_user_id", userId).maybeSingle();
+    if (id !== requestId.current) return;
+    if (error) { setAuthError(true); setProfile(null); setClinic(null); return; }
     setProfile((data as ProfileRow | null) ?? null);
     if (data?.clinic_id) {
-      const { data: c } = await db.from("clinics").select("*").eq("id", data.clinic_id).maybeSingle();
+      const { data: c, error: clinicError } = await db.from("clinics").select("*").eq("id", data.clinic_id).maybeSingle();
+      if (id !== requestId.current) return;
+      if (clinicError) { setAuthError(true); setClinic(null); return; }
       setClinic((c as ClinicRow | null) ?? null);
     } else setClinic(null);
+    setAuthError(false);
   };
 
   useEffect(() => {
     let active = true;
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, next) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event, next) => {
       if (!active) return;
+      if (event === "PASSWORD_RECOVERY") {
+        sessionStorage.setItem("apero-password-recovery", "1");
+        setRecoveringPassword(true);
+      } else if (event === "SIGNED_OUT") {
+        sessionStorage.removeItem("apero-password-recovery");
+        setRecoveringPassword(false);
+      }
       setSession(next);
-      void loadProfile(next?.user?.id).finally(() => setLoading(false));
+      setLoading(true);
+      const id = ++requestId.current;
+      void loadProfile(next?.user?.id, id).finally(() => { if (active && id === requestId.current) setLoading(false); });
     });
-    void supabase.auth.getSession().then(async ({ data }) => {
+    void supabase.auth.getSession().then(async ({ data, error }) => {
       if (!active) return;
+      if (error) { setAuthError(true); setLoading(false); return; }
+      setRecoveringPassword(sessionStorage.getItem("apero-password-recovery") === "1");
       setSession(data.session);
-      await loadProfile(data.session?.user?.id);
-      setLoading(false);
-    });
+      const id = ++requestId.current;
+      await loadProfile(data.session?.user?.id, id);
+      if (active && id === requestId.current) setLoading(false);
+    }).catch(() => { if (active) { setAuthError(true); setLoading(false); } });
     return () => { active = false; sub.subscription.unsubscribe(); };
   }, []);
 
@@ -57,12 +79,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     profile,
     clinic,
     role: profile?.role ?? null,
+    authError,
+    recoveringPassword,
     refreshProfile: () => loadProfile(session?.user?.id),
     signIn: async (email, password) => {
       const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
       return { error: error ? error.message : null };
     },
-    signOut: async () => { await supabase.auth.signOut(); setProfile(null); setClinic(null); },
+    signOut: async () => {
+      const { error } = await supabase.auth.signOut();
+      if (!error) { requestId.current++; setSession(null); setProfile(null); setClinic(null); sessionStorage.removeItem("apero-password-recovery"); setRecoveringPassword(false); }
+      return { error: error ? "Could not log out. Please try again." : null };
+    },
     sendPasswordReset: async (email) => {
       const redirectTo = typeof window !== "undefined" ? `${window.location.origin}/reset-password` : undefined;
       const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), redirectTo ? { redirectTo } : undefined);
@@ -70,6 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     updatePassword: async (password) => {
       const { error } = await supabase.auth.updateUser({ password });
+      if (!error) { sessionStorage.removeItem("apero-password-recovery"); setRecoveringPassword(false); }
       return { error: error ? error.message : null };
     },
   };

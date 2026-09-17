@@ -105,7 +105,7 @@ export function useClientNotes(clientId: string) {
       return (data ?? []) as ClientNoteRow[];
     },
   });
-  return query.data ?? [];
+  return query;
 }
 
 function useClinicMutation<TInput>(keys: string[], run: (clinicId: string, input: TInput) => Promise<void>) {
