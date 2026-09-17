@@ -23,6 +23,10 @@ export type StaffAvailabilityRow = {
   id: string; clinic_id: string; staff_id: string; day_of_week: number;
   start_time: string; end_time: string; is_available: boolean;
 };
+export type StaffTimeOffRow = {
+  id: string; clinic_id: string; staff_id: string; start_time: string; end_time: string;
+  reason: string | null; created_at: string;
+};
 export type AppointmentRow = {
   id: string; clinic_id: string; client_id: string | null; staff_id: string | null;
   service: string; start_time: string; end_time: string; status: string; source: string;
@@ -58,13 +62,19 @@ export type AperoDatabase = {
       clients: TableDef<ClientRow>;
       staff: TableDef<StaffRow>;
       staff_availability: TableDef<StaffAvailabilityRow>;
+      staff_time_off: TableDef<StaffTimeOffRow>;
       appointments: TableDef<AppointmentRow>;
       conversations: TableDef<ConversationRow>;
       client_notes: TableDef<ClientNoteRow>;
       notifications: TableDef<NotificationRow>;
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      create_staff_with_schedule: {
+        Args: { p_full_name: string; p_specialty: string; p_phone: string; p_email: string; p_services: string[]; p_schedule: Json };
+        Returns: string;
+      };
+    };
     Enums: { profile_role: ProfileRole };
     CompositeTypes: Record<string, never>;
   };

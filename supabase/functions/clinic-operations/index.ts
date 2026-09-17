@@ -8,7 +8,7 @@ import { DateTime } from "npm:luxon@3";
 const encoder = new TextEncoder();
 type Slot = { slot_id: string; checked_slot_id: string; start_time: string; end_time: string; practitioner_id: string; practitioner_name: string; service_name: string; date: string; time: string; duration_minutes: number; timezone: string };
 
-import { resolveStaff, resolveService, phone as normalizePhone, value, type Staff } from "./logic.ts";
+import { resolveStaff, resolveService, slotIsOpen, phone as normalizePhone, value, type Staff } from "./logic.ts";
 
 function failure(error_type: string, message = error_type) { return { success: false, available: false, appointment_booked: false, error_type, message }; }
 function bytesToBase64(bytes: Uint8Array): string { return btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, ""); }
@@ -52,19 +52,21 @@ async function availableSlots(db: any, clinicId: string, slotMinutes: number, st
   const slots: Slot[] = [];
   for (const person of staff) {
     const [shifts, appointments, timeOff] = await Promise.all([
-      db.from("staff_availability").select("start_time,end_time").eq("clinic_id", clinicId).eq("staff_id", person.id).eq("day_of_week", day.weekday % 7).eq("is_available", true),
+      db.from("staff_availability").select("start_time,end_time,is_available").eq("clinic_id", clinicId).eq("staff_id", person.id).eq("day_of_week", day.weekday % 7),
       db.from("appointments").select("id,start_time,end_time").eq("clinic_id", clinicId).eq("staff_id", person.id).neq("status", "Cancelled").lt("start_time", day.plus({ days: 1 }).toUTC().toISO()).gt("end_time", day.toUTC().toISO()),
       db.from("staff_time_off").select("start_time,end_time").eq("clinic_id", clinicId).eq("staff_id", person.id).lt("start_time", day.plus({ days: 1 }).toUTC().toISO()).gt("end_time", day.toUTC().toISO()),
     ]);
     if (shifts.error || appointments.error || timeOff.error) throw shifts.error ?? appointments.error ?? timeOff.error;
     for (const shift of shifts.data ?? []) {
+      if (!shift.is_available) continue;
       let start = DateTime.fromISO(`${date}T${shift.start_time}`, { zone: timezone });
       const end = DateTime.fromISO(`${date}T${shift.end_time}`, { zone: timezone });
       if (start.isValid) start = start.plus({ minutes: (30 - start.minute % 30) % 30 }).set({ second: 0, millisecond: 0 });
       while (start.isValid && end.isValid && start.plus({ minutes: slotMinutes }) <= end) {
         const finish = start.plus({ minutes: slotMinutes });
-        const overlap = (items: any[]) => items.some(item => DateTime.fromISO(item.start_time) < finish && DateTime.fromISO(item.end_time) > start);
-        if (start > now && !overlap((appointments.data ?? []).filter((a: any) => a.id !== excludeId)) && !overlap(timeOff.data ?? [])) {
+        if (start > now && slotIsOpen(shift, start.toFormat("HH:mm"), finish.toFormat("HH:mm"),
+          start.toUTC().toISO()!, finish.toUTC().toISO()!,
+          (appointments.data ?? []).filter((a: any) => a.id !== excludeId), timeOff.data ?? [])) {
           const checkedSlotId = crypto.randomUUID();
           slots.push({ slot_id: await tokenFor(clinicId, person, service, start, secret, callId, checkId, checkedSlotId),
             checked_slot_id: checkedSlotId, start_time: start.toUTC().toISO()!, end_time: finish.toUTC().toISO()!, practitioner_id: person.id,

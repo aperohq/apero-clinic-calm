@@ -50,3 +50,23 @@ test("Kuwaiti contact numbers normalize and malformed numbers fail", () => {
   assert.equal(phone("991234567"), null);
   assert.equal(phone("123-abc-456"), null);
 });
+
+test("saved weekly day and hours gate voice slots", async () => {
+  const { slotIsOpen } = await import("./logic.ts");
+  const start = "2026-10-14T11:00:00.000Z";
+  const end = "2026-10-14T11:45:00.000Z";
+  const shift = { start_time: "09:00:00", end_time: "17:00:00", is_available: true };
+  assert.equal(slotIsOpen({ ...shift, is_available: false }, "14:00", "14:45", start, end, [], []), false);
+  assert.equal(slotIsOpen({ ...shift, end_time: "13:00:00" }, "14:00", "14:45", start, end, [], []), false);
+  assert.equal(slotIsOpen(shift, "14:00", "14:45", start, end, [], []), true);
+});
+
+test("time off blocks only the selected practitioner's slots", async () => {
+  const { slotIsOpen } = await import("./logic.ts");
+  const shift = { start_time: "09:00:00", end_time: "17:00:00", is_available: true };
+  const start = "2026-10-14T11:00:00.000Z";
+  const end = "2026-10-14T11:45:00.000Z";
+  const ahmedTimeOff = [{ start_time: "2026-10-14T11:00:00.000Z", end_time: "2026-10-14T14:00:00.000Z" }];
+  assert.equal(slotIsOpen(shift, "14:00", "14:45", start, end, [], ahmedTimeOff), false);
+  assert.equal(slotIsOpen(shift, "14:00", "14:45", start, end, [], []), true);
+});

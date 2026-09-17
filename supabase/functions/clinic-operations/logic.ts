@@ -56,3 +56,17 @@ export function phone(value: unknown, prefix = "+965", localLength = 8): string 
   return null;
 }
 export function value(args: Record<string, unknown>, key: string): string { return typeof args[key] === "string" ? String(args[key]).trim() : ""; }
+
+export type TimeRange = { start_time: string; end_time: string };
+export type WeeklyShift = TimeRange & { is_available: boolean };
+
+export function slotIsOpen(
+  shift: WeeklyShift, localStart: string, localEnd: string,
+  slotStart: string, slotEnd: string, appointments: TimeRange[], timeOff: TimeRange[],
+): boolean {
+  const start = Date.parse(slotStart), end = Date.parse(slotEnd);
+  const overlap = (range: TimeRange) => Date.parse(range.start_time) < end && Date.parse(range.end_time) > start;
+  return shift.is_available && localStart >= shift.start_time.slice(0, 5) &&
+    localEnd <= shift.end_time.slice(0, 5) &&
+    !appointments.some(overlap) && !timeOff.some(overlap);
+}
