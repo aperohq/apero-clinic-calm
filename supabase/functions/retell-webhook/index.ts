@@ -1,0 +1,303 @@
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { withSupabase } from "jsr:@supabase/server@^1";
+
+const CLINIC_ID = "11111111-1111-4111-8111-111111111111";
+const AGENT_ID = "agent_b84b2766efeb85afc809147d7a";
+
+function normalizePhone(phone: string | null | undefined) {
+  if (!phone) return null;
+  return phone.replace(/[^\d+]/g, "");
+}
+
+function formatTime(seconds: number) {
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+}
+
+function normalizeTranscript(items: any[] | undefined) {
+  if (!Array.isArray(items)) return null;
+
+  return items.map((item) => ({
+    speaker: item.role === "agent" ? "Apero" : "Caller",
+    text: item.content ?? "",
+    time: formatTime(item.words?.[0]?.start ?? 0),
+  }));
+}
+
+async function hmacHex(key: string, message: string) {
+  const encoder = new TextEncoder();
+
+  const cryptoKey = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(key),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+
+  const signed = await crypto.subtle.sign(
+    "HMAC",
+    cryptoKey,
+    encoder.encode(message),
+  );
+
+  return Array.from(new Uint8Array(signed))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+function safeEqual(a: string, b: string) {
+  if (a.length !== b.length) return false;
+
+  let result = 0;
+
+  for (let i = 0; i < a.length; i++) {
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+
+  return result === 0;
+}
+
+async function verifyRetellSignature(
+  rawBody: string,
+  signature: string | null,
+  apiKey: string,
+) {
+  if (!signature) return false;
+
+  const match = signature.match(/^v=(\d+),d=([0-9a-fA-F]+)$/);
+
+  if (!match) return false;
+
+  const timestamp = match[1];
+  const digest = match[2].toLowerCase();
+
+  // Reject webhook replays older than 5 minutes.
+  if (Math.abs(Date.now() - Number(timestamp)) > 5 * 60 * 1000) {
+    return false;
+  }
+
+  const expected = await hmacHex(apiKey, rawBody + timestamp);
+
+  return safeEqual(expected.toLowerCase(), digest);
+}
+
+export default {
+  fetch: withSupabase({ auth: "none" }, async (req, ctx) => {
+    if (req.method !== "POST") {
+      return new Response("Method not allowed", { status: 405 });
+    }
+
+    const apiKey = Deno.env.get("RETELL_API_KEY");
+
+    if (!apiKey) {
+      console.error("RETELL_API_KEY is missing");
+      return new Response("Server configuration error", { status: 500 });
+    }
+
+    // IMPORTANT: verify the RAW body before parsing JSON.
+    const rawBody = await req.text();
+
+    const signature = req.headers.get("x-retell-signature");
+
+    const valid = await verifyRetellSignature(
+      rawBody,
+      signature,
+      apiKey,
+    );
+
+    if (!valid) {
+      console.error("Invalid Retell webhook signature");
+      return new Response("Unauthorized", { status: 401 });
+    }
+
+    let payload: any;
+
+    try {
+      payload = JSON.parse(rawBody);
+    } catch {
+      return new Response("Invalid JSON", { status: 400 });
+    }
+
+    const { event, call } = payload;
+
+    // For now we only care about completed/analyzed calls.
+    if (!["call_ended", "call_analyzed"].includes(event)) {
+      return new Response(null, { status: 204 });
+    }
+
+    if (!call?.call_id) {
+      return new Response("Missing call_id", { status: 400 });
+    }
+    if (call.agent_id !== AGENT_ID) return new Response(null, { status: 204 });
+
+    const analysis = call.call_analysis ?? {};
+    const custom = analysis.custom_analysis_data ?? {};
+    const collected = call.collected_dynamic_variables ?? {};
+
+    // Keep the patient side of telephony calls; web calls need a collected number.
+    const telephonyPatientPhone = call.direction === "outbound"
+      ? call.to_number
+      : call.from_number;
+    const callerPhone = [
+      telephonyPatientPhone,
+      custom.client_phone,
+      collected.client_phone,
+      collected.callback_number,
+    ].find((phone) => typeof phone === "string" && phone.trim()) ?? null;
+
+    const normalizedCaller = normalizePhone(callerPhone);
+
+    // Operational outcomes come from successful server-side actions, never from
+    // a summary or an unverified post-call model extraction.
+    const { data: operations, error: operationsError } = await ctx.supabaseAdmin
+      .from("voice_operations")
+      .select("action,result")
+      .eq("clinic_id", CLINIC_ID)
+      .eq("call_id", call.call_id)
+      .order("created_at", { ascending: false });
+    if (operationsError) {
+      console.error("Failed to load Retell operations:", operationsError);
+      return new Response("Database error", { status: 500 });
+    }
+    const completedOperations = (operations ?? []).filter((o: any) => o.result?.success === true);
+    const lastOperation = completedOperations[0] ?? null;
+    const { data: savedRequests, error: requestsError } = await ctx.supabaseAdmin
+      .from("voice_requests").select("id").eq("clinic_id", CLINIC_ID)
+      .eq("call_id", call.call_id).limit(1);
+    if (requestsError) {
+      console.error("Failed to load Retell requests:", requestsError);
+      return new Response("Database error", { status: 500 });
+    }
+
+    // Try to connect the call with an existing Apero client.
+    let clientId: string | null = null;
+
+    const { data: clients } = await ctx.supabaseAdmin
+      .from("clients")
+      .select("id, phone")
+      .eq("clinic_id", CLINIC_ID);
+
+    if (normalizedCaller && clients) {
+      const client = clients.find(
+        (c: any) => normalizePhone(c.phone) === normalizedCaller,
+      );
+
+      clientId = client?.id ?? null;
+    }
+
+    // Link an appointment only when it belongs to this clinic. The appointment's
+    // patient wins over the caller's phone (a parent may book for a child).
+    let appointmentId: string | null = null;
+    const collectedAppointmentId = lastOperation?.result?.appointment_id ?? collected.appointment_id;
+    if (typeof collectedAppointmentId === "string" &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(collectedAppointmentId)) {
+      const { data: appointment, error: appointmentError } = await ctx.supabaseAdmin
+        .from("appointments")
+        .select("id,client_id")
+        .eq("id", collectedAppointmentId)
+        .eq("clinic_id", CLINIC_ID)
+        .maybeSingle();
+
+      if (appointmentError) {
+        console.error("Failed to validate Retell appointment:", appointmentError);
+        return new Response("Database error", { status: 500 });
+      }
+      if (appointment && (lastOperation || appointment.client_id === clientId)) {
+        appointmentId = appointment.id;
+        clientId = appointment.client_id;
+      }
+    }
+
+    const summary =
+      analysis.call_summary ??
+      call.call_summary ??
+      null;
+
+    const booked = completedOperations.some((o: any) => o.action === "book");
+
+    const missedReasons = [
+      "dial_no_answer",
+      "dial_busy",
+      "dial_failed",
+      "user_declined",
+      "error_user_not_joined",
+    ];
+
+    let status = "Completed";
+
+    if (booked) {
+      status = "Booked";
+    } else if (missedReasons.includes(call.disconnection_reason)) {
+      status = "Missed";
+    } else if (analysis.call_successful === false) {
+      status = "Needs Review";
+    }
+
+    const outcome = lastOperation?.action === "book" ? "Appointment Booked"
+      : lastOperation?.action === "reschedule" ? "Appointment Rescheduled"
+      : lastOperation?.action === "cancel" ? "Appointment Cancelled"
+      : savedRequests?.length ? "Follow-up Needed"
+      : analysis.call_successful === true ? "General Inquiry"
+      : "No Appointment";
+
+    const title =
+      custom.call_title ??
+      custom.intent ??
+      (booked ? "Appointment Booking Call" : "Phone Call");
+
+    const row: Record<string, any> = {
+      clinic_id: CLINIC_ID,
+      client_id: clientId,
+      retell_call_id: call.call_id,
+      retell_agent_id: call.agent_id ?? null,
+      caller_phone: callerPhone ?? null,
+      title,
+      status,
+      outcome,
+    };
+
+    if (appointmentId) {
+      row.appointment_id = appointmentId;
+    }
+
+    if (call.start_timestamp) {
+      row.started_at = new Date(call.start_timestamp).toISOString();
+    }
+
+    if (typeof call.duration_ms === "number") {
+      row.duration_seconds = Math.round(call.duration_ms / 1000);
+    }
+
+    if (call.transcript_object) {
+      row.transcript = normalizeTranscript(call.transcript_object);
+    }
+
+    if (call.recording_url) {
+      row.recording_url = call.recording_url;
+    }
+
+    if (summary) {
+      row.summary = summary;
+    }
+
+    const { error } = await ctx.supabaseAdmin
+      .from("conversations")
+      .upsert(row, {
+        onConflict: "retell_call_id",
+        ignoreDuplicates: event === "call_ended",
+      });
+
+    if (error) {
+      console.error("Failed to save Retell call:", error);
+      return new Response("Database error", { status: 500 });
+    }
+
+    console.log(
+      `Processed Retell ${event}: ${call.call_id}`,
+    );
+
+    return new Response(null, { status: 204 });
+  }),
+};

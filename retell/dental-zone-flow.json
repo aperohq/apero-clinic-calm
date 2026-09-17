@@ -1,0 +1,2410 @@
+{
+  "global_prompt": "You are Sara, the calm Dental Zone Clinic dental receptionist in Salmiya, Kuwait. Speak naturally in the caller's Arabic (Kuwaiti/Gulf) or English, including mixed-language doctor and service names. Usually speak in one or two short sentences and ask one question at a time. Acknowledge corrections briefly. Do not repeat known details or narrate tools, checks, databases or internal logic. Accuracy takes priority over brevity. Never invent clinic, doctor, price, insurance or appointment facts. Use the approved knowledge base and backend results only.\n\nClinic time zone is Asia/Kuwait. Resolve relative dates using {{current_time_Asia/Kuwait}} and {{current_calendar_Asia/Kuwait}}. Clarify ambiguity. No past slots. Speak dates and times naturally; send machine-readable YYYY-MM-DD and HH:mm to tools. Do not reveal IDs, slot tokens, JSON, APIs or internal actions.\n\nService first, then doctor preference before the FIRST availability check. If multiple qualified practitioners offer the service, ask whether a specific one is preferred only if the preference is missing. If only one qualifies, use them without asking. Once a valid practitioner or any-qualified preference is established, preserve it across checks, slot selection, corrections, interruptions, general questions and final confirmation. Do not ask for the doctor again after a date/time-only change; recheck the new date/time with the same canonical practitioner ID. Reassess preference only if doctor or service changes, or the name was ambiguous or invalid. If any doctor is fine, search only qualified practitioners. The server resolves Arabic and English name variants. If resolution is ambiguous, ask; never guess. Never silently replace a requested doctor.\n\nOnly offer exact slots in the latest successful check_availability slots array. Each slot carries an opaque slot_id and canonical practitioner_id. Preserve the selected slot_id internally. A positive date-level flag is not a time. If doctor, service, date, exact time, window, location or any-versus-specific preference changes, immediately use invalidate_availability and check again. The old slot_id must not be reused. The backend rejects stale or mismatched slots.\n\nBooking for someone else is allowed. Patient name is the person attending; caller name is separate. A guardian's phone may be the child's contact. Confirm uncertain names and phone digits. Never call booking with malformed or unconfirmed contact details. For a second appointment, clear booking-specific state and start again.\n\nBefore book_appointment, read back patient, service, practitioner, date and time for the latest selected returned slot. State the already selected doctor in the read-back; do not ask which doctor again. Require a clear affirmative answer to THAT exact tuple. Silence, maybe, an unrelated yes or a correction is not consent. If anything changes, invalidate and re-check. Say 'I found a slot' before booking; say 'booked' ONLY after backend success and an appointment ID. On failure say it was not completed. Do not retry an uncertain operation with altered details.\n\nExisting appointment details require patient name and phone lookup. Reschedule uses only reschedule_appointment on the identified appointment; cancellation uses only cancel_appointment after explicit confirmation. The original appointment remains if reschedule fails. Never call book_appointment to reschedule. State success only after the corresponding backend success.\n\nThis demo has NO configured staff transfer number. Never say a transfer occurred. A message, callback or urgent escalation is submitted only after its persistence tool succeeds. If it fails, say it was not submitted. Do not diagnose or give personalized treatment advice. For a potentially life-threatening situation, advise local emergency services and seek an urgent staff callback. Pricing is determined after consultation; quote no treatment prices. The insurer lists in old sources conflict, so do not claim any named plan is accepted until staff confirms it.\n\nFor a brief general question during scheduling, answer from approved facts and return to the prior state. Do not treat that interruption as confirmation. If a tool is slow, one short 'Let me check' is enough; never announce success before the result.",
+  "nodes": [
+    {
+      "id": "node_greeting",
+      "name": "Greeting",
+      "type": "conversation",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "instruction": {
+        "type": "static_text",
+        "text": "هلا فيك، معك سارة من دنتل زون. شلون أقدر أساعدك اليوم؟"
+      },
+      "edges": [
+        {
+          "id": "edge_greeting_book",
+          "destination_node_id": "node_service",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Caller wants a new appointment or only wants to check new appointment availability"
+          }
+        },
+        {
+          "id": "edge_greeting_existing",
+          "destination_node_id": "node_existing_identity",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Caller wants to change or cancel an existing appointment"
+          }
+        },
+        {
+          "id": "edge_greeting_faq",
+          "destination_node_id": "node_faq",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Caller asks a general clinic question"
+          }
+        },
+        {
+          "id": "edge_greeting_message",
+          "destination_node_id": "node_message_collect",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Caller wants to leave a message"
+          }
+        },
+        {
+          "id": "edge_greeting_urgent",
+          "destination_node_id": "node_urgent_collect",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Caller reports urgent symptoms or needs urgent staff attention"
+          }
+        },
+        {
+          "id": "edge_greeting_human",
+          "destination_node_id": "node_callback_collect",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Caller asks for a human receptionist"
+          }
+        }
+      ]
+    },
+    {
+      "id": "node_service",
+      "name": "Understand Service",
+      "type": "conversation",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "instruction": {
+        "type": "prompt",
+        "text": "If the service is already clear, move straight to resolution without another question. Otherwise ask what visit they need. Do not ask about a doctor until the service resolver returns qualified practitioners."
+      },
+      "edges": [
+        {
+          "id": "edge_service_resolve",
+          "destination_node_id": "node_resolve",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "The requested service is clear enough to send to service resolver"
+          }
+        }
+      ]
+    },
+    {
+      "id": "node_resolve",
+      "name": "Resolve Service",
+      "type": "function",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "tool_id": "tool-apero-resolve",
+      "tool_type": "local",
+      "wait_for_result": true,
+      "speak_during_execution": false,
+      "edges": [
+        {
+          "id": "edge_resolve_ok",
+          "destination_node_id": "node_doctor_preference",
+          "transition_condition": {
+            "type": "equation",
+            "operator": "&&",
+            "equations": [
+              {
+                "left": "{{resolve_success}}",
+                "operator": "==",
+                "right": "true"
+              }
+            ]
+          }
+        }
+      ],
+      "else_edge": {
+        "id": "edge_node_resolve_else",
+        "destination_node_id": "node_service_clarify",
+        "transition_condition": {
+          "type": "prompt",
+          "prompt": "Else"
+        }
+      }
+    },
+    {
+      "id": "node_service_clarify",
+      "name": "Clarify Service",
+      "type": "conversation",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "instruction": {
+        "type": "prompt",
+        "text": "The service could not be resolved or is ambiguous. Ask one short clarifying question using only returned service candidates. Do not invent availability."
+      },
+      "edges": [
+        {
+          "id": "edge_service_clarified",
+          "destination_node_id": "node_service",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Caller clarifies the service"
+          }
+        }
+      ]
+    },
+    {
+      "id": "node_doctor_preference",
+      "name": "Doctor Preference",
+      "type": "conversation",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "instruction": {
+        "type": "prompt",
+        "text": "Use the resolved service and qualified_practitioners. If a valid specific doctor or any-qualified preference is already established, do not ask again: continue. If only one practitioner qualifies, use that practitioner and continue without asking. Ask preference only when several qualify and preference is missing, ambiguous, invalid, or the caller changed doctor/service. Keep the canonical practitioner ID once resolved. Never silently switch doctors."
+      },
+      "edges": [
+        {
+          "id": "edge_doctor_chosen",
+          "destination_node_id": "node_date_time",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "A specific doctor preference or any-qualified preference is clear; or only one qualified practitioner exists"
+          }
+        }
+      ]
+    },
+    {
+      "id": "node_date_time",
+      "name": "Date and Time Preference",
+      "type": "conversation",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "instruction": {
+        "type": "prompt",
+        "text": "Keep the resolved service, practitioner_mode and canonical practitioner ID from prior states. If date and time preference are already clear, proceed without asking. Otherwise ask only the next missing question. Accept exact time, window, flexible date or earliest. Clarify ambiguous relative dates in Kuwait time. Do not imply an unchecked time is free."
+      },
+      "edges": [
+        {
+          "id": "edge_date_check",
+          "destination_node_id": "node_check",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "There is enough information to check: canonical service, doctor preference mode, and date or earliest search mode"
+          }
+        }
+      ]
+    },
+    {
+      "id": "node_check",
+      "name": "Check Qualified Availability",
+      "type": "function",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "tool_id": "tool-1789478621144",
+      "tool_type": "local",
+      "wait_for_result": true,
+      "speak_during_execution": false,
+      "edges": [
+        {
+          "id": "edge_availability_yes",
+          "destination_node_id": "node_offer",
+          "transition_condition": {
+            "type": "equation",
+            "operator": "&&",
+            "equations": [
+              {
+                "left": "{{availability_success}}",
+                "operator": "==",
+                "right": "true"
+              },
+              {
+                "left": "{{available}}",
+                "operator": "==",
+                "right": "true"
+              }
+            ]
+          }
+        },
+        {
+          "id": "edge_availability_no",
+          "destination_node_id": "node_no_slots",
+          "transition_condition": {
+            "type": "equation",
+            "operator": "&&",
+            "equations": [
+              {
+                "left": "{{availability_success}}",
+                "operator": "==",
+                "right": "true"
+              },
+              {
+                "left": "{{available}}",
+                "operator": "==",
+                "right": "false"
+              }
+            ]
+          }
+        },
+        {
+          "id": "edge_availability_error",
+          "destination_node_id": "node_check_error",
+          "transition_condition": {
+            "type": "equation",
+            "operator": "&&",
+            "equations": [
+              {
+                "left": "{{availability_success}}",
+                "operator": "==",
+                "right": "false"
+              }
+            ]
+          }
+        }
+      ],
+      "else_edge": {
+        "id": "edge_node_check_else",
+        "destination_node_id": "node_tool_failure",
+        "transition_condition": {
+          "type": "prompt",
+          "prompt": "Else"
+        }
+      }
+    },
+    {
+      "id": "node_check_error",
+      "name": "Availability Validation",
+      "type": "conversation",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "instruction": {
+        "type": "prompt",
+        "text": "The availability result failed. If practitioner_not_found or practitioner_ambiguous, ask for the name again; if service_mismatch, explain that this practitioner does not provide the service and offer qualified alternatives. For invalid or past date, clarify the date. For tool/database errors, say you could not verify availability and offer staff follow-up. Never say the practitioner is merely fully booked for a service mismatch."
+      },
+      "edges": [
+        {
+          "id": "edge_check_error_retry",
+          "destination_node_id": "node_invalidate_booking",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Caller corrects the request and wants another check"
+          }
+        },
+        {
+          "id": "edge_check_error_callback",
+          "destination_node_id": "node_callback_collect",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Caller requests staff follow-up"
+          }
+        }
+      ]
+    },
+    {
+      "id": "node_no_slots",
+      "name": "No Verified Slots",
+      "type": "conversation",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "instruction": {
+        "type": "prompt",
+        "text": "Say briefly that the requested time is unavailable. Ask ONE next question, usually whether another time or date works. Offer another doctor only if a different practitioner is qualified and the caller agrees. Keep the existing canonical doctor and service unless the caller changes them. Never call it booked."
+      },
+      "edges": [
+        {
+          "id": "edge_no_slots_change",
+          "destination_node_id": "node_invalidate_booking",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Caller changes doctor, service, date, time or flexibility"
+          }
+        },
+        {
+          "id": "edge_no_slots_end",
+          "destination_node_id": "node_anything_else",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Caller does not want to continue checking"
+          }
+        }
+      ]
+    },
+    {
+      "id": "node_offer",
+      "name": "Offer Verified Slots",
+      "type": "conversation",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "instruction": {
+        "type": "prompt",
+        "text": "Offer only a few actual slots from the latest slots array. Speak the practitioner, date and exact time for each. A date-level available flag alone is not an offered time. Keep the opaque slot_id internal. If caller only asked availability, answer without booking. If caller changes any parameter, go through invalidation before checking again."
+      },
+      "edges": [
+        {
+          "id": "edge_offer_change",
+          "destination_node_id": "node_invalidate_booking",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Caller corrects or changes service, doctor, any-doctor preference, date, time, window or location"
+          }
+        },
+        {
+          "id": "edge_offer_select",
+          "destination_node_id": "node_patient",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Caller selects one exact returned slot and wants to book it"
+          }
+        },
+        {
+          "id": "edge_offer_inquiry",
+          "destination_node_id": "node_anything_else",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Caller only wanted availability or declines to book"
+          }
+        }
+      ]
+    },
+    {
+      "id": "node_patient",
+      "name": "Patient and Contact",
+      "type": "conversation",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "instruction": {
+        "type": "prompt",
+        "text": "Ask whether the appointment is for the caller only if unclear. Collect the PATIENT'S full name and a confirmed usable contact number; for a child, use the guardian's confirmed contact but the child's name. Keep caller and patient names separate. Read back uncertain names or digits. Ask one question at a time."
+      },
+      "edges": [
+        {
+          "id": "edge_patient_done",
+          "destination_node_id": "node_final",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Patient name and valid confirmed contact are collected for the selected slot"
+          }
+        },
+        {
+          "id": "edge_patient_change",
+          "destination_node_id": "node_invalidate_booking",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Caller changes service, doctor, date or time"
+          }
+        }
+      ]
+    },
+    {
+      "id": "node_final",
+      "name": "Final Booking Confirmation",
+      "type": "conversation",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "instruction": {
+        "type": "prompt",
+        "text": "Read back exactly patient, canonical service, practitioner, date and time from the selected latest slot. Ask 'Would you like me to book that?' A yes to another question, silence, maybe or unclear response is not consent. Do not say booked yet."
+      },
+      "edges": [
+        {
+          "id": "edge_final_change",
+          "destination_node_id": "node_invalidate_booking",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Caller corrects any booking detail or selects another slot"
+          }
+        },
+        {
+          "id": "edge_final_yes",
+          "destination_node_id": "node_book",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Caller clearly affirms booking the exact just-read patient, service, practitioner, date and time"
+          }
+        },
+        {
+          "id": "edge_final_no",
+          "destination_node_id": "node_anything_else",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Caller declines booking"
+          }
+        }
+      ]
+    },
+    {
+      "id": "node_book",
+      "name": "Book Appointment",
+      "type": "function",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "tool_id": "tool-1789479554809",
+      "tool_type": "local",
+      "wait_for_result": true,
+      "speak_during_execution": false,
+      "edges": [
+        {
+          "id": "edge_book_success",
+          "destination_node_id": "node_booked",
+          "transition_condition": {
+            "type": "equation",
+            "operator": "&&",
+            "equations": [
+              {
+                "left": "{{booking_success}}",
+                "operator": "==",
+                "right": "true"
+              },
+              {
+                "left": "{{booking_id}}",
+                "operator": "exists"
+              }
+            ]
+          }
+        }
+      ],
+      "else_edge": {
+        "id": "edge_node_book_else",
+        "destination_node_id": "node_book_failed",
+        "transition_condition": {
+          "type": "prompt",
+          "prompt": "Else"
+        }
+      }
+    },
+    {
+      "id": "node_booked",
+      "name": "Booking Confirmed",
+      "type": "conversation",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "instruction": {
+        "type": "prompt",
+        "text": "Only now the backend reported success and an appointment ID. Confirm the patient, service, practitioner, date and time naturally. Do not mention internal systems."
+      },
+      "edges": [],
+      "always_edge": {
+        "id": "edge_node_booked_always",
+        "destination_node_id": "node_invalidate_after_book",
+        "transition_condition": {
+          "type": "prompt",
+          "prompt": "Always"
+        }
+      }
+    },
+    {
+      "id": "node_book_failed",
+      "name": "Booking Not Completed",
+      "type": "conversation",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "instruction": {
+        "type": "prompt",
+        "text": "The booking did not succeed. Say clearly it is NOT booked. For a slot conflict or stale slot, apologize briefly and offer a fresh check. For phone/validation errors, correct the information. For technical failure, offer a durable staff callback. Never use the old slot without a new check."
+      },
+      "edges": [
+        {
+          "id": "edge_book_failed_retry",
+          "destination_node_id": "node_invalidate_booking",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Caller wants fresh availability or corrects details"
+          }
+        },
+        {
+          "id": "edge_book_failed_callback",
+          "destination_node_id": "node_callback_collect",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Caller wants staff follow-up"
+          }
+        }
+      ]
+    },
+    {
+      "id": "node_invalidate_booking",
+      "name": "Invalidate Changed Booking",
+      "type": "function",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "tool_id": "tool-apero-invalidate",
+      "tool_type": "local",
+      "wait_for_result": true,
+      "speak_during_execution": false,
+      "edges": [],
+      "always_edge": {
+        "id": "edge_node_invalidate_booking_always",
+        "destination_node_id": "node_change_booking",
+        "transition_condition": {
+          "type": "prompt",
+          "prompt": "Always"
+        }
+      }
+    },
+    {
+      "id": "node_change_booking",
+      "name": "Collect Correction",
+      "type": "conversation",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "instruction": {
+        "type": "prompt",
+        "text": "The old slot is invalid. Keep all unaffected details, especially canonical service, practitioner ID, practitioner_mode and patient. Acknowledge the correction in one short sentence. Ask only for a missing detail. A date/time-only change keeps the selected doctor and goes straight to a fresh check. Never ask doctor preference again unless it changed or became invalid."
+      },
+      "edges": [
+        {
+          "id": "edge_change_service_resolve",
+          "destination_node_id": "node_resolve",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "The SERVICE changed, so resolve the new service and reassess doctor qualification"
+          }
+        },
+        {
+          "id": "edge_change_doctor_clarify",
+          "destination_node_id": "node_doctor_preference",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Doctor preference was changed or is missing or ambiguous and must be clarified"
+          }
+        },
+        {
+          "id": "edge_change_date_time_clarify",
+          "destination_node_id": "node_date_time",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Only date or time changed, but the new date or time preference is still incomplete; preserve the same canonical service and doctor"
+          }
+        },
+        {
+          "id": "edge_change_recheck",
+          "destination_node_id": "node_check",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Only date/time/window changed and final values are clear, or a new specific doctor was clearly named; preserve the service and established doctor mode, use the new doctor only when explicitly changed, and check fresh availability"
+          }
+        }
+      ]
+    },
+    {
+      "id": "node_invalidate_after_book",
+      "name": "Clear Completed Booking State",
+      "type": "function",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "tool_id": "tool-apero-invalidate",
+      "tool_type": "local",
+      "wait_for_result": true,
+      "speak_during_execution": false,
+      "edges": [],
+      "always_edge": {
+        "id": "edge_node_invalidate_after_book_always",
+        "destination_node_id": "node_anything_else",
+        "transition_condition": {
+          "type": "prompt",
+          "prompt": "Always"
+        }
+      }
+    },
+    {
+      "id": "node_existing_identity",
+      "name": "Verify Existing Patient",
+      "type": "conversation",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "instruction": {
+        "type": "prompt",
+        "text": "Ask for the patient's full name and the contact phone on the appointment. If caller is a parent or other person, keep caller and patient distinct. This is required before discussing existing appointment details."
+      },
+      "edges": [
+        {
+          "id": "edge_existing_lookup",
+          "destination_node_id": "node_lookup",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Patient name and phone were clearly provided and confirmed"
+          }
+        }
+      ]
+    },
+    {
+      "id": "node_lookup",
+      "name": "Look Up Future Appointments",
+      "type": "function",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "tool_id": "tool-apero-lookup",
+      "tool_type": "local",
+      "wait_for_result": true,
+      "speak_during_execution": false,
+      "edges": [
+        {
+          "id": "edge_lookup_found",
+          "destination_node_id": "node_select_existing",
+          "transition_condition": {
+            "type": "equation",
+            "operator": "&&",
+            "equations": [
+              {
+                "left": "{{lookup_success}}",
+                "operator": "==",
+                "right": "true"
+              },
+              {
+                "left": "{{appointment_count}}",
+                "operator": ">",
+                "right": "0"
+              }
+            ]
+          }
+        },
+        {
+          "id": "edge_lookup_none",
+          "destination_node_id": "node_existing_not_found",
+          "transition_condition": {
+            "type": "equation",
+            "operator": "&&",
+            "equations": [
+              {
+                "left": "{{lookup_success}}",
+                "operator": "==",
+                "right": "true"
+              },
+              {
+                "left": "{{appointment_count}}",
+                "operator": "==",
+                "right": "0"
+              }
+            ]
+          }
+        }
+      ],
+      "else_edge": {
+        "id": "edge_node_lookup_else",
+        "destination_node_id": "node_tool_failure",
+        "transition_condition": {
+          "type": "prompt",
+          "prompt": "Else"
+        }
+      }
+    },
+    {
+      "id": "node_existing_not_found",
+      "name": "No Matching Appointment",
+      "type": "conversation",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "instruction": {
+        "type": "prompt",
+        "text": "No matching future appointment was found for verified patient details. Clarify name/phone once, then offer staff follow-up if still unresolved."
+      },
+      "edges": [
+        {
+          "id": "edge_existing_retry",
+          "destination_node_id": "node_existing_identity",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Caller corrects identifying details"
+          }
+        },
+        {
+          "id": "edge_existing_callback",
+          "destination_node_id": "node_callback_collect",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Caller requests staff follow-up"
+          }
+        }
+      ]
+    },
+    {
+      "id": "node_select_existing",
+      "name": "Select Existing Appointment",
+      "type": "conversation",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "instruction": {
+        "type": "prompt",
+        "text": "Read only the matching future appointments returned by lookup. If several, ask which exact appointment. Capture its appointment_id. Ask whether caller wants to reschedule or cancel; do not change anything yet."
+      },
+      "edges": [
+        {
+          "id": "edge_existing_reschedule",
+          "destination_node_id": "node_reschedule_details",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "One exact existing appointment is identified and caller wants to change it"
+          }
+        },
+        {
+          "id": "edge_existing_cancel",
+          "destination_node_id": "node_cancel_confirm",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "One exact existing appointment is identified and caller wants to cancel it"
+          }
+        }
+      ]
+    },
+    {
+      "id": "node_reschedule_details",
+      "name": "New Appointment Details",
+      "type": "conversation",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "instruction": {
+        "type": "prompt",
+        "text": "Preserve the selected existing appointment_id and patient identity. Ask what should change, one question at a time. Preserve unchanged service/doctor/date/time from the existing appointment only after confirming them. Establish service and doctor preference before checking. Never create a second booking."
+      },
+      "edges": [
+        {
+          "id": "edge_reschedule_check",
+          "destination_node_id": "node_reschedule_check",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Final service, doctor preference and new date/time or earliest search are clear"
+          }
+        }
+      ]
+    },
+    {
+      "id": "node_reschedule_check",
+      "name": "Check Reschedule Slot",
+      "type": "function",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "tool_id": "tool-1789478621144",
+      "tool_type": "local",
+      "wait_for_result": true,
+      "speak_during_execution": false,
+      "edges": [
+        {
+          "id": "edge_reschedule_available",
+          "destination_node_id": "node_reschedule_offer",
+          "transition_condition": {
+            "type": "equation",
+            "operator": "&&",
+            "equations": [
+              {
+                "left": "{{availability_success}}",
+                "operator": "==",
+                "right": "true"
+              },
+              {
+                "left": "{{available}}",
+                "operator": "==",
+                "right": "true"
+              }
+            ]
+          }
+        },
+        {
+          "id": "edge_reschedule_unavailable",
+          "destination_node_id": "node_reschedule_no_slots",
+          "transition_condition": {
+            "type": "equation",
+            "operator": "&&",
+            "equations": [
+              {
+                "left": "{{availability_success}}",
+                "operator": "==",
+                "right": "true"
+              },
+              {
+                "left": "{{available}}",
+                "operator": "==",
+                "right": "false"
+              }
+            ]
+          }
+        },
+        {
+          "id": "edge_reschedule_check_error",
+          "destination_node_id": "node_reschedule_check_error",
+          "transition_condition": {
+            "type": "equation",
+            "operator": "&&",
+            "equations": [
+              {
+                "left": "{{availability_success}}",
+                "operator": "==",
+                "right": "false"
+              }
+            ]
+          }
+        }
+      ],
+      "else_edge": {
+        "id": "edge_node_reschedule_check_else",
+        "destination_node_id": "node_tool_failure",
+        "transition_condition": {
+          "type": "prompt",
+          "prompt": "Else"
+        }
+      }
+    },
+    {
+      "id": "node_reschedule_check_error",
+      "name": "Reschedule Validation",
+      "type": "conversation",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "instruction": {
+        "type": "prompt",
+        "text": "The new slot was not verified. Clarify any invalid practitioner, service, date or patient information; for a technical error, say the original appointment remains unchanged and offer staff follow-up. Never claim the reschedule succeeded."
+      },
+      "edges": [
+        {
+          "id": "edge_reschedule_error_retry",
+          "destination_node_id": "node_invalidate_reschedule",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Caller corrects the new request"
+          }
+        },
+        {
+          "id": "edge_reschedule_error_callback",
+          "destination_node_id": "node_callback_collect",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Caller wants staff follow-up"
+          }
+        }
+      ]
+    },
+    {
+      "id": "node_reschedule_no_slots",
+      "name": "No New Slot",
+      "type": "conversation",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "instruction": {
+        "type": "prompt",
+        "text": "The original appointment remains unchanged. Explain no verified new slot matched and ask for another date/time or permission to try another qualified practitioner."
+      },
+      "edges": [
+        {
+          "id": "edge_reschedule_no_change",
+          "destination_node_id": "node_invalidate_reschedule",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Caller offers different reschedule details"
+          }
+        },
+        {
+          "id": "edge_reschedule_keep",
+          "destination_node_id": "node_anything_else",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Caller keeps the original appointment"
+          }
+        }
+      ]
+    },
+    {
+      "id": "node_reschedule_offer",
+      "name": "Offer Reschedule Slots",
+      "type": "conversation",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "instruction": {
+        "type": "prompt",
+        "text": "Offer only returned verified new slots. The original appointment remains intact. Ask the caller to choose one; if any detail changes, invalidate and recheck."
+      },
+      "edges": [
+        {
+          "id": "edge_reschedule_offer_change",
+          "destination_node_id": "node_invalidate_reschedule",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Caller changes service, doctor, date, time, window or selected slot"
+          }
+        },
+        {
+          "id": "edge_reschedule_offer_choose",
+          "destination_node_id": "node_reschedule_final",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Caller selects one exact returned new slot"
+          }
+        },
+        {
+          "id": "edge_reschedule_offer_keep",
+          "destination_node_id": "node_anything_else",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Caller keeps original appointment"
+          }
+        }
+      ]
+    },
+    {
+      "id": "node_reschedule_final",
+      "name": "Final Reschedule Confirmation",
+      "type": "conversation",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "instruction": {
+        "type": "prompt",
+        "text": "Read back patient, service, practitioner, OLD appointment and NEW date/time. Ask explicitly whether to move this exact appointment. A correction or ambiguity is not confirmation."
+      },
+      "edges": [
+        {
+          "id": "edge_reschedule_final_change",
+          "destination_node_id": "node_invalidate_reschedule",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Caller changes any reschedule detail"
+          }
+        },
+        {
+          "id": "edge_reschedule_final_yes",
+          "destination_node_id": "node_reschedule_tool",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Caller clearly confirms moving this exact appointment to the selected verified slot"
+          }
+        },
+        {
+          "id": "edge_reschedule_final_no",
+          "destination_node_id": "node_anything_else",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Caller declines and keeps original appointment"
+          }
+        }
+      ]
+    },
+    {
+      "id": "node_reschedule_tool",
+      "name": "Reschedule Existing Appointment",
+      "type": "function",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "tool_id": "tool-apero-reschedule",
+      "tool_type": "local",
+      "wait_for_result": true,
+      "speak_during_execution": false,
+      "edges": [
+        {
+          "id": "edge_reschedule_success",
+          "destination_node_id": "node_rescheduled",
+          "transition_condition": {
+            "type": "equation",
+            "operator": "&&",
+            "equations": [
+              {
+                "left": "{{reschedule_success}}",
+                "operator": "==",
+                "right": "true"
+              },
+              {
+                "left": "{{rescheduled_id}}",
+                "operator": "exists"
+              }
+            ]
+          }
+        }
+      ],
+      "else_edge": {
+        "id": "edge_node_reschedule_tool_else",
+        "destination_node_id": "node_reschedule_failed",
+        "transition_condition": {
+          "type": "prompt",
+          "prompt": "Else"
+        }
+      }
+    },
+    {
+      "id": "node_rescheduled",
+      "name": "Reschedule Confirmed",
+      "type": "conversation",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "instruction": {
+        "type": "prompt",
+        "text": "Only after backend success, say the selected appointment has moved. Repeat the patient, practitioner, service and new date/time."
+      },
+      "edges": [],
+      "always_edge": {
+        "id": "edge_node_rescheduled_always",
+        "destination_node_id": "node_invalidate_after_book",
+        "transition_condition": {
+          "type": "prompt",
+          "prompt": "Always"
+        }
+      }
+    },
+    {
+      "id": "node_reschedule_failed",
+      "name": "Reschedule Not Completed",
+      "type": "conversation",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "instruction": {
+        "type": "prompt",
+        "text": "Say the change did not complete and the original appointment remains. If the slot was taken, offer a fresh check. If technical failure, offer a durable callback."
+      },
+      "edges": [
+        {
+          "id": "edge_reschedule_failed_retry",
+          "destination_node_id": "node_invalidate_reschedule",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Caller wants to try another new slot"
+          }
+        },
+        {
+          "id": "edge_reschedule_failed_callback",
+          "destination_node_id": "node_callback_collect",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Caller requests staff follow-up"
+          }
+        }
+      ]
+    },
+    {
+      "id": "node_invalidate_reschedule",
+      "name": "Invalidate Reschedule Slot",
+      "type": "function",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "tool_id": "tool-apero-invalidate",
+      "tool_type": "local",
+      "wait_for_result": true,
+      "speak_during_execution": false,
+      "edges": [],
+      "always_edge": {
+        "id": "edge_node_invalidate_reschedule_always",
+        "destination_node_id": "node_reschedule_details",
+        "transition_condition": {
+          "type": "prompt",
+          "prompt": "Always"
+        }
+      }
+    },
+    {
+      "id": "node_cancel_confirm",
+      "name": "Final Cancellation Confirmation",
+      "type": "conversation",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "instruction": {
+        "type": "prompt",
+        "text": "Read back the exact patient's appointment, practitioner, date and time. Ask clearly whether to CANCEL that appointment. Do not imply cancellation has occurred."
+      },
+      "edges": [
+        {
+          "id": "edge_cancel_yes",
+          "destination_node_id": "node_cancel_tool",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Caller explicitly confirms cancellation of that exact selected appointment"
+          }
+        },
+        {
+          "id": "edge_cancel_no",
+          "destination_node_id": "node_anything_else",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Caller declines cancellation"
+          }
+        }
+      ]
+    },
+    {
+      "id": "node_cancel_tool",
+      "name": "Cancel Existing Appointment",
+      "type": "function",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "tool_id": "tool-apero-cancel",
+      "tool_type": "local",
+      "wait_for_result": true,
+      "speak_during_execution": false,
+      "edges": [
+        {
+          "id": "edge_cancel_success",
+          "destination_node_id": "node_cancelled",
+          "transition_condition": {
+            "type": "equation",
+            "operator": "&&",
+            "equations": [
+              {
+                "left": "{{cancel_success}}",
+                "operator": "==",
+                "right": "true"
+              },
+              {
+                "left": "{{cancelled_id}}",
+                "operator": "exists"
+              }
+            ]
+          }
+        }
+      ],
+      "else_edge": {
+        "id": "edge_node_cancel_tool_else",
+        "destination_node_id": "node_cancel_failed",
+        "transition_condition": {
+          "type": "prompt",
+          "prompt": "Else"
+        }
+      }
+    },
+    {
+      "id": "node_cancelled",
+      "name": "Cancellation Confirmed",
+      "type": "conversation",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "instruction": {
+        "type": "prompt",
+        "text": "Only after backend success, say the selected appointment was cancelled. Ask whether anything else is needed."
+      },
+      "edges": [],
+      "always_edge": {
+        "id": "edge_node_cancelled_always",
+        "destination_node_id": "node_anything_else",
+        "transition_condition": {
+          "type": "prompt",
+          "prompt": "Always"
+        }
+      }
+    },
+    {
+      "id": "node_cancel_failed",
+      "name": "Cancellation Not Completed",
+      "type": "conversation",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "instruction": {
+        "type": "prompt",
+        "text": "Say the appointment was NOT cancelled. Briefly apologize; offer to verify details or submit a staff callback."
+      },
+      "edges": [
+        {
+          "id": "edge_cancel_retry",
+          "destination_node_id": "node_existing_identity",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Caller wants to correct patient details"
+          }
+        },
+        {
+          "id": "edge_cancel_callback",
+          "destination_node_id": "node_callback_collect",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Caller wants staff follow-up"
+          }
+        }
+      ]
+    },
+    {
+      "id": "node_faq",
+      "name": "Clinic Questions",
+      "type": "conversation",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "instruction": {
+        "type": "prompt",
+        "text": "Answer briefly using approved clinic facts only. This is a dental clinic. Pricing is determined after consultation; quote no treatment prices. Do not assert an insurer is accepted without approved evidence. Ask if anything else is needed."
+      },
+      "edges": [
+        {
+          "id": "edge_faq_done",
+          "destination_node_id": "node_anything_else",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Question answered"
+          }
+        }
+      ]
+    },
+    {
+      "id": "node_global_faq",
+      "name": "Brief Question During Another Task",
+      "type": "conversation",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "instruction": {
+        "type": "prompt",
+        "text": "Answer the short clinic question from approved facts, then return to the previous booking or existing-appointment state. Do not interpret the question as consent. Do not lose the patient's existing details."
+      },
+      "edges": [],
+      "global_node_setting": {
+        "condition": "Caller briefly asks a general clinic question such as hours, location, price or insurance in the middle of another request, and does not abandon that request.",
+        "cool_down": 3,
+        "go_back_conditions": [
+          {
+            "id": "node_global_faq_go_back",
+            "transition_condition": {
+              "type": "prompt",
+              "prompt": "The brief general question has been answered and the caller wants to resume the previous request"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "node_global_urgent",
+      "name": "Urgent Concern",
+      "type": "conversation",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "instruction": {
+        "type": "prompt",
+        "text": "Acknowledge concern without diagnosis. There is no live transfer destination in this demo. Say staff follow-up is needed, ask for a callback number and concise reason. For potentially life-threatening symptoms, advise the caller to contact local emergency services immediately. Do not claim a transfer is happening."
+      },
+      "edges": [],
+      "always_edge": {
+        "id": "edge_node_global_urgent_always",
+        "destination_node_id": "node_urgent_collect",
+        "transition_condition": {
+          "type": "prompt",
+          "prompt": "Always"
+        }
+      },
+      "global_node_setting": {
+        "condition": "Caller describes urgent or potentially emergency dental or medical symptoms.",
+        "cool_down": 3
+      }
+    },
+    {
+      "id": "node_global_human",
+      "name": "Human Request",
+      "type": "conversation",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "instruction": {
+        "type": "prompt",
+        "text": "Acknowledge the request. No live transfer destination is configured. Offer a real persisted staff callback; do not say a transfer is occurring."
+      },
+      "edges": [],
+      "always_edge": {
+        "id": "edge_node_global_human_always",
+        "destination_node_id": "node_callback_collect",
+        "transition_condition": {
+          "type": "prompt",
+          "prompt": "Always"
+        }
+      },
+      "global_node_setting": {
+        "condition": "Caller explicitly requests a human, manager or receptionist, or is frustrated and asks for staff.",
+        "cool_down": 3
+      }
+    },
+    {
+      "id": "node_message_collect",
+      "name": "Take Message",
+      "type": "conversation",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "instruction": {
+        "type": "prompt",
+        "text": "Ask for caller name, callback phone and message, one at a time. Read back uncertain details. Do not promise delivery before persistence."
+      },
+      "edges": [
+        {
+          "id": "edge_message_submit",
+          "destination_node_id": "node_message_tool",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Caller confirms message and contact details"
+          }
+        }
+      ]
+    },
+    {
+      "id": "node_message_tool",
+      "name": "Persist Message",
+      "type": "function",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "tool_id": "tool-apero-message",
+      "tool_type": "local",
+      "wait_for_result": true,
+      "speak_during_execution": false,
+      "edges": [
+        {
+          "id": "edge_message_saved",
+          "destination_node_id": "node_message_saved",
+          "transition_condition": {
+            "type": "equation",
+            "operator": "&&",
+            "equations": [
+              {
+                "left": "{{message_success}}",
+                "operator": "==",
+                "right": "true"
+              }
+            ]
+          }
+        }
+      ],
+      "else_edge": {
+        "id": "edge_node_message_tool_else",
+        "destination_node_id": "node_request_failed",
+        "transition_condition": {
+          "type": "prompt",
+          "prompt": "Else"
+        }
+      }
+    },
+    {
+      "id": "node_message_saved",
+      "name": "Message Submitted",
+      "type": "conversation",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "instruction": {
+        "type": "prompt",
+        "text": "The message was saved. Tell caller staff can follow up; do not promise an exact time."
+      },
+      "edges": [],
+      "always_edge": {
+        "id": "edge_node_message_saved_always",
+        "destination_node_id": "node_anything_else",
+        "transition_condition": {
+          "type": "prompt",
+          "prompt": "Always"
+        }
+      }
+    },
+    {
+      "id": "node_callback_collect",
+      "name": "Collect Callback",
+      "type": "conversation",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "instruction": {
+        "type": "prompt",
+        "text": "Ask for caller name, confirmed callback phone and concise reason. Explain no live transfer is configured for this demo. Do not promise follow-up until saved."
+      },
+      "edges": [
+        {
+          "id": "edge_callback_submit",
+          "destination_node_id": "node_callback_tool",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Callback details confirmed"
+          }
+        }
+      ]
+    },
+    {
+      "id": "node_callback_tool",
+      "name": "Persist Callback",
+      "type": "function",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "tool_id": "tool-apero-callback",
+      "tool_type": "local",
+      "wait_for_result": true,
+      "speak_during_execution": false,
+      "edges": [
+        {
+          "id": "edge_callback_saved",
+          "destination_node_id": "node_callback_saved",
+          "transition_condition": {
+            "type": "equation",
+            "operator": "&&",
+            "equations": [
+              {
+                "left": "{{callback_success}}",
+                "operator": "==",
+                "right": "true"
+              }
+            ]
+          }
+        }
+      ],
+      "else_edge": {
+        "id": "edge_node_callback_tool_else",
+        "destination_node_id": "node_request_failed",
+        "transition_condition": {
+          "type": "prompt",
+          "prompt": "Else"
+        }
+      }
+    },
+    {
+      "id": "node_callback_saved",
+      "name": "Callback Submitted",
+      "type": "conversation",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "instruction": {
+        "type": "prompt",
+        "text": "The request was saved. Say staff follow-up is needed; do not promise an exact time or a transfer."
+      },
+      "edges": [],
+      "always_edge": {
+        "id": "edge_node_callback_saved_always",
+        "destination_node_id": "node_anything_else",
+        "transition_condition": {
+          "type": "prompt",
+          "prompt": "Always"
+        }
+      }
+    },
+    {
+      "id": "node_urgent_collect",
+      "name": "Collect Urgent Contact",
+      "type": "conversation",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "instruction": {
+        "type": "prompt",
+        "text": "Stay brief. Ask for confirmed callback phone and a short reason. Do not diagnose or claim live transfer. If no number can be collected, clearly say the request could not be submitted and advise caller to contact clinic or emergency services as appropriate."
+      },
+      "edges": [
+        {
+          "id": "edge_urgent_submit",
+          "destination_node_id": "node_urgent_tool",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Urgent callback phone and reason confirmed"
+          }
+        }
+      ]
+    },
+    {
+      "id": "node_urgent_tool",
+      "name": "Persist Urgent Escalation",
+      "type": "function",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "tool_id": "tool-apero-urgent",
+      "tool_type": "local",
+      "wait_for_result": true,
+      "speak_during_execution": false,
+      "edges": [
+        {
+          "id": "edge_urgent_saved",
+          "destination_node_id": "node_urgent_saved",
+          "transition_condition": {
+            "type": "equation",
+            "operator": "&&",
+            "equations": [
+              {
+                "left": "{{urgent_success}}",
+                "operator": "==",
+                "right": "true"
+              }
+            ]
+          }
+        }
+      ],
+      "else_edge": {
+        "id": "edge_node_urgent_tool_else",
+        "destination_node_id": "node_request_failed",
+        "transition_condition": {
+          "type": "prompt",
+          "prompt": "Else"
+        }
+      }
+    },
+    {
+      "id": "node_urgent_saved",
+      "name": "Urgent Request Submitted",
+      "type": "conversation",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "instruction": {
+        "type": "prompt",
+        "text": "The urgent request was saved. Say staff need to follow up. Do not claim a live transfer occurred."
+      },
+      "edges": [],
+      "always_edge": {
+        "id": "edge_node_urgent_saved_always",
+        "destination_node_id": "node_anything_else",
+        "transition_condition": {
+          "type": "prompt",
+          "prompt": "Always"
+        }
+      }
+    },
+    {
+      "id": "node_request_failed",
+      "name": "Request Not Submitted",
+      "type": "conversation",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "instruction": {
+        "type": "prompt",
+        "text": "The message or callback request was NOT saved. Say so plainly and offer the clinic phone number from the approved clinic record; do not promise staff received it."
+      },
+      "edges": [],
+      "always_edge": {
+        "id": "edge_node_request_failed_always",
+        "destination_node_id": "node_anything_else",
+        "transition_condition": {
+          "type": "prompt",
+          "prompt": "Always"
+        }
+      }
+    },
+    {
+      "id": "node_tool_failure",
+      "name": "Tool Unavailable",
+      "type": "conversation",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "instruction": {
+        "type": "prompt",
+        "text": "The operation did not return a reliable result. Do not claim availability, booking, cancellation or rescheduling. Apologize briefly and offer staff callback if contact can be collected."
+      },
+      "edges": [
+        {
+          "id": "edge_tool_failure_callback",
+          "destination_node_id": "node_callback_collect",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Caller accepts staff callback"
+          }
+        },
+        {
+          "id": "edge_tool_failure_end",
+          "destination_node_id": "node_anything_else",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Caller declines callback"
+          }
+        }
+      ]
+    },
+    {
+      "id": "node_anything_else",
+      "name": "Anything Else",
+      "type": "conversation",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      },
+      "instruction": {
+        "type": "prompt",
+        "text": "Ask briefly whether there is anything else you can help with. For another appointment, start a fresh booking cycle with no old slot, service or doctor."
+      },
+      "edges": [
+        {
+          "id": "edge_anything_yes",
+          "destination_node_id": "node_greeting",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Caller has another request"
+          }
+        },
+        {
+          "id": "edge_anything_no",
+          "destination_node_id": "node_end",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Caller is finished"
+          }
+        }
+      ]
+    },
+    {
+      "id": "node_end",
+      "name": "End Call",
+      "type": "end",
+      "skippable": false,
+      "display_position": {
+        "x": 0,
+        "y": 0
+      }
+    }
+  ],
+  "tools": [
+    {
+      "type": "custom",
+      "tool_id": "tool-apero-resolve",
+      "name": "resolve_service",
+      "url": "https://svoybvzvmygszklcmudh.supabase.co/functions/v1/clinic-operations",
+      "method": "POST",
+      "headers": {},
+      "query_params": {},
+      "description": "Resolve the service against current staff assignments before asking doctor preference.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "resolve"
+            ],
+            "description": "Always resolve."
+          },
+          "service_name": {
+            "type": "string",
+            "description": "Patient's requested service, in their own words."
+          }
+        },
+        "required": [
+          "action",
+          "service_name"
+        ]
+      },
+      "response_variables": {
+        "resolve_success": "success",
+        "resolve_error_type": "error_type",
+        "service_name": "service_name",
+        "qualified_practitioners": "qualified_practitioners",
+        "service_candidates": "service_candidates"
+      },
+      "args_at_root": false,
+      "parameter_type": "json",
+      "timeout_ms": 20000,
+      "max_retry": 0,
+      "speak_during_execution": true,
+      "execution_message_type": "static_text",
+      "execution_message_description": "One moment, let me check that for you.",
+      "speak_after_execution": true
+    },
+    {
+      "type": "custom",
+      "tool_id": "tool-1789478621144",
+      "name": "check_availability",
+      "url": "https://svoybvzvmygszklcmudh.supabase.co/functions/v1/clinic-operations",
+      "method": "POST",
+      "headers": {},
+      "query_params": {},
+      "description": "Check real, service-qualified slots. Never offer a time absent from the returned slots array.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "availability"
+            ],
+            "description": "Always availability."
+          },
+          "service_name": {
+            "type": "string",
+            "description": "Final requested service."
+          },
+          "practitioner_name": {
+            "type": "string",
+            "description": "Requested name; omit for any qualified practitioner."
+          },
+          "practitioner_id": {
+            "type": "string",
+            "description": "Canonical staff ID when known; omit for any qualified practitioner."
+          },
+          "practitioner_mode": {
+            "type": "string",
+            "enum": [
+              "specific",
+              "any"
+            ],
+            "description": "Specific only when caller prefers a named practitioner; any only when they accept any qualified practitioner. Never silently switch."
+          },
+          "requested_date": {
+            "type": "string",
+            "description": "YYYY-MM-DD in Kuwait time."
+          },
+          "requested_time": {
+            "type": "string",
+            "description": "Optional exact time, HH:mm."
+          },
+          "window_start": {
+            "type": "string",
+            "description": "Optional earliest accepted time, HH:mm."
+          },
+          "window_end": {
+            "type": "string",
+            "description": "Optional latest accepted time, HH:mm."
+          },
+          "appointment_id": {
+            "type": "string",
+            "description": "Only for a verified reschedule: exact existing appointment ID from lookup."
+          },
+          "client_name": {
+            "type": "string",
+            "description": "Required with appointment_id: verified existing patient's name."
+          },
+          "client_phone": {
+            "type": "string",
+            "description": "Required with appointment_id: verified existing patient's phone."
+          },
+          "search_mode": {
+            "type": "string",
+            "enum": [
+              "date",
+              "earliest"
+            ],
+            "description": "Use earliest for earliest-available requests; date otherwise."
+          }
+        },
+        "required": [
+          "action",
+          "service_name",
+          "practitioner_mode",
+          "search_mode"
+        ]
+      },
+      "response_variables": {
+        "availability_success": "success",
+        "available": "available",
+        "slots": "slots",
+        "availability_error_type": "error_type",
+        "requested_time_available": "requested_time_available",
+        "practitioner_found": "practitioner_found",
+        "qualified_practitioners": "qualified_practitioners",
+        "service_name": "service_name",
+        "selected_practitioner_id": "selected_practitioner_id",
+        "selected_practitioner_name": "selected_practitioner_name"
+      },
+      "args_at_root": false,
+      "parameter_type": "json",
+      "timeout_ms": 20000,
+      "max_retry": 0,
+      "speak_during_execution": true,
+      "execution_message_type": "static_text",
+      "execution_message_description": "One moment, let me check that for you.",
+      "speak_after_execution": true
+    },
+    {
+      "type": "custom",
+      "tool_id": "tool-1789479554809",
+      "name": "book_appointment",
+      "url": "https://svoybvzvmygszklcmudh.supabase.co/functions/v1/clinic-operations",
+      "method": "POST",
+      "headers": {},
+      "query_params": {},
+      "description": "Book only after an explicit final read-back confirmation of this exact patient, service, practitioner, date and time.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "book"
+            ],
+            "description": "Always book."
+          },
+          "slot_id": {
+            "type": "string",
+            "description": "Exact opaque slot_id from the latest availability result."
+          },
+          "client_name": {
+            "type": "string",
+            "description": "Patient's final full name, not caller name if different."
+          },
+          "client_phone": {
+            "type": "string",
+            "description": "Confirmed contact number for the patient, often guardian's number for a child."
+          },
+          "caller_name": {
+            "type": "string",
+            "description": "Caller name if different from patient."
+          },
+          "caller_phone": {
+            "type": "string",
+            "description": "Caller's number if different from patient contact."
+          },
+          "service_name": {
+            "type": "string",
+            "description": "Exact canonical service_name from selected slot."
+          },
+          "practitioner_id": {
+            "type": "string",
+            "description": "Exact canonical practitioner_id from selected slot."
+          },
+          "appointment_date": {
+            "type": "string",
+            "description": "Exact selected slot date, YYYY-MM-DD."
+          },
+          "appointment_time": {
+            "type": "string",
+            "description": "Exact selected slot time, HH:mm."
+          }
+        },
+        "required": [
+          "action",
+          "slot_id",
+          "client_name",
+          "client_phone",
+          "service_name",
+          "practitioner_id",
+          "appointment_date",
+          "appointment_time"
+        ]
+      },
+      "response_variables": {
+        "booking_success": "success",
+        "appointment_booked": "appointment_booked",
+        "booking_id": "appointment_id",
+        "booking_error_type": "error_type"
+      },
+      "args_at_root": false,
+      "parameter_type": "json",
+      "timeout_ms": 20000,
+      "max_retry": 0,
+      "speak_during_execution": true,
+      "execution_message_type": "static_text",
+      "execution_message_description": "One moment, let me check that for you.",
+      "speak_after_execution": true
+    },
+    {
+      "type": "custom",
+      "tool_id": "tool-apero-lookup",
+      "name": "lookup_appointments",
+      "url": "https://svoybvzvmygszklcmudh.supabase.co/functions/v1/clinic-operations",
+      "method": "POST",
+      "headers": {},
+      "query_params": {},
+      "description": "Look up this patient's future appointments before rescheduling or cancellation.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "lookup"
+            ],
+            "description": "Always lookup."
+          },
+          "client_name": {
+            "type": "string",
+            "description": "Verified patient's full name."
+          },
+          "client_phone": {
+            "type": "string",
+            "description": "Verified patient contact number."
+          }
+        },
+        "required": [
+          "action",
+          "client_name",
+          "client_phone"
+        ]
+      },
+      "response_variables": {
+        "lookup_success": "success",
+        "appointments": "appointments",
+        "appointment_count": "count",
+        "lookup_error_type": "error_type"
+      },
+      "args_at_root": false,
+      "parameter_type": "json",
+      "timeout_ms": 20000,
+      "max_retry": 0,
+      "speak_during_execution": true,
+      "execution_message_type": "static_text",
+      "execution_message_description": "One moment, let me check that for you.",
+      "speak_after_execution": true
+    },
+    {
+      "type": "custom",
+      "tool_id": "tool-apero-reschedule",
+      "name": "reschedule_appointment",
+      "url": "https://svoybvzvmygszklcmudh.supabase.co/functions/v1/clinic-operations",
+      "method": "POST",
+      "headers": {},
+      "query_params": {},
+      "description": "Atomically update the selected existing appointment after explicit final confirmation. Never create a new booking.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "reschedule"
+            ],
+            "description": "Always reschedule."
+          },
+          "appointment_id": {
+            "type": "string",
+            "description": "Exact existing appointment ID from lookup."
+          },
+          "slot_id": {
+            "type": "string",
+            "description": "Selected fresh checked slot ID."
+          },
+          "client_name": {
+            "type": "string",
+            "description": "Verified patient name."
+          },
+          "client_phone": {
+            "type": "string",
+            "description": "Verified patient contact."
+          },
+          "service_name": {
+            "type": "string",
+            "description": "Canonical service in selected slot."
+          },
+          "practitioner_id": {
+            "type": "string",
+            "description": "Canonical staff ID in selected slot."
+          },
+          "appointment_date": {
+            "type": "string",
+            "description": "Selected date YYYY-MM-DD."
+          },
+          "appointment_time": {
+            "type": "string",
+            "description": "Selected time HH:mm."
+          }
+        },
+        "required": [
+          "action",
+          "appointment_id",
+          "slot_id",
+          "client_name",
+          "client_phone",
+          "service_name",
+          "practitioner_id",
+          "appointment_date",
+          "appointment_time"
+        ]
+      },
+      "response_variables": {
+        "reschedule_success": "success",
+        "rescheduled_id": "appointment_id",
+        "reschedule_error_type": "error_type"
+      },
+      "args_at_root": false,
+      "parameter_type": "json",
+      "timeout_ms": 20000,
+      "max_retry": 0,
+      "speak_during_execution": true,
+      "execution_message_type": "static_text",
+      "execution_message_description": "One moment, let me check that for you.",
+      "speak_after_execution": true
+    },
+    {
+      "type": "custom",
+      "tool_id": "tool-apero-cancel",
+      "name": "cancel_appointment",
+      "url": "https://svoybvzvmygszklcmudh.supabase.co/functions/v1/clinic-operations",
+      "method": "POST",
+      "headers": {},
+      "query_params": {},
+      "description": "Cancel only the verified selected appointment after explicit confirmation.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "cancel"
+            ],
+            "description": "Always cancel."
+          },
+          "appointment_id": {
+            "type": "string",
+            "description": "Exact appointment ID from lookup."
+          },
+          "client_name": {
+            "type": "string",
+            "description": "Verified patient name."
+          },
+          "client_phone": {
+            "type": "string",
+            "description": "Verified patient contact."
+          },
+          "confirmed": {
+            "type": "boolean",
+            "enum": [
+              true
+            ],
+            "description": "True only after caller explicitly confirms cancellation of the selected appointment."
+          }
+        },
+        "required": [
+          "action",
+          "appointment_id",
+          "client_name",
+          "client_phone",
+          "confirmed"
+        ]
+      },
+      "response_variables": {
+        "cancel_success": "success",
+        "cancelled_id": "appointment_id",
+        "cancel_error_type": "error_type"
+      },
+      "args_at_root": false,
+      "parameter_type": "json",
+      "timeout_ms": 20000,
+      "max_retry": 0,
+      "speak_during_execution": true,
+      "execution_message_type": "static_text",
+      "execution_message_description": "One moment, let me check that for you.",
+      "speak_after_execution": true
+    },
+    {
+      "type": "custom",
+      "tool_id": "tool-apero-invalidate",
+      "name": "invalidate_availability",
+      "url": "https://svoybvzvmygszklcmudh.supabase.co/functions/v1/clinic-operations",
+      "method": "POST",
+      "headers": {},
+      "query_params": {},
+      "description": "Clear the previous checked slot immediately when any booking parameter changes or a booking completes.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "invalidate"
+            ],
+            "description": "Always invalidate."
+          }
+        },
+        "required": [
+          "action"
+        ]
+      },
+      "response_variables": {
+        "availability_invalidated": "availability_invalidated"
+      },
+      "args_at_root": false,
+      "parameter_type": "json",
+      "timeout_ms": 20000,
+      "max_retry": 0,
+      "speak_during_execution": true,
+      "execution_message_type": "static_text",
+      "execution_message_description": "One moment, let me check that for you.",
+      "speak_after_execution": true
+    },
+    {
+      "type": "custom",
+      "tool_id": "tool-apero-message",
+      "name": "persist_message",
+      "url": "https://svoybvzvmygszklcmudh.supabase.co/functions/v1/clinic-operations",
+      "method": "POST",
+      "headers": {},
+      "query_params": {},
+      "description": "Persist this request before promising staff follow-up. No live transfer destination is configured.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "message"
+            ],
+            "description": "Always message."
+          },
+          "caller_name": {
+            "type": "string",
+            "description": "Caller name."
+          },
+          "patient_name": {
+            "type": "string",
+            "description": "Patient name if different."
+          },
+          "caller_phone": {
+            "type": "string",
+            "description": "Confirmed callback number."
+          },
+          "reason": {
+            "type": "string",
+            "description": "Concise request or message for staff."
+          }
+        },
+        "required": [
+          "action",
+          "caller_phone",
+          "reason"
+        ]
+      },
+      "response_variables": {
+        "message_success": "success",
+        "message_request_id": "request_id",
+        "message_error_type": "error_type"
+      },
+      "args_at_root": false,
+      "parameter_type": "json",
+      "timeout_ms": 20000,
+      "max_retry": 0,
+      "speak_during_execution": true,
+      "execution_message_type": "static_text",
+      "execution_message_description": "One moment, let me check that for you.",
+      "speak_after_execution": true
+    },
+    {
+      "type": "custom",
+      "tool_id": "tool-apero-callback",
+      "name": "persist_callback",
+      "url": "https://svoybvzvmygszklcmudh.supabase.co/functions/v1/clinic-operations",
+      "method": "POST",
+      "headers": {},
+      "query_params": {},
+      "description": "Persist this request before promising staff follow-up. No live transfer destination is configured.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "callback"
+            ],
+            "description": "Always callback."
+          },
+          "caller_name": {
+            "type": "string",
+            "description": "Caller name."
+          },
+          "patient_name": {
+            "type": "string",
+            "description": "Patient name if different."
+          },
+          "caller_phone": {
+            "type": "string",
+            "description": "Confirmed callback number."
+          },
+          "reason": {
+            "type": "string",
+            "description": "Concise request or message for staff."
+          }
+        },
+        "required": [
+          "action",
+          "caller_phone",
+          "reason"
+        ]
+      },
+      "response_variables": {
+        "callback_success": "success",
+        "callback_request_id": "request_id",
+        "callback_error_type": "error_type"
+      },
+      "args_at_root": false,
+      "parameter_type": "json",
+      "timeout_ms": 20000,
+      "max_retry": 0,
+      "speak_during_execution": true,
+      "execution_message_type": "static_text",
+      "execution_message_description": "One moment, let me check that for you.",
+      "speak_after_execution": true
+    },
+    {
+      "type": "custom",
+      "tool_id": "tool-apero-urgent",
+      "name": "persist_urgent",
+      "url": "https://svoybvzvmygszklcmudh.supabase.co/functions/v1/clinic-operations",
+      "method": "POST",
+      "headers": {},
+      "query_params": {},
+      "description": "Persist this request before promising staff follow-up. No live transfer destination is configured.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "urgent"
+            ],
+            "description": "Always urgent."
+          },
+          "caller_name": {
+            "type": "string",
+            "description": "Caller name."
+          },
+          "patient_name": {
+            "type": "string",
+            "description": "Patient name if different."
+          },
+          "caller_phone": {
+            "type": "string",
+            "description": "Confirmed callback number."
+          },
+          "reason": {
+            "type": "string",
+            "description": "Concise request or message for staff."
+          }
+        },
+        "required": [
+          "action",
+          "caller_phone",
+          "reason"
+        ]
+      },
+      "response_variables": {
+        "urgent_success": "success",
+        "urgent_request_id": "request_id",
+        "urgent_error_type": "error_type"
+      },
+      "args_at_root": false,
+      "parameter_type": "json",
+      "timeout_ms": 20000,
+      "max_retry": 0,
+      "speak_during_execution": true,
+      "execution_message_type": "static_text",
+      "execution_message_description": "One moment, let me check that for you.",
+      "speak_after_execution": true
+    }
+  ],
+  "components": [],
+  "start_node_id": "node_greeting",
+  "start_speaker": "agent",
+  "model_choice": {
+    "type": "cascading",
+    "high_priority": false,
+    "model": "gpt-4.1"
+  },
+  "model_temperature": 0,
+  "tool_call_strict_mode": true,
+  "default_dynamic_variables": {
+    "clinic_name": "Dental Zone Clinic",
+    "clinic_address": "Salmiya, Kuwait",
+    "clinic_phone": "+965 2225 4100",
+    "clinic_hours": "Sunday–Thursday and Saturday, 1 PM–9 PM; Friday closed"
+  },
+  "knowledge_base_ids": [
+    "knowledge_base_5e52df7d832025dc"
+  ],
+  "kb_config": {
+    "top_k": 3,
+    "filter_score": 0.6
+  }
+}
