@@ -11,7 +11,6 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AccountRouteImport } from './routes/account'
-import { Route as BillingRouteImport } from './routes/billing'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as ClientsRouteImport } from './routes/clients'
 import { Route as ConversationsRouteImport } from './routes/conversations'
@@ -35,11 +34,6 @@ const IndexRoute = IndexRouteImport.update({
 const AccountRoute = AccountRouteImport.update({
   id: '/account',
   path: '/account',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BillingRoute = BillingRouteImport.update({
-  id: '/billing',
-  path: '/billing',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CalendarRoute = CalendarRouteImport.update({
@@ -116,7 +110,6 @@ const StaffIdRoute = StaffIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/account': typeof AccountRoute
-  '/billing': typeof BillingRoute
   '/calendar': typeof CalendarRoute
   '/clients': typeof ClientsRouteWithChildren
   '/conversations': typeof ConversationsRouteWithChildren
@@ -135,7 +128,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/account': typeof AccountRoute
-  '/billing': typeof BillingRoute
   '/calendar': typeof CalendarRoute
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
@@ -152,7 +144,6 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/account': typeof AccountRoute
-  '/billing': typeof BillingRoute
   '/calendar': typeof CalendarRoute
   '/clients': typeof ClientsRouteWithChildren
   '/conversations': typeof ConversationsRouteWithChildren
@@ -173,7 +164,6 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/account'
-    | '/billing'
     | '/calendar'
     | '/clients'
     | '/conversations'
@@ -192,7 +182,6 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/account'
-    | '/billing'
     | '/calendar'
     | '/home'
     | '/login'
@@ -208,7 +197,6 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/account'
-    | '/billing'
     | '/calendar'
     | '/clients'
     | '/conversations'
@@ -228,7 +216,6 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AccountRoute: typeof AccountRoute
-  BillingRoute: typeof BillingRoute
   CalendarRoute: typeof CalendarRoute
   ClientsRoute: typeof ClientsRouteWithChildren
   ConversationsRoute: typeof ConversationsRouteWithChildren
@@ -253,13 +240,6 @@ declare module '@tanstack/react-router' {
       path: '/account'
       fullPath: '/account'
       preLoaderRoute: typeof AccountRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/billing': {
-      id: '/billing'
-      path: '/billing'
-      fullPath: '/billing'
-      preLoaderRoute: typeof BillingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/calendar': {
@@ -405,7 +385,6 @@ const StaffRouteWithChildren = StaffRoute._addFileChildren(StaffRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AccountRoute: AccountRoute,
-  BillingRoute: BillingRoute,
   CalendarRoute: CalendarRoute,
   ClientsRoute: ClientsRouteWithChildren,
   ConversationsRoute: ConversationsRouteWithChildren,

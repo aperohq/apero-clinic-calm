@@ -1,6 +1,6 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
-import { CalendarDays, CreditCard, Headphones, Home, LogOut, Menu, MessageSquare, PanelLeftClose, PanelLeftOpen, UserRound, Users, X } from "lucide-react";
+import { CalendarDays, Headphones, Home, LogOut, Menu, MessageSquare, PanelLeftClose, PanelLeftOpen, UserRound, Users, X } from "lucide-react";
 import { AperoMark, ClinicBadge } from "@/components/apero-brand";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
@@ -12,9 +12,8 @@ const main = [
   { to: "/clients", label: "Clients", icon: Users },
   { to: "/staff", label: "Staff", icon: UserRound },
   { to: "/conversations", label: "Conversations", icon: MessageSquare },
-  { to: "/billing", label: "Billing", icon: CreditCard },
 ] as const;
-const footer = [{ to: "/support", label: "Support", icon: Headphones }, { to: "/account", label: "Account / Profile", icon: UserRound }] as const;
+const footer = [{ to: "/support", label: "Support", icon: Headphones }, { to: "/account", label: "Account", icon: UserRound }] as const;
 
 type NavItem = { to: string; label: string; icon: typeof Home };
 
@@ -24,7 +23,6 @@ function Nav({ compact, onSelect }: { compact?: boolean; onSelect?: () => void }
   const { role, signOut } = useAuth();
   const allowed = (item: NavItem) => {
     if (item.to === "/staff") return role !== "staff";
-    if (item.to === "/billing") return role === "owner";
     return true;
   };
   const row = (item: NavItem) => {
@@ -32,8 +30,7 @@ function Nav({ compact, onSelect }: { compact?: boolean; onSelect?: () => void }
     return <Link key={item.to} to={item.to} onClick={onSelect} title={compact ? item.label : undefined} className={cn("flex h-10 items-center gap-3 rounded-[10px] px-3 text-sm font-medium transition-colors", active ? "bg-nav-active text-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground", compact && "justify-center px-0")}><item.icon className="size-4" />{!compact && <span>{item.label}</span>}{active && !compact && <span className="ml-auto size-1.5 rounded-full bg-success" />}</Link>;
   };
   const operations = main.slice(1, 5).filter(allowed);
-  const billing = allowed(main[5]) ? main[5] : null;
-  return <><div className="space-y-1">{row(main[0])}</div>{!compact && <p className="mb-2 mt-6 px-3 text-[10px] font-semibold uppercase text-muted-foreground">Operations</p>}<div className={cn("space-y-1", compact && "mt-3")}>{operations.map(row)}</div>{billing && <div className="mt-3 border-t border-border pt-3">{row(billing)}</div>}<div className="mt-auto space-y-1 border-t border-border pt-3">{footer.map(row)}<button type="button" onClick={async () => { onSelect?.(); await signOut(); void navigate({ to: "/login" }); }} className={cn("flex h-10 w-full items-center gap-3 rounded-[10px] px-3 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground", compact && "justify-center px-0")}><LogOut className="size-4" />{!compact && "Log out"}</button></div></>;
+  return <><div className="space-y-1">{row(main[0])}</div>{!compact && <p className="mb-2 mt-6 px-3 text-[10px] font-semibold uppercase text-muted-foreground">Operations</p>}<div className={cn("space-y-1", compact && "mt-3")}>{operations.map(row)}</div><div className="mt-auto space-y-1 border-t border-border pt-3">{footer.map(row)}<button type="button" onClick={async () => { onSelect?.(); await signOut(); void navigate({ to: "/login" }); }} className={cn("flex h-10 w-full items-center gap-3 rounded-[10px] px-3 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground", compact && "justify-center px-0")} aria-label="Log out"><LogOut className="size-4" />{!compact && "Log out"}</button></div></>;
 }
 
 export function AppLayout({ children }: { children: ReactNode }) {
