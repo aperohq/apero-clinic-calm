@@ -1,7 +1,5 @@
-import { Sparkles } from "lucide-react";
-
 export function AperoMark({ compact = false }: { compact?: boolean }) {
-  return <div className="flex items-center gap-2.5"><span className="grid size-8 place-items-center rounded-[10px] bg-primary text-primary-foreground"><Sparkles className="size-4" /></span>{!compact && <span className="text-[20px] font-semibold text-foreground">Apero</span>}</div>;
+  return <img src="/apero-logo-black.png" alt="Apero" width={36} height={36} className={compact ? "size-8 shrink-0 object-contain dark:invert" : "size-9 shrink-0 object-contain dark:invert"} />;
 }
 
 function initialsOf(name: string) {
