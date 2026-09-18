@@ -7,6 +7,7 @@ import type {
   AppointmentRow, ClientNoteRow, ClientRow, ConversationRow,
   StaffAvailabilityRow, StaffTimeOffRow, StaffRow,
 } from "@/lib/db-types";
+import { appointmentRange } from "@/lib/clinic-time";
 
 export type Client = ClientRow & { name: string; initials: string };
 export type StaffMember = StaffRow & { name: string; initials: string; role: string };
@@ -116,25 +117,35 @@ function useClinicMutation<TInput>(keys: string[], run: (clinicId: string, input
       if (!clinicId) throw new Error("No clinic is linked to your account yet.");
       await run(clinicId, input);
     },
-    onSuccess: () => { keys.forEach((k) => void queryClient.invalidateQueries({ queryKey: [k] })); },
+    onSuccess: async () => { await Promise.all(keys.map((key) => queryClient.invalidateQueries({ queryKey: [key, clinicId] }))); },
   });
 }
 
 export function useAddClient() {
   return useClinicMutation<{ name: string; phone: string; email?: string; notes?: string }>(["clients"], async (clinicId, input) => {
-    const { error } = await db.from("clients").insert({
+    const values = {
       clinic_id: clinicId, full_name: input.name.trim(), phone: input.phone.trim(),
       email: input.email?.trim() || null, notes: input.notes?.trim() || null,
-    });
+    };
+    const { data, error } = await db.from("clients").insert(values).select("id").single();
     if (error) throw error;
+    const { data: saved, error: readError } = await db.from("clients").select("full_name,phone,email,notes")
+      .eq("id", data.id).eq("clinic_id", clinicId).single();
+    if (readError || !saved || Object.entries(values).some(([key, value]) => key !== "clinic_id" && saved[key as keyof typeof saved] !== value))
+      throw new Error("The client could not be verified.");
   });
 }
 
 export function useUpdateClient() {
-  return useClinicMutation<{ id: string; full_name?: string; phone?: string; email?: string | null; notes?: string | null }>(["clients"], async (_c, input) => {
+  return useClinicMutation<{ id: string; full_name?: string; phone?: string; email?: string | null; notes?: string | null }>(["clients"], async (clinicId, input) => {
     const { id, ...patch } = input;
-    const { error } = await db.from("clients").update(patch).eq("id", id);
+    const { data, error } = await db.from("clients").update(patch).eq("id", id).eq("clinic_id", clinicId).select("id").single();
     if (error) throw error;
+    if (!data) throw new Error("The client was not updated.");
+    const { data: saved, error: readError } = await db.from("clients").select("full_name,phone,email,notes")
+      .eq("id", id).eq("clinic_id", clinicId).single();
+    if (readError || !saved || Object.entries(patch).some(([key, value]) => saved[key as keyof typeof saved] !== value))
+      throw new Error("The client changes could not be verified.");
   });
 }
 
@@ -167,11 +178,16 @@ export function useAddStaff() {
 }
 
 export function useUpdateStaff() {
-  return useClinicMutation<{ id: string; full_name?: string; specialty?: string; phone?: string | null; email?: string | null; services?: string[] }>(["staff"], async (_c, input) => {
+  return useClinicMutation<{ id: string; full_name?: string; specialty?: string; phone?: string | null; email?: string | null; services?: string[] }>(["staff"], async (clinicId, input) => {
     const { id, ...patch } = input;
-    const { data, error } = await db.from("staff").update(patch).eq("id", id).select("id").single();
+    const { data, error } = await db.from("staff").update(patch).eq("id", id).eq("clinic_id", clinicId).select("id").single();
     if (error) throw error;
     if (!data) throw new Error("The staff member was not updated.");
+    const { data: saved, error: readError } = await db.from("staff")
+      .select("full_name,specialty,phone,email,services").eq("id", id).eq("clinic_id", clinicId).single();
+    if (readError || !saved || Object.entries(patch).some(([key, value]) =>
+      key === "services" ? JSON.stringify(saved.services) !== JSON.stringify(value) : saved[key as keyof typeof saved] !== value))
+      throw new Error("The staff changes could not be verified.");
   });
 }
 
@@ -259,53 +275,81 @@ export function useRemoveTimeOff() {
 export function useAddClientNote() {
   const { profile } = useAuth();
   return useClinicMutation<{ clientId: string; note: string }>(["client_notes"], async (clinicId, input) => {
-    const { error } = await db.from("client_notes").insert({
+    const values = {
       clinic_id: clinicId, client_id: input.clientId, note: input.note.trim(),
       author_profile_id: profile?.id ?? null,
-    });
+    };
+    const { data, error } = await db.from("client_notes").insert(values).select("id").single();
     if (error) throw error;
+    const { data: saved, error: readError } = await db.from("client_notes")
+      .select("client_id,note,author_profile_id").eq("id", data.id).eq("clinic_id", clinicId).single();
+    if (readError || !saved || saved.client_id !== values.client_id || saved.note !== values.note || saved.author_profile_id !== values.author_profile_id)
+      throw new Error("The note could not be verified.");
   });
 }
 
 export function useCreateAppointment() {
+  const { clinic } = useAuth();
   return useClinicMutation<{ clientId: string; staffId: string; service: string; date: string; time: string; minutes?: number; notes?: string }>(["appointments"], async (clinicId, input) => {
-    const start = new Date(`${input.date}T${input.time}:00`);
-    const end = new Date(start.getTime() + (input.minutes ?? 45) * 60000);
-    const { error } = await db.from("appointments").insert({
+    if (!clinic?.timezone) throw new Error("Clinic timezone is unavailable.");
+    const range = appointmentRange(input.date, input.time, input.minutes ?? 45, clinic.timezone);
+    const start = new Date(range.start); const end = new Date(range.end);
+    const values = {
       clinic_id: clinicId, client_id: input.clientId, staff_id: input.staffId,
       service: input.service.trim(), start_time: start.toISOString(), end_time: end.toISOString(),
       status: "Booked", source: "Front desk", notes: input.notes?.trim() || null,
-    });
+    };
+    const { data, error } = await db.from("appointments").insert(values).select("id").single();
     if (error) throw error;
+    const { data: saved, error: readError } = await db.from("appointments")
+      .select("client_id,staff_id,service,start_time,end_time,status,source,notes")
+      .eq("id", data.id).eq("clinic_id", clinicId).single();
+    if (readError || !saved || saved.client_id !== values.client_id || saved.staff_id !== values.staff_id ||
+      saved.service !== values.service || Date.parse(saved.start_time) !== start.getTime() || Date.parse(saved.end_time) !== end.getTime() ||
+      saved.status !== values.status || saved.source !== values.source || saved.notes !== values.notes)
+      throw new Error("The appointment could not be verified.");
   });
 }
 
 export function useRescheduleAppointment() {
-  return useClinicMutation<{ id: string; date: string; time: string; minutes?: number }>(["appointments"], async (_c, input) => {
-    const start = new Date(`${input.date}T${input.time}:00`);
-    const end = new Date(start.getTime() + (input.minutes ?? 45) * 60000);
-    const { error } = await db.from("appointments")
+  const { clinic } = useAuth();
+  return useClinicMutation<{ id: string; date: string; time: string; minutes?: number }>(["appointments"], async (clinicId, input) => {
+    if (!clinic?.timezone) throw new Error("Clinic timezone is unavailable.");
+    const range = appointmentRange(input.date, input.time, input.minutes ?? 45, clinic.timezone);
+    const start = new Date(range.start); const end = new Date(range.end);
+    const { data, error } = await db.from("appointments")
       .update({ start_time: start.toISOString(), end_time: end.toISOString(), status: "Booked" })
-      .eq("id", input.id);
+      .eq("id", input.id).eq("clinic_id", clinicId).select("id").single();
     if (error) throw error;
+    if (!data) throw new Error("The appointment was not updated.");
+    const { data: saved, error: readError } = await db.from("appointments")
+      .select("start_time,end_time,status").eq("id", input.id).eq("clinic_id", clinicId).single();
+    if (readError || !saved || Date.parse(saved.start_time) !== start.getTime() || Date.parse(saved.end_time) !== end.getTime() || saved.status !== "Booked")
+      throw new Error("The appointment changes could not be verified.");
   });
 }
 
 export function useCancelAppointment() {
-  return useClinicMutation<{ id: string; reason?: string }>(["appointments"], async (_c, input) => {
-    const { error } = await db.from("appointments")
-      .update({ status: "Cancelled", notes: input.reason?.trim() || null })
-      .eq("id", input.id);
+  return useClinicMutation<{ id: string; reason?: string }>(["appointments"], async (clinicId, input) => {
+    const notes = input.reason?.trim() || null;
+    const { data, error } = await db.from("appointments")
+      .update({ status: "Cancelled", notes })
+      .eq("id", input.id).eq("clinic_id", clinicId).select("id").single();
     if (error) throw error;
+    if (!data) throw new Error("The appointment was not cancelled.");
+    const { data: saved, error: readError } = await db.from("appointments")
+      .select("status,notes").eq("id", input.id).eq("clinic_id", clinicId).single();
+    if (readError || !saved || saved.status !== "Cancelled" || saved.notes !== notes)
+      throw new Error("The cancellation could not be verified.");
   });
 }
 
 // ---------------------------------------------------------------- helpers
-export function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+export function formatDate(iso: string, timeZone?: string) {
+  return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric", timeZone });
 }
-export function formatTime(iso: string) {
-  return new Date(iso).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+export function formatTime(iso: string, timeZone?: string) {
+  return new Date(iso).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit", timeZone });
 }
 export function formatDuration(seconds: number) {
   return `${Math.floor(seconds / 60)}m ${String(seconds % 60).padStart(2, "0")}s`;

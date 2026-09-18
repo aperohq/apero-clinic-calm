@@ -70,3 +70,11 @@ test("time off blocks only the selected practitioner's slots", async () => {
   assert.equal(slotIsOpen(shift, "14:00", "14:45", start, end, [], ahmedTimeOff), false);
   assert.equal(slotIsOpen(shift, "14:00", "14:45", start, end, [], []), true);
 });
+
+test("existing appointment overlap blocks the slot while adjacent times remain open", async () => {
+  const { slotIsOpen } = await import("./logic.ts");
+  const shift = { start_time: "09:00:00", end_time: "17:00:00", is_available: true };
+  const appointment = [{ start_time: "2026-10-14T11:30:00.000Z", end_time: "2026-10-14T12:15:00.000Z" }];
+  assert.equal(slotIsOpen(shift, "14:00", "14:45", "2026-10-14T11:00:00.000Z", "2026-10-14T11:45:00.000Z", appointment, []), false);
+  assert.equal(slotIsOpen(shift, "14:00", "14:45", "2026-10-14T12:15:00.000Z", "2026-10-14T13:00:00.000Z", appointment, []), true);
+});

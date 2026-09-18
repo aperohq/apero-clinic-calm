@@ -24,7 +24,7 @@ Follow all Phase 1 specifications:
 
 This project was built with [Lovable](https://lovable.dev).
 
-**Live app**: https://apero-clinic-calm.lovable.app
+**Live app**: https://aperodashboard.lovable.app
 
 ## Build with Lovable
 

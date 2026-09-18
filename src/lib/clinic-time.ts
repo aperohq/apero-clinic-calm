@@ -28,3 +28,9 @@ export function fromClinicInput(value: string, timeZone: string): string {
   }
   throw new Error("This local time is not valid in the clinic timezone.");
 }
+
+export function appointmentRange(date: string, time: string, minutes: number, timeZone: string) {
+  if (!Number.isInteger(minutes) || minutes <= 0) throw new Error("Enter a valid appointment duration.");
+  const start = fromClinicInput(`${date}T${time}`, timeZone);
+  return { start, end: new Date(Date.parse(start) + minutes * 60_000).toISOString() };
+}

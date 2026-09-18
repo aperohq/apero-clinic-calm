@@ -105,10 +105,14 @@ export default {
     // Try to connect the call with an existing Apero client.
     let clientId: string | null = null;
 
-    const { data: clients } = await ctx.supabaseAdmin
+    const { data: clients, error: clientsError } = await ctx.supabaseAdmin
       .from("clients")
       .select("id, phone")
       .eq("clinic_id", clinicId);
+    if (clientsError) {
+      console.error("Failed to load clients for Retell call:", clientsError);
+      return new Response("Database error", { status: 500 });
+    }
 
     if (normalizedCaller && clients) {
       const client = clients.find(
