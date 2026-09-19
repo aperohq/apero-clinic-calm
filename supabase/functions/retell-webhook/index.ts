@@ -2,6 +2,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { withSupabase } from "jsr:@supabase/server@^1";
 
 import { resolveVoiceIntegration } from "../_shared/voice-integration.ts";
+import { logDatabaseFailure, readLimitedBody, RequestBodyTooLargeError } from "../_shared/request-security.ts";
 
 function normalizePhone(phone: string | null | undefined) {
   if (!phone) return null;
@@ -30,7 +31,9 @@ export default {
       return new Response("Method not allowed", { status: 405 });
     }
 
-    const rawBody = await req.text();
+    let rawBody: string;
+    try { rawBody = await readLimitedBody(req, 2 * 1024 * 1024); }
+    catch (error) { return new Response("Request body too large", { status: error instanceof RequestBodyTooLargeError ? 413 : 400 }); }
     const signature = req.headers.get("x-retell-signature");
     const timestamp = signature?.match(/^v=(\d+),d=[0-9a-fA-F]+$/)?.[1];
     if (!timestamp || Math.abs(Date.now() - Number(timestamp)) > 5 * 60 * 1000)
@@ -89,7 +92,7 @@ export default {
       .eq("call_id", call.call_id)
       .order("created_at", { ascending: false });
     if (operationsError) {
-      console.error("Failed to load Retell operations:", operationsError);
+      logDatabaseFailure("Retell operations lookup", operationsError);
       return new Response("Database error", { status: 500 });
     }
     const completedOperations = (operations ?? []).filter((o: any) => o.result?.success === true);
@@ -98,7 +101,7 @@ export default {
       .from("voice_requests").select("id").eq("clinic_id", clinicId)
       .eq("call_id", call.call_id).limit(1);
     if (requestsError) {
-      console.error("Failed to load Retell requests:", requestsError);
+      logDatabaseFailure("Retell requests lookup", requestsError);
       return new Response("Database error", { status: 500 });
     }
 
@@ -110,7 +113,7 @@ export default {
       .select("id, phone")
       .eq("clinic_id", clinicId);
     if (clientsError) {
-      console.error("Failed to load clients for Retell call:", clientsError);
+      logDatabaseFailure("Retell client lookup", clientsError);
       return new Response("Database error", { status: 500 });
     }
 
@@ -136,7 +139,7 @@ export default {
         .maybeSingle();
 
       if (appointmentError) {
-        console.error("Failed to validate Retell appointment:", appointmentError);
+        logDatabaseFailure("Retell appointment validation", appointmentError);
         return new Response("Database error", { status: 500 });
       }
       if (appointment && (lastOperation || appointment.client_id === clientId)) {
@@ -225,13 +228,11 @@ export default {
       });
 
     if (error) {
-      console.error("Failed to save Retell call:", error);
+      logDatabaseFailure("Retell conversation save", error);
       return new Response("Database error", { status: 500 });
     }
 
-    console.log(
-      `Processed Retell ${event}: ${call.call_id}`,
-    );
+    console.log(`Processed Retell ${event}`);
 
     return new Response(null, { status: 204 });
   }),

@@ -1,6 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { withSupabase } from "jsr:@supabase/server@^1";
 import { resolveVoiceIntegration } from "../_shared/voice-integration.ts";
+import { logDatabaseFailure, readLimitedBody, RequestBodyTooLargeError } from "../_shared/request-security.ts";
 import { DateTime } from "npm:luxon@3";
 
 const SLOT_MINUTES = 30;
@@ -59,7 +60,9 @@ export default {
         );
       }
 
-      const rawBody = await req.text();
+      let rawBody: string;
+      try { rawBody = await readLimitedBody(req, 128 * 1024); }
+      catch (error) { return new Response("Request body too large", { status: error instanceof RequestBodyTooLargeError ? 413 : 400 }); }
 
       const identity = await resolveVoiceIntegration(ctx.supabaseAdmin, rawBody, req.headers.get("x-retell-signature"));
       if (!identity) return new Response("Unauthorized", { status: 401 });
@@ -143,10 +146,7 @@ export default {
         .single();
 
       if (clinicError || !clinic) {
-        console.error(
-          "Clinic lookup failed:",
-          clinicError,
-        );
+        logDatabaseFailure("Booking clinic lookup", clinicError);
 
         return Response.json(
           {
@@ -207,10 +207,7 @@ export default {
         .eq("active", true);
 
       if (staffError || !staffList) {
-        console.error(
-          "Staff lookup failed:",
-          staffError,
-        );
+        logDatabaseFailure("Booking staff lookup", staffError);
 
         return Response.json(
           {
@@ -266,10 +263,7 @@ export default {
         .eq("is_available", true);
 
       if (shiftError) {
-        console.error(
-          "Shift lookup failed:",
-          shiftError,
-        );
+        logDatabaseFailure("Booking shift lookup", shiftError);
 
         return Response.json(
           {
@@ -338,10 +332,7 @@ export default {
         );
 
       if (timeOffError) {
-        console.error(
-          "Time-off lookup failed:",
-          timeOffError,
-        );
+        logDatabaseFailure("Booking time-off lookup", timeOffError);
 
         return Response.json(
           {
@@ -394,10 +385,7 @@ export default {
         );
 
       if (conflictError) {
-        console.error(
-          "Conflict lookup failed:",
-          conflictError,
-        );
+        logDatabaseFailure("Booking conflict lookup", conflictError);
 
         return Response.json(
           {
@@ -434,10 +422,7 @@ export default {
         .eq("clinic_id", clinicId);
 
       if (clientsError) {
-        console.error(
-          "Client lookup failed:",
-          clientsError,
-        );
+        logDatabaseFailure("Booking client lookup", clientsError);
 
         return Response.json(
           {
@@ -477,10 +462,7 @@ export default {
           clientError ||
           !newClient
         ) {
-          console.error(
-            "Failed creating client:",
-            clientError,
-          );
+          logDatabaseFailure("Booking client create", clientError);
 
           return Response.json(
             {
@@ -519,10 +501,7 @@ export default {
         .single();
 
       if (appointmentError) {
-        console.error(
-          "Booking failed:",
-          appointmentError,
-        );
+        logDatabaseFailure("Booking appointment insert", appointmentError);
 
         // Exclusion constraint:
         // another booking took the slot

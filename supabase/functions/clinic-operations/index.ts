@@ -1,6 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { withSupabase } from "jsr:@supabase/server@^1";
 import { resolveVoiceIntegration } from "../_shared/voice-integration.ts";
+import { logDatabaseFailure, readLimitedBody, RequestBodyTooLargeError } from "../_shared/request-security.ts";
 import { DateTime } from "npm:luxon@3";
 
 // Apero's current calendar defaults new appointments to 45 minutes.
@@ -82,7 +83,9 @@ async function availableSlots(db: any, clinicId: string, slotMinutes: number, st
 export default {
   fetch: withSupabase({ auth: "none" }, async (req, ctx) => {
     if (req.method !== "POST") return new Response("Method not allowed", { status: 405 });
-    const raw = await req.text();
+    let raw: string;
+    try { raw = await readLimitedBody(req, 128 * 1024); }
+    catch (error) { return new Response("Request body too large", { status: error instanceof RequestBodyTooLargeError ? 413 : 400 }); }
     const identity = await resolveVoiceIntegration(ctx.supabaseAdmin, raw, req.headers.get("x-retell-signature"));
     if (!identity) return new Response("Unauthorized", { status: 401 });
     const { secret } = identity;
@@ -234,7 +237,7 @@ export default {
           p_start: start.toUTC().toISO(), p_end: start.plus({ minutes: slotMinutes }).toUTC().toISO(),
           p_check_id: slot.i, p_slot_id: slot.q,
         });
-        if (error) { console.error("Voice operation failed", error); return Response.json(failure("database_error")); }
+        if (error) { logDatabaseFailure("Voice operation", error); return Response.json(failure("database_error")); }
         return Response.json(data);
       }
       if (action === "lookup") {
@@ -264,7 +267,7 @@ export default {
           p_caller_name: value(args, "caller_name") || null, p_caller_phone: phone(args.caller_phone),
           p_staff_id: null, p_service: null, p_start: null, p_end: null, p_check_id: null, p_slot_id: null,
         });
-        if (error) { console.error("Cancellation failed", error); return Response.json(failure("database_error")); }
+        if (error) { logDatabaseFailure("Cancellation", error); return Response.json(failure("database_error")); }
         return Response.json(data);
       }
       if (["message", "callback", "urgent"].includes(action)) {
@@ -280,12 +283,12 @@ export default {
             .eq("clinic_id", clinicId).eq("request_key", requestKey).single();
           if (!existing.error && existing.data) return Response.json({ success: true, request_id: existing.data.id, status: existing.data.status });
         }
-        if (error || !data) { console.error("Voice request failed", error); return Response.json(failure("database_error")); }
+        if (error || !data) { logDatabaseFailure("Voice request", error); return Response.json(failure("database_error")); }
         return Response.json({ success: true, request_id: data.id, status: data.status });
       }
       return Response.json(failure("unknown_action"));
-    } catch (error) {
-      console.error("Voice tool error", error);
+    } catch {
+      console.error("Voice tool failed");
       return Response.json(failure("tool_error"));
     }
   }),

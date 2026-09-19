@@ -1,6 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { withSupabase } from "jsr:@supabase/server@^1";
 import { resolveVoiceIntegration } from "../_shared/voice-integration.ts";
+import { logDatabaseFailure, readLimitedBody, RequestBodyTooLargeError } from "../_shared/request-security.ts";
 import { DateTime } from "npm:luxon@3";
 
 const SLOT_MINUTES = 30;
@@ -38,7 +39,9 @@ export default {
         return new Response("Method not allowed", { status: 405 });
       }
 
-      const rawBody = await req.text();
+      let rawBody: string;
+      try { rawBody = await readLimitedBody(req, 128 * 1024); }
+      catch (error) { return new Response("Request body too large", { status: error instanceof RequestBodyTooLargeError ? 413 : 400 }); }
 
       const identity = await resolveVoiceIntegration(ctx.supabaseAdmin, rawBody, req.headers.get("x-retell-signature"));
       if (!identity) return new Response("Unauthorized", { status: 401 });
@@ -76,7 +79,7 @@ export default {
           .single();
 
       if (clinicError || !clinic) {
-        console.error("Clinic error:", clinicError);
+        logDatabaseFailure("Availability clinic lookup", clinicError);
 
         return Response.json(
           {
@@ -130,7 +133,7 @@ export default {
           .eq("active", true);
 
       if (staffError || !staffList) {
-        console.error("Staff error:", staffError);
+        logDatabaseFailure("Availability staff lookup", staffError);
 
         return Response.json(
           {
@@ -185,7 +188,7 @@ export default {
             .order("start_time");
 
         if (shiftsError) {
-          console.error("Shift error:", shiftsError);
+          logDatabaseFailure("Availability shift lookup", shiftsError);
           continue;
         }
 
@@ -214,7 +217,7 @@ export default {
             .neq("status", "Cancelled");
 
         if (appointmentError) {
-          console.error("Appointment error:", appointmentError);
+          logDatabaseFailure("Availability appointment lookup", appointmentError);
           continue;
         }
 
@@ -232,7 +235,7 @@ export default {
             .gt("end_time", dayStart.toUTC().toISO());
 
         if (timeOffError) {
-          console.error("Time off error:", timeOffError);
+          logDatabaseFailure("Availability time-off lookup", timeOffError);
           continue;
         }
 
@@ -254,7 +257,7 @@ export default {
           );
 
           if (!shiftStart.isValid || !shiftEnd.isValid) {
-            console.error("Invalid shift:", shift);
+            console.error("Availability data contained an invalid shift");
             continue;
           }
 
@@ -374,14 +377,13 @@ export default {
         // TEMPORARY DEBUG
 
       });
-    } catch (error) {
-      console.error(error);
+    } catch {
+      console.error("Availability check failed");
 
       return Response.json(
         {
           available: false,
           message: "Availability check failed.",
-          error: String(error),
         },
         { status: 500 },
       );
