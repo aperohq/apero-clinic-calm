@@ -114,8 +114,8 @@ export function useAuth() {
 
 // Navigation permissions per role.
 const ROLE_ROUTES: Record<ProfileRole, string[]> = {
-  owner: ["/home", "/calendar", "/clients", "/staff", "/conversations", "/support", "/account"],
-  manager: ["/home", "/calendar", "/clients", "/staff", "/conversations", "/support", "/account"],
+  owner: ["/home", "/calendar", "/clients", "/staff", "/conversations", "/requests", "/support", "/account"],
+  manager: ["/home", "/calendar", "/clients", "/staff", "/conversations", "/requests", "/support", "/account"],
   staff: ["/home", "/calendar", "/clients", "/conversations", "/support", "/account"],
 };
 

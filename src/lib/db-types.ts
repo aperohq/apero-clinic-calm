@@ -46,6 +46,12 @@ export type NotificationRow = {
   id: string; clinic_id: string; profile_id: string | null; type: string;
   title: string; message: string | null; read: boolean; created_at: string;
 };
+export type VoiceRequestRow = {
+  id: string; clinic_id: string; request_key: string; call_id: string | null;
+  kind: "message" | "callback" | "urgent"; caller_name: string | null;
+  patient_name: string | null; phone: string; reason: string;
+  status: "Open" | "In Progress" | "Closed"; created_at: string;
+};
 
 type TableDef<Row> = {
   Row: Row;
@@ -67,6 +73,7 @@ export type AperoDatabase = {
       conversations: TableDef<ConversationRow>;
       client_notes: TableDef<ClientNoteRow>;
       notifications: TableDef<NotificationRow>;
+      voice_requests: TableDef<VoiceRequestRow>;
     };
     Views: Record<string, never>;
     Functions: {
