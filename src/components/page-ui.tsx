@@ -3,10 +3,10 @@ import { CheckCircle2, CircleAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function PageHeader({ title, description, action }: { title: string; description: string; action?: ReactNode }) {
-  return <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><h1 className="text-2xl font-semibold text-foreground">{title}</h1><p className="mt-1 text-sm text-muted-foreground">{description}</p></div>{action}</div>;
+  return <div className="mb-6 flex min-w-0 flex-col justify-between gap-4 sm:flex-row sm:items-end"><div className="min-w-0"><h1 className="break-words [overflow-wrap:anywhere] text-2xl font-semibold text-foreground">{title}</h1><p className="mt-1 break-words [overflow-wrap:anywhere] text-sm text-muted-foreground">{description}</p></div>{action}</div>;
 }
 export function Panel({ children, className }: { children: ReactNode; className?: string }) { return <section className={cn("min-w-0 rounded-2xl border border-border bg-card p-4 shadow-card sm:p-5", className)}>{children}</section>; }
-export function PanelTitle({ children, detail }: { children: ReactNode; detail?: ReactNode }) { return <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><h2 className="font-semibold">{children}</h2>{detail}</div>; }
+export function PanelTitle({ children, detail }: { children: ReactNode; detail?: ReactNode }) { return <div className="mb-4 flex min-w-0 flex-wrap items-center justify-between gap-3"><h2 className="min-w-0 break-words [overflow-wrap:anywhere] font-semibold">{children}</h2>{detail}</div>; }
 export function StatusBadge({ status }: { status: string }) {
   const success = ["Booked", "Completed", "Paid", "Active", "Online"].includes(status);
   const warning = status === "Needs Review";

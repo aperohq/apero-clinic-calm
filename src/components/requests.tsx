@@ -33,7 +33,7 @@ function RequestCard({ row, timeZone }: { row: VoiceRequestDisplay; timeZone: st
       )}
     >
       <div className="flex flex-wrap items-start justify-between gap-2">
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
           {isUrgent && <AlertCircle className="size-4 text-warning-strong" aria-hidden="true" />}
           <h3 className="font-semibold">{kindLabel[row.kind]}</h3>
           <span className="rounded-full border border-border bg-background px-2 py-0.5 text-xs text-muted-foreground">
@@ -46,7 +46,7 @@ function RequestCard({ row, timeZone }: { row: VoiceRequestDisplay; timeZone: st
       </div>
       <div className="mt-3 text-sm">
         {name && (
-          <p className="font-medium">
+          <p className="break-words [overflow-wrap:anywhere] font-medium">
             {name}
             {row.caller_name && row.patient_name && row.caller_name !== row.patient_name ? (
               <span className="font-normal text-muted-foreground">
@@ -56,19 +56,20 @@ function RequestCard({ row, timeZone }: { row: VoiceRequestDisplay; timeZone: st
             ) : null}
           </p>
         )}
-        <p className="mt-1 flex items-center gap-1 text-muted-foreground">
+        <p className="mt-1 flex min-w-0 items-center gap-1 text-muted-foreground">
           <Phone className="size-3.5" aria-hidden="true" />
-          <a href={`tel:${row.phone}`} className="break-all hover:underline">
+          <a href={`tel:${row.phone}`} className="min-w-0 break-all hover:underline">
             {row.phone}
           </a>
         </p>
       </div>
-      <p className="mt-3 whitespace-pre-wrap break-words text-sm">{row.reason}</p>
+      <p className="mt-3 whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-sm">{row.reason}</p>
       {row.status !== "Closed" && (
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <Button
             size="sm"
             variant="outline"
+            className="min-h-10"
             disabled={close.isPending}
             onClick={async () => {
               setError(false);
