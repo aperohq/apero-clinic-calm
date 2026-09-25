@@ -195,9 +195,9 @@ export function RequestsPage() {
             </Button>
           }
         >
-          Needs attention
+          {showClosed ? "All requests" : "Needs attention"}
           {query.isSuccess
-            ? ` (${(query.data ?? []).filter((row) => row.status !== "Closed").length})`
+            ? ` (${(query.data ?? []).filter((row) => row.status !== "Closed").length} open)`
             : ""}
         </PanelTitle>
         <RequestState
