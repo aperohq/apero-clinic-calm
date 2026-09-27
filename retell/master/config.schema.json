@@ -1,0 +1,437 @@
+{
+  "type": "object",
+  "description": "Apero Master Clinic Configuration v1 / exact onboarding information schema",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "mode": {
+      "enum": [
+        "template",
+        "clinic"
+      ]
+    },
+    "agent_name": {
+      "type": "string",
+      "description": "Retell display name of the new separate agent",
+      "minLength": 1
+    },
+    "clinic": {
+      "type": "object",
+      "description": "Shared identity. ID/timezone/phone/name must match backend. One location only.",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "Existing backend clinic UUID",
+              "minLength": 1,
+              "pattern": "^[0-9a-f-]{36}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "name": {
+          "type": "string",
+          "description": "Backend clinics.name",
+          "minLength": 1
+        },
+        "localized_name": {
+          "type": "string",
+          "description": "Approved Arabic clinic name",
+          "minLength": 1
+        },
+        "type": {
+          "type": "string",
+          "description": "Clinic type; not a source of service facts",
+          "minLength": 1
+        },
+        "timezone": {
+          "type": "string",
+          "description": "Backend clinics.timezone, IANA",
+          "minLength": 1
+        },
+        "phone": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "Backend clinics.phone",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "address": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "Approved single-location address",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "opening_hours": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "Approved public opening hours; never a substitute for staff availability",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "location_count": {
+          "const": 1
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "localized_name",
+        "type",
+        "timezone",
+        "phone",
+        "address",
+        "opening_hours",
+        "location_count"
+      ]
+    },
+    "speech": {
+      "type": "object",
+      "description": "Retell-owned speech. v1 preserves the proven Arabic/English framework.",
+      "additionalProperties": false,
+      "properties": {
+        "receptionist_name": {
+          "type": "string",
+          "description": "Approved English receptionist identity",
+          "minLength": 1
+        },
+        "receptionist_localized_name": {
+          "type": "string",
+          "description": "Approved Arabic receptionist identity",
+          "minLength": 1
+        },
+        "default_language": {
+          "enum": [
+            "en-US",
+            "ar-SA"
+          ]
+        },
+        "supported_languages": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "en-US",
+              "ar-SA"
+            ]
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "dialect": {
+          "type": "string",
+          "description": "Preferred spoken dialect, independent of STT locale",
+          "minLength": 1
+        },
+        "voice_id": {
+          "type": "string",
+          "description": "Approved accessible Retell voice ID",
+          "minLength": 1
+        },
+        "greeting": {
+          "type": "string",
+          "description": "Approved greeting. Retell {{clinic_name}}, {{clinic_name_localized}}, {{receptionist_name}}, {{receptionist_name_localized}} supported",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "receptionist_name",
+        "receptionist_localized_name",
+        "default_language",
+        "supported_languages",
+        "dialect",
+        "voice_id",
+        "greeting"
+      ]
+    },
+    "policies": {
+      "type": "object",
+      "description": "Approved shared policy text",
+      "additionalProperties": false,
+      "properties": {
+        "pricing": {
+          "type": "string",
+          "description": "Approved pricing policy or explicit unknown-information fallback",
+          "minLength": 1
+        },
+        "insurance": {
+          "type": "string",
+          "description": "Approved insurance policy or explicit unknown-information fallback",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "pricing",
+        "insurance"
+      ]
+    },
+    "knowledge": {
+      "type": "object",
+      "description": "Approved inline FAQs and/or clinic-specific Retell KB. Empty means do not invent answers.",
+      "additionalProperties": false,
+      "properties": {
+        "approved_by": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "Clinic approver/revision reference, developer record only",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "approved_faq": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "description": "One approved factual answer",
+            "additionalProperties": false,
+            "properties": {
+              "question": {
+                "type": "string",
+                "description": "Approved question/topic",
+                "minLength": 1
+              },
+              "answer": {
+                "type": "string",
+                "description": "Approved answer",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "question",
+              "answer"
+            ]
+          }
+        },
+        "retell_knowledge_base_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "description": "Optional per-clinic approved KB, never inherited",
+            "minLength": 1,
+            "pattern": "^knowledge_base_"
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "approved_by",
+        "approved_faq",
+        "retell_knowledge_base_ids"
+      ]
+    },
+    "escalation": {
+      "type": "object",
+      "description": "v1 offers persisted callbacks/messages/urgent requests. Live transfer requires future implementation.",
+      "additionalProperties": false,
+      "properties": {
+        "callbacks_enabled": {
+          "const": true
+        },
+        "callback_availability": {
+          "type": "string",
+          "description": "When staff handle callback requests; no guaranteed response time",
+          "minLength": 1
+        },
+        "urgent_callback_behavior": {
+          "type": "string",
+          "description": "Approved urgent staff request behavior; never emergency response guarantee",
+          "minLength": 1
+        },
+        "fallback_phone": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "Approved alternative contact number",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "live_transfer_enabled": {
+          "const": false
+        },
+        "transfer_destination": {
+          "type": "null"
+        },
+        "emergency_guidance": {
+          "type": "string",
+          "description": "Approved emergency guidance; no diagnosis and no delay for callback",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "callbacks_enabled",
+        "callback_availability",
+        "urgent_callback_behavior",
+        "fallback_phone",
+        "live_transfer_enabled",
+        "transfer_destination",
+        "emergency_guidance"
+      ]
+    },
+    "integration": {
+      "type": "object",
+      "description": "Server-only integration metadata. Not inserted into prompts. Template stays unregistered.",
+      "additionalProperties": false,
+      "properties": {
+        "workspace_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "Retell workspace ID obtained from GET /get-api-key-info",
+              "minLength": 1,
+              "pattern": "^org_"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "agent_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "New agent ID recorded after creation",
+              "minLength": 1,
+              "pattern": "^agent_"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "conversation_flow_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "New flow ID recorded after creation",
+              "minLength": 1,
+              "pattern": "^conversation_flow_"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "secret_env_name": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "Supabase Edge secret NAME only; never an API key",
+              "minLength": 1,
+              "pattern": "^RETELL_[A-Z0-9_]+$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "tool_url": {
+          "type": "string",
+          "description": "Shared HTTPS clinic-operations endpoint",
+          "minLength": 1,
+          "pattern": "^https://[^\\s]+/functions/v1/clinic-operations$"
+        },
+        "webhook_url": {
+          "type": "string",
+          "description": "Shared HTTPS retell-webhook endpoint",
+          "minLength": 1,
+          "pattern": "^https://[^\\s]+/functions/v1/retell-webhook$"
+        },
+        "telephony_number": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "Assigned inbound number; never automatically purchased",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "dialing_prefix": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "Backend voice_integrations dialing prefix",
+              "minLength": 1,
+              "pattern": "^\\+[0-9]{1,4}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "local_number_length": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 6,
+          "maximum": 14
+        },
+        "slot_minutes": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 15,
+          "maximum": 180
+        }
+      },
+      "required": [
+        "workspace_id",
+        "agent_id",
+        "conversation_flow_id",
+        "secret_env_name",
+        "tool_url",
+        "webhook_url",
+        "telephony_number",
+        "dialing_prefix",
+        "local_number_length",
+        "slot_minutes"
+      ]
+    }
+  },
+  "required": [
+    "schema_version",
+    "mode",
+    "agent_name",
+    "clinic",
+    "speech",
+    "policies",
+    "knowledge",
+    "escalation",
+    "integration"
+  ],
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apero.example/schemas/master-clinic-v1.json"
+}

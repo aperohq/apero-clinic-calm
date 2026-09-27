@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "mode": "clinic",
+  "agent_name": "LOCAL ONLY Clinic B",
+  "clinic": {
+    "id": "22222222-2222-4222-8222-222222222222",
+    "name": "Clinic B",
+    "localized_name": "العيادة ب",
+    "type": "medical clinic",
+    "timezone": "America/New_York",
+    "phone": "+12025550101",
+    "address": "Local synthetic address",
+    "opening_hours": "Weekdays 09:00–17:00",
+    "location_count": 1
+  },
+  "speech": {
+    "receptionist_name": "Apero",
+    "receptionist_localized_name": "أبيرو",
+    "default_language": "ar-SA",
+    "supported_languages": [
+      "ar-SA",
+      "en-US"
+    ],
+    "dialect": "Clear neutral Arabic, or natural English when the caller prefers it",
+    "voice_id": "custom_voice_0a4555aa35689c81ed65d08b23",
+    "greeting": "مرحباً، معك {{receptionist_name_localized}} من {{clinic_name_localized}}. كيف أقدر أساعدك اليوم؟"
+  },
+  "policies": {
+    "pricing": "Quote only explicitly approved prices; otherwise offer staff confirmation.",
+    "insurance": "Confirm only explicitly approved coverage; otherwise offer staff confirmation."
+  },
+  "knowledge": {
+    "approved_by": "Local test fixture, not a real clinic",
+    "approved_faq": [
+      {
+        "question": "Is parking available?",
+        "answer": "This synthetic fixture has a car park."
+      }
+    ],
+    "retell_knowledge_base_ids": []
+  },
+  "escalation": {
+    "callbacks_enabled": true,
+    "callback_availability": "Staff response hours are not configured; do not promise when they will respond.",
+    "urgent_callback_behavior": "Save an urgent request only after confirming contact details. A saved request does not replace emergency care.",
+    "fallback_phone": null,
+    "live_transfer_enabled": false,
+    "transfer_destination": null,
+    "emergency_guidance": "For a potentially life-threatening situation, advise contacting local emergency services immediately. Do not guess an emergency number."
+  },
+  "integration": {
+    "workspace_id": "org_local_fixture_b",
+    "agent_id": null,
+    "conversation_flow_id": null,
+    "secret_env_name": "RETELL_LOCAL_B",
+    "tool_url": "https://svoybvzvmygszklcmudh.supabase.co/functions/v1/clinic-operations",
+    "webhook_url": "https://svoybvzvmygszklcmudh.supabase.co/functions/v1/retell-webhook",
+    "telephony_number": null,
+    "dialing_prefix": "+1",
+    "local_number_length": 10,
+    "slot_minutes": 45
+  }
+}

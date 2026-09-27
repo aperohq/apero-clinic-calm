@@ -1,6 +1,92 @@
-# Add a clinic voice integration
+# Add a clinic using Apero Master v1
 
-Production is unchanged until the migration and functions are deployed. The dashboard already reads tenant data; this guide covers the voice path.
+Use `retell/master/prepare.py`. The older `retell/build_flow.py` and Dental Zone
+artifacts remain historical/reference tooling; do not use them to instantiate a
+new clinic. [Master architecture and configuration](APERO_MASTER_V1.md) explains
+field ownership and limitations. The exact onboarding schema is
+`retell/master/config.schema.json`.
+
+## Required information
+
+- Existing Apero clinic record (name, phone, timezone), single address/location,
+  active practitioners with canonical services/aliases, saved hours and time off.
+- Clinic type and approved English/Arabic clinic and receptionist names; default
+  language, supported Arabic/English languages, spoken dialect, greeting and voice.
+- Approved public hours, pricing/insurance policy, FAQ answers or a clinic-owned
+  KB, and the person/revision approving these facts. Unknown facts may stay unknown.
+- Callback availability, urgent callback policy, emergency guidance and optional
+  fallback phone. v1 has persisted callbacks/messages/urgent requests; no live transfer.
+- New Retell workspace/key, explicit dialing prefix, local number length, slot
+  duration, and telephony number when assigned. Record new agent/flow IDs after creation.
+
+## Exact process
+
+1. **Create clinic and scheduling data.** Use Apero's existing clinic/staff data
+   model. Save active staff, services, aliases, weekly hours and time off. v1 is one
+   operational location; public opening hours never override staff availability.
+2. **Create the clinic's Retell workspace.** Obtain its API key; verify its exact
+   ID with `GET https://api.retellai.com/get-api-key-info` using that key. The
+   response `org_id` is authoritative and case-sensitive. Never reuse Dental Zone's
+   workspace/key for another clinic. Choose an accessible approved voice.
+3. **Collect configuration.** Copy `retell/master/config/template.json` into a
+   private developer configuration file, set `mode` to `clinic`, supply its existing
+   UUID and fill the schema fields. `prepare.py` refreshes name/phone/timezone from
+   the database. Keep raw API keys out of JSON, SQL, prompts and frontend tables.
+4. **Approve knowledge and telephony.** Enter approved FAQ/policy facts in the
+   config, or create that clinic's approved Retell KB and record its IDs. Empty KB
+   is supported. Obtain/connect telephony separately; the script never buys numbers.
+   Keep inbound public routing disconnected until acceptance testing is complete.
+5. **Prepare and validate locally.** Set `SUPABASE_URL` and
+   `SUPABASE_SERVICE_ROLE_KEY` in the developer environment, then run:
+
+   ```bash
+   python3 retell/master/prepare.py --config /private/clinic.json --output-dir /private/clinic-output
+   ```
+
+   The script validates the existing clinic, active staff/services, saved hours,
+   schema and integration uniqueness. It outputs `flow.json`, `agent.json`, a
+   backend snapshot and `resolved-config.json`. Snapshots contain staff details;
+   keep real-clinic output private. No external write occurs by default.
+6. **Create the separate clinic draft.** Set `RETELL_API_KEY` to the NEW workspace
+   key and rerun with `--create-draft`. This verifies workspace/voice/KB ownership
+   and refuses a key that can access any already integrated clinic agent, even if
+   historical workspace metadata contains a typo. It creates a new flow and agent;
+   it never updates an existing agent or publishes.
+   IDs are recorded immediately in `retell-created.json`; do not rerun creation
+   after a partial failure without inspecting this file. Use the generated flow
+   instead of manually editing 53 nodes or copying Dental Zone's agent IDs.
+7. **Register the trusted integration.** Put that key in Supabase Edge secrets
+   under the unique configured `RETELL_...` name. Review/apply the generated
+   `register-inactive.sql` using write-capable server credentials. It inserts an
+   inactive row and intentionally fails on duplicate clinic/workspace/agent/secret.
+   Do **not** rerun migration 05 to onboard a clinic: it is historical and already
+   applied in this project. The shared deployed backend already supports new rows.
+8. **Test without public telephony.** Inactive mappings reject calls, so enable
+   only the dedicated clinic/test mapping when ready for controlled signed tests.
+   Keep the agent draft and public inbound number disconnected. Run tenant/RPC
+   isolation, signature, checked-slot, stale-slot, booking/reschedule/cancellation,
+   persistence and webhook tests using synthetic patients in an isolated test clinic.
+   Run the 45 mocked Retell text scenarios. Never attach the unbound generic master
+   itself to Dental Zone. If testing fails, disable the new mapping.
+9. **Accept, publish and activate public routing.** Perform controlled audio and
+   phone acceptance for the clinic's approved voice, language, timezone, knowledge
+   and callbacks. After approval, publish that clinic's agent, connect its number
+   and verify the webhook/dashboard. Monitor failures and tenant ownership. The
+   generic master stays an unbound draft for future instantiation.
+
+## Current project state and workspace note
+
+Migration `db/05_voice_integrations.sql` was already applied in September 2026;
+all four deployed voice functions match current repository source. This master
+implementation requires no additional schema migration or redeployment.
+
+The historical Dental Zone seed contains `org_Ybi3pl9fq16wgTf6` (lowercase **l**),
+while the current key's `get-api-key-info` returns `org_Ybi3pI9fq16wgTf6` (uppercase
+**I**). This metadata discrepancy is recorded, not silently changed. Routing uses
+verified agent/key mapping and the signed Dental Zone probes pass. Do not copy
+that historical seed into new clinic configuration; always query the new key's
+actual `org_id`. Correcting historical metadata should be a separate reviewed
+change, since rerunning migration 05 asserts its original seed value.
 
 ## Inventory of Dental Zone bindings
 
@@ -17,26 +103,3 @@ Production is unchanged until the migration and functions are deployed. The dash
 | `src/routes/*.tsx`, `src/components/clinic-pages.tsx`, README | Dental Zone page metadata, examples, static copy | Dashboard scope excluded from this refactor |
 
 The old `book-appointment` and `check-availability` functions now require trusted integration resolution but retain their older scheduling contract. New agents must use `clinic-operations`, which uses persisted checked slots and the atomic appointment RPC. Do not point a new flow at the legacy functions.
-
-## Actual process
-
-1. Create a clinic row, staff with `services` and `aliases`, optional `clinic_service_aliases`, and `staff_availability` and any time off. The clinic row supplies the authoritative timezone; staff rows supply practitioner and service choices. Confirm the clinic's owner and RLS access.
-2. Create a separate Retell workspace for this clinic. Obtain its agent ID and workspace API key. A workspace and its key must be unique per clinic. Keep the key in Supabase Edge Function secrets under a unique `RETELL_...` name. Never enter it in a client table, JSON config or flow definition. Vault was not used because Edge Function environment secrets already provide server-only access; the database stores only the secret's environment variable name.
-3. Create the clinic knowledge base from approved clinic facts and record its ID. Set up telephony and record assigned number separately. Transfer remains disabled until a real transfer mechanism and destination are configured; a configured number alone does not enable a transfer tool.
-4. Fill a clinic JSON file using `retell/config/dental-zone.json` as a schema example. Enter identity, Arabic name, address, hours, languages, KB ID, timezone, tool URL, phone rules and booking duration. Do not copy Dental Zone IDs or its knowledge document. Set `tool_url` to the deployed `clinic-operations` endpoint.
-5. Run `python3 retell/onboard_clinic.py --config path/to/config.json --output /tmp/new-clinic-flow.json` with `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in the developer environment. It reads clinic and staff data, checks timezone, staff and services, and writes a local flow. It does not create or publish resources. For offline validation, use `--fixture retell/config/clinic-b.fixture.json` with the local Clinic B config.
-6. `db/05_voice_integrations.sql` was applied to the live Dental Zone project on 2026-09-18, after `db/04_voice_service_role_grants.sql`. It seeded the existing workspace and agent with the `RETELL_API_KEY` secret name, copied staff aliases, and updated the appointment RPC. Current source for `clinic-operations`, `retell-webhook`, and both legacy endpoints was deployed with shared `_shared` code. Keep Dental Zone's existing Edge secret. The duplicate draft numbered 07 was removed without applying it.
-7. Insert a new `voice_integrations` row with the new clinic ID, distinct workspace/agent/secret names, KB and flow IDs, dialing prefix, number length and slot duration, with `active=false`. Verify secret presence on the server. Apply generated flow in the correct Retell workspace. The generator writes local JSON only; publishing requires a separate owner-reviewed action.
-8. Test signed tool calls, unknown agent rejection, other-workspace signature rejection, clinic-scoped staff and appointment lookup, checked-slot expiry and stale slots, webhook routing and idempotency. Then run live acceptance calls for booking, reschedule, cancellation, corrections, messages and urgent callback.
-9. Only after acceptance, set `active=true` and connect telephony. Monitor webhook failures and tenant-scoped conversations.
-
-## Request boundary
-
-The unverified `call.agent_id` is only a lookup hint. The server loads its single integration row using the service role, obtains the named Edge secret, and verifies the raw signed body. A request claiming another clinic's `clinic_id` is ignored. Unique workspace IDs and secret names prevent duplicate mapping rows; the server also rejects an active integration when another clinic's configured secret has the same actual value. All reads and writes use the resolved clinic ID. Checked-slot tokens contain clinic ID and are signed with that workspace key; the database RPC checks clinic, staff, call, check and slot IDs again. `voice_call_state.call_id` has a global primary key, so the endpoint rejects an existing call ID owned by another clinic before writing.
-
-## Limits requiring owner decisions
-
-- Supply a dedicated Retell workspace, agent, KB, API key and telephony for each new clinic. Dental Zone's workspace ID `org_Ybi3pl9fq16wgTf6` is recorded in the seed and local config. A read-only `GET /get-agent/{agent_id}` with the existing `RETELL_API_KEY` confirms the key can access that agent; the response itself omits the workspace ID.
-- Approve clinic language, phone rules, slot duration, business policies, transfer implementation and destination. The current flow offers persisted callbacks; it does not perform live transfer.
-- The base flow assumes a receptionist and dental appointment language in some node copy. Review generated Clinic B prompts and KB before publishing for a clinic with different clinical services.
-- The legacy scheduling endpoints are retained for compatibility, but they lack the newer checked-slot protocol and should be retired after confirming no old Retell tool still calls them.

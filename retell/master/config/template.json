@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "mode": "template",
+  "agent_name": "Apero Master Clinic Template v1",
+  "clinic": {
+    "id": null,
+    "name": "your clinic",
+    "localized_name": "العيادة",
+    "type": "medical clinic",
+    "timezone": "UTC",
+    "phone": null,
+    "address": null,
+    "opening_hours": null,
+    "location_count": 1
+  },
+  "speech": {
+    "receptionist_name": "Apero",
+    "receptionist_localized_name": "أبيرو",
+    "default_language": "ar-SA",
+    "supported_languages": [
+      "ar-SA",
+      "en-US"
+    ],
+    "dialect": "Clear neutral Arabic, or natural English when the caller prefers it",
+    "voice_id": "custom_voice_0a4555aa35689c81ed65d08b23",
+    "greeting": "مرحباً، معك {{receptionist_name_localized}} من {{clinic_name_localized}}. كيف أقدر أساعدك اليوم؟"
+  },
+  "policies": {
+    "pricing": "Quote only explicitly approved prices; otherwise offer staff confirmation.",
+    "insurance": "Confirm only explicitly approved coverage; otherwise offer staff confirmation."
+  },
+  "knowledge": {
+    "approved_by": null,
+    "approved_faq": [],
+    "retell_knowledge_base_ids": []
+  },
+  "escalation": {
+    "callbacks_enabled": true,
+    "callback_availability": "Staff response hours are not configured; do not promise when they will respond.",
+    "urgent_callback_behavior": "Save an urgent request only after confirming contact details. A saved request does not replace emergency care.",
+    "fallback_phone": null,
+    "live_transfer_enabled": false,
+    "transfer_destination": null,
+    "emergency_guidance": "For a potentially life-threatening situation, advise contacting local emergency services immediately. Do not guess an emergency number."
+  },
+  "integration": {
+    "workspace_id": null,
+    "agent_id": null,
+    "conversation_flow_id": null,
+    "secret_env_name": null,
+    "tool_url": "https://svoybvzvmygszklcmudh.supabase.co/functions/v1/clinic-operations",
+    "webhook_url": "https://svoybvzvmygszklcmudh.supabase.co/functions/v1/retell-webhook",
+    "telephony_number": null,
+    "dialing_prefix": null,
+    "local_number_length": null,
+    "slot_minutes": null
+  }
+}

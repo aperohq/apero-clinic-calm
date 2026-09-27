@@ -1,0 +1,82 @@
+{
+  "clinics": [
+    {
+      "id": "22222222-2222-4222-8222-222222222222",
+      "name": "Clinic B",
+      "timezone": "America/New_York",
+      "phone": "+12025550101"
+    }
+  ],
+  "staff": [
+    {
+      "id": "bbbbbbbb-2222-4222-8222-222222222222",
+      "clinic_id": "22222222-2222-4222-8222-222222222222",
+      "full_name": "Dr. Same Name",
+      "aliases": [
+        "Same Alias"
+      ],
+      "services": [
+        "Consultation",
+        "Vaccination"
+      ],
+      "active": true
+    },
+    {
+      "id": "aaaaaaaa-1111-4111-8111-111111111111",
+      "clinic_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "full_name": "Dr. Same Name",
+      "aliases": [
+        "Same Alias",
+        "ZetaExclusive"
+      ],
+      "services": [
+        "Consultation",
+        "Radiography"
+      ],
+      "active": true
+    }
+  ],
+  "staff_availability": [
+    {
+      "clinic_id": "22222222-2222-4222-8222-222222222222",
+      "staff_id": "bbbbbbbb-2222-4222-8222-222222222222",
+      "day_of_week": 1,
+      "start_time": "09:00:00",
+      "end_time": "17:00:00",
+      "is_available": true
+    },
+    {
+      "clinic_id": "22222222-2222-4222-8222-222222222222",
+      "staff_id": "bbbbbbbb-2222-4222-8222-222222222222",
+      "day_of_week": 2,
+      "start_time": "09:00:00",
+      "end_time": "17:00:00",
+      "is_available": true
+    },
+    {
+      "clinic_id": "22222222-2222-4222-8222-222222222222",
+      "staff_id": "bbbbbbbb-2222-4222-8222-222222222222",
+      "day_of_week": 3,
+      "start_time": "09:00:00",
+      "end_time": "17:00:00",
+      "is_available": true
+    },
+    {
+      "clinic_id": "22222222-2222-4222-8222-222222222222",
+      "staff_id": "bbbbbbbb-2222-4222-8222-222222222222",
+      "day_of_week": 4,
+      "start_time": "09:00:00",
+      "end_time": "17:00:00",
+      "is_available": true
+    },
+    {
+      "clinic_id": "22222222-2222-4222-8222-222222222222",
+      "staff_id": "bbbbbbbb-2222-4222-8222-222222222222",
+      "day_of_week": 5,
+      "start_time": "09:00:00",
+      "end_time": "17:00:00",
+      "is_available": true
+    }
+  ],
+  "voice_integrations": []
+}

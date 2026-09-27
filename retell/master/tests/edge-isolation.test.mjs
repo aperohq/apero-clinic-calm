@@ -1,0 +1,383 @@
+// Execute the real Edge handlers in-process with a local Supabase query adapter.
+// SQL/RLS/RPC constraints are covered separately by tenant_isolation.sql.
+import assert from "node:assert/strict";
+import { createHmac, timingSafeEqual } from "node:crypto";
+import { readFileSync } from "node:fs";
+import test from "node:test";
+import { transpileModule } from "typescript";
+import * as routing from "../../../supabase/functions/_shared/voice-routing.ts";
+import * as security from "../../../supabase/functions/_shared/request-security.ts";
+import * as logic from "../../../supabase/functions/clinic-operations/logic.ts";
+
+const A = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+const B = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+const SA = "aaaaaaaa-1111-4111-8111-111111111111";
+const SB = "bbbbbbbb-2222-4222-8222-222222222222";
+const APPA = "aaaaaaaa-3333-4333-8333-333333333333";
+const APPB = "bbbbbbbb-4444-4444-8444-444444444444";
+const keys = { RETELL_A: "local-only-secret-a", RETELL_B: "local-only-secret-b" };
+const integrations = [
+  {
+    clinic_id: A,
+    agent_id: "agent-a",
+    workspace_id: "workspace-a",
+    secret_env_name: "RETELL_A",
+    active: true,
+    dialing_prefix: "+1",
+    local_number_length: 10,
+    slot_minutes: 45,
+  },
+  {
+    clinic_id: B,
+    agent_id: "agent-b",
+    workspace_id: "workspace-b",
+    secret_env_name: "RETELL_B",
+    active: true,
+    dialing_prefix: "+1",
+    local_number_length: 10,
+    slot_minutes: 45,
+  },
+];
+function signature(body, key, time = Date.now()) {
+  return `v=${time},d=${createHmac("sha256", key)
+    .update(body + time)
+    .digest("hex")}`;
+}
+const Retell = {
+  verify: async (raw, key, sig) => {
+    const match = /^v=(\d+),d=([0-9a-f]{64})$/.exec(sig);
+    if (!match || Math.abs(Date.now() - Number(match[1])) > 300000) return false;
+    return timingSafeEqual(Buffer.from(sig), Buffer.from(signature(raw, key, Number(match[1]))));
+  },
+};
+
+function compile(path, bindings, extra = "") {
+  const source = readFileSync(new URL(path, import.meta.url), "utf8")
+    .replace(/^import[\s\S]*?;\s*$/gm, "")
+    .replace("export default", "const handler =");
+  const js = transpileModule(source + extra, { compilerOptions: { target: 99, module: 99 } })
+    .outputText.replace(/export\s+(?=(async )?function)/g, "")
+    .replace(/export \{[^}]*\};/g, "");
+  return new Function(...Object.keys(bindings), js)(...Object.values(bindings));
+}
+
+class Database {
+  constructor() {
+    this.tables = {
+      voice_integrations: structuredClone(integrations),
+      staff: [
+        {
+          id: SA,
+          clinic_id: A,
+          full_name: "Dr. Same Name",
+          services: ["Consultation", "Radiography"],
+          aliases: ["Same Alias", "ZetaExclusive"],
+          active: true,
+        },
+        {
+          id: SB,
+          clinic_id: B,
+          full_name: "Dr. Same Name",
+          services: ["Consultation", "Vaccination"],
+          aliases: ["Same Alias"],
+          active: true,
+        },
+      ],
+      clinic_service_aliases: [],
+      voice_call_state: [],
+      voice_checked_slots: [],
+      voice_operations: [],
+      voice_requests: [],
+      conversations: [],
+      clients: [
+        { id: "patient-a", clinic_id: A, full_name: "Alex Test", phone: "+12025550101" },
+        { id: "patient-b", clinic_id: B, full_name: "Alex Test", phone: "+12025550101" },
+      ],
+      appointments: [
+        {
+          id: APPA,
+          clinic_id: A,
+          client_id: "patient-a",
+          staff_id: SA,
+          service: "Radiography",
+          start_time: "2099-01-01T10:00:00Z",
+          status: "Booked",
+        },
+        {
+          id: APPB,
+          clinic_id: B,
+          client_id: "patient-b",
+          staff_id: SB,
+          service: "Vaccination",
+          start_time: "2099-01-01T10:00:00Z",
+          status: "Booked",
+        },
+      ],
+    };
+    this.rpcCalls = [];
+  }
+  from(table) {
+    const db = this;
+    let filters = [],
+      single = false,
+      mutation,
+      limit = Infinity;
+    const q = {
+      select: () => q,
+      eq: (k, v) => {
+        filters.push((r) => r[k] === v);
+        return q;
+      },
+      neq: (k, v) => {
+        filters.push((r) => r[k] !== v);
+        return q;
+      },
+      gte: (k, v) => {
+        filters.push((r) => r[k] >= v);
+        return q;
+      },
+      ilike: (k, v) => {
+        filters.push((r) => r[k].toLowerCase() === v.toLowerCase());
+        return q;
+      },
+      in: (k, v) => {
+        filters.push((r) => v.includes(r[k]));
+        return q;
+      },
+      order: () => q,
+      limit: (n) => {
+        limit = n;
+        return q;
+      },
+      maybeSingle: () => {
+        single = true;
+        return q;
+      },
+      single: () => {
+        single = true;
+        return q;
+      },
+      upsert: (row, options) => {
+        mutation = { row, field: options?.onConflict };
+        return q;
+      },
+      insert: (row) => {
+        mutation = { row };
+        return q;
+      },
+      then: (yes, no) =>
+        Promise.resolve()
+          .then(() => {
+            if (mutation) {
+              const row = structuredClone(mutation.row);
+              const old =
+                mutation.field &&
+                db.tables[table].find((r) => r[mutation.field] === row[mutation.field]);
+              if (old) Object.assign(old, row);
+              else db.tables[table].push(row);
+            }
+            const rows = db.tables[table].filter((r) => filters.every((f) => f(r))).slice(0, limit);
+            return { data: structuredClone(single ? (rows[0] ?? null) : rows), error: null };
+          })
+          .then(yes, no),
+    };
+    return q;
+  }
+  async rpc(name, args) {
+    this.rpcCalls.push({ name, args });
+    // Deliberately never implement appointment mutation in this adapter.
+    return { data: { success: false, error_type: "local_rpc_not_executed" }, error: null };
+  }
+}
+
+function environment() {
+  const db = new Database();
+  const localKeys = { ...keys };
+  const resolveVoiceIntegration = compile(
+    "../../../supabase/functions/_shared/voice-integration.ts",
+    {
+      ...routing,
+      Retell,
+      Deno: { env: { get: (k) => localKeys[k] } },
+    },
+    "\nreturn resolveVoiceIntegration;",
+  );
+  const common = {
+    ...security,
+    ...logic,
+    resolveVoiceIntegration,
+    normalizePhone: logic.phone,
+    withSupabase: (_options, fn) => (req) => fn(req, { supabaseAdmin: db }),
+  };
+  const operations = compile(
+    "../../../supabase/functions/clinic-operations/index.ts",
+    common,
+    "\nreturn {handler, readToken, tokenFor};",
+  );
+  const webhook = compile(
+    "../../../supabase/functions/retell-webhook/index.ts",
+    common,
+    "\nreturn handler;",
+  );
+  async function send(
+    handler,
+    agent,
+    args,
+    additions = {},
+    key = keys[agent === "agent-a" ? "RETELL_A" : "RETELL_B"],
+  ) {
+    const raw = JSON.stringify({
+      call: { agent_id: agent, call_id: "local-" + agent },
+      args,
+      ...additions,
+    });
+    return handler.fetch(
+      new Request("https://local.test", {
+        method: "POST",
+        body: raw,
+        headers: { "x-retell-signature": signature(raw, key) },
+      }),
+    );
+  }
+  return { db, localKeys, operations, webhook, send };
+}
+
+test("real handler scopes same-name practitioners, aliases and services to signed clinic", async () => {
+  const { operations, send } = environment();
+  for (const [agent, expected, spoof] of [
+    ["agent-a", SA, B],
+    ["agent-b", SB, A],
+  ]) {
+    const response = await send(
+      operations.handler,
+      agent,
+      { action: "resolve", service_name: "Consultation", clinic_id: spoof },
+      { clinic_id: spoof },
+    );
+    assert.equal(response.status, 200);
+    assert.deepEqual(
+      (await response.json()).qualified_practitioners.map((p) => p.id),
+      [expected],
+    );
+  }
+  const foreignService = await send(operations.handler, "agent-b", {
+    action: "resolve",
+    service_name: "Radiography",
+  });
+  assert.equal((await foreignService.json()).success, false);
+  const foreignAlias = await send(operations.handler, "agent-b", {
+    action: "resolve",
+    service_name: "Consultation",
+    practitioner_name: "ZetaExclusive",
+  });
+  assert.equal((await foreignAlias.json()).error_type, "practitioner_not_found");
+  const foreignStaff = await send(operations.handler, "agent-b", {
+    action: "resolve",
+    service_name: "Consultation",
+    practitioner_id: SA,
+  });
+  assert.equal((await foreignStaff.json()).error_type, "practitioner_not_found");
+});
+
+test("appointment lookup and mutation RPC arguments ignore claimed clinic", async () => {
+  const { operations, send, db } = environment();
+  for (const [agent, expected, spoof] of [
+    ["agent-a", APPA, B],
+    ["agent-b", APPB, A],
+  ]) {
+    const r = await send(operations.handler, agent, {
+      action: "lookup",
+      client_name: "Alex Test",
+      client_phone: "+12025550101",
+      clinic_id: spoof,
+    });
+    assert.deepEqual(
+      (await r.json()).appointments.map((a) => a.id),
+      [expected],
+    );
+  }
+  await send(operations.handler, "agent-b", {
+    action: "cancel",
+    appointment_id: APPA,
+    client_name: "Alex Test",
+    client_phone: "+12025550101",
+    confirmed: true,
+    clinic_id: A,
+  });
+  assert.equal(db.rpcCalls[0].args.p_clinic_id, B);
+});
+
+test("actual checked-slot verifier rejects another clinic, key, expired token and tampering", async () => {
+  const { operations } = environment();
+  const start = { toUTC: () => ({ toISO: () => "2099-01-01T10:00:00Z" }) };
+  const token = await operations.tokenFor(
+    A,
+    { id: SA },
+    "Consultation",
+    start,
+    keys.RETELL_A,
+    "call-a",
+    "check-a",
+    "slot-a",
+  );
+  assert.ok(await operations.readToken(token, keys.RETELL_A, A));
+  assert.equal(await operations.readToken(token, keys.RETELL_A, B), null);
+  assert.equal(await operations.readToken(token, keys.RETELL_B, A), null);
+  assert.equal(await operations.readToken(token + "x", keys.RETELL_A, A), null);
+  const expired = Buffer.from(JSON.stringify({ c: A, e: Date.now() - 1 })).toString("base64url");
+  const mac = createHmac("sha256", keys.RETELL_A).update(expired).digest("base64url");
+  assert.equal(await operations.readToken(expired + "." + mac, keys.RETELL_A, A), null);
+});
+
+test("book and reschedule reject foreign tokens before any mutation RPC", async () => {
+  const { operations, send, db } = environment();
+  const start = { toUTC: () => ({ toISO: () => "2099-01-01T10:00:00Z" }) };
+  const token = await operations.tokenFor(
+    A,
+    { id: SA },
+    "Consultation",
+    start,
+    keys.RETELL_A,
+    "local-agent-a",
+    "check-a",
+    "slot-a",
+  );
+  for (const action of ["book", "reschedule"]) {
+    const r = await send(operations.handler, "agent-b", {
+      action,
+      slot_id: token,
+      clinic_id: A,
+      appointment_id: APPA,
+    });
+    assert.equal((await r.json()).error_type, "stale_or_invalid_slot");
+  }
+  assert.equal(db.rpcCalls.length, 0);
+});
+
+test("unknown integration, foreign signature, shared secret and missing key fail closed", async () => {
+  const { operations, send, localKeys } = environment();
+  assert.equal((await send(operations.handler, "unknown", {})).status, 401);
+  assert.equal((await send(operations.handler, "agent-b", {}, {}, keys.RETELL_A)).status, 401);
+  localKeys.RETELL_B = localKeys.RETELL_A;
+  assert.equal((await send(operations.handler, "agent-a", {})).status, 401);
+  delete localKeys.RETELL_A;
+  assert.equal((await send(operations.handler, "agent-a", {})).status, 401);
+});
+
+test("webhook scopes patient/appointment links and rejects reassigning another clinic call", async () => {
+  const { webhook, send, db } = environment();
+  const call = {
+    agent_id: "agent-b",
+    call_id: "webhook-b",
+    from_number: "+12025550101",
+    collected_dynamic_variables: { appointment_id: APPA },
+    call_analysis: { call_successful: true },
+  };
+  const r = await send(webhook, "agent-b", {}, { event: "call_analyzed", clinic_id: A, call });
+  assert.equal(r.status, 204);
+  assert.equal(db.tables.conversations[0].clinic_id, B);
+  assert.equal(db.tables.conversations[0].client_id, "patient-b");
+  assert.equal(db.tables.conversations[0].appointment_id ?? null, null);
+  db.tables.conversations[0].clinic_id = A;
+  assert.equal((await send(webhook, "agent-b", {}, { event: "call_analyzed", call })).status, 403);
+});

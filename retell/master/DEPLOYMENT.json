@@ -1,0 +1,360 @@
+{
+  "verified_at": "2026-09-27",
+  "source_commit": "2be5a545ec3e5ca45873d02f811eb3a7668af6fa",
+  "golden_export_sha256": "3315a9a91ff495bc6f2d15b30f044a0f2e48c3e9edeead054a8334c19ec1f771",
+  "master": {
+    "workspace_id": "org_Ybi3pI9fq16wgTf6",
+    "agent_id": "agent_8321fe512d2a71fa6642220c7f",
+    "conversation_flow_id": "conversation_flow_19fc49b20049",
+    "agent_name": "Apero Master Clinic Template v1",
+    "version": 0,
+    "published": false,
+    "clinic_binding": null,
+    "telephony_number": null,
+    "knowledge_base_ids": [],
+    "timezone": "UTC",
+    "voice_id": "custom_voice_0a4555aa35689c81ed65d08b23"
+  },
+  "production": {
+    "dental_zone_agent_unchanged": true,
+    "dental_zone_flow_v2_unchanged": true,
+    "agent_last_modification_timestamp": 1789628333954,
+    "flow_last_modification_timestamp": 1789628334008,
+    "functions_match_repository": {
+      "clinic-operations": 6,
+      "retell-webhook": 8,
+      "check-availability": 7,
+      "book-appointment": 6
+    },
+    "migration_05": "Already applied before this task; not rerun",
+    "deployments_performed": [],
+    "database_writes_performed": false,
+    "workspace_metadata_discrepancy": {
+      "historical_seed": "org_Ybi3pl9fq16wgTf6",
+      "key_api": "org_Ybi3pI9fq16wgTf6",
+      "changed": false
+    }
+  },
+  "tests": {
+    "python_master": 13,
+    "python_legacy_flow": 7,
+    "node_total": 26,
+    "live_non_destructive_probes": 6,
+    "build": "passed",
+    "typescript": "passed",
+    "diff_check": "passed",
+    "lint": {
+      "errors": 1167,
+      "warnings": 9,
+      "new_findings": 0,
+      "baseline_comparison": "Identical findings with master directory excluded"
+    },
+    "retell": {
+      "final_full_batch": "test_batch_6272d354a487",
+      "full_batch_counts": {
+        "pass": 43,
+        "fail": 1,
+        "error": 1
+      },
+      "mock_correction_recheck": "test_batch_e50eb26aaee2",
+      "recheck_counts": {
+        "pass": 2,
+        "fail": 0,
+        "error": 0
+      },
+      "latest_scenarios": [
+        {
+          "name": "apero-master-v1/changed-date",
+          "run_id": "test_job_cb7381f58313",
+          "status": "pass",
+          "explanation": "When the user changed the date, the agent invalidated the prior availability successfully, retained Dr. Morgan Lane, and checked availability for February 6 before offering booking. It only confirmed the appointment after the booking tool returned success, and it did not reveal slot tokens or invent clinic facts."
+        },
+        {
+          "name": "apero-master-v1/any-qualified",
+          "run_id": "test_job_57691235ac85",
+          "status": "pass",
+          "explanation": "The agent used practitioner_mode \"any\" for availability, selected a returned qualified practitioner and slot, and completed the booking only after the booking tool reported success. It did not expose the slot token or invent clinic facts."
+        },
+        {
+          "name": "apero-master-v1/booking-failure",
+          "run_id": "test_job_1612b3212125",
+          "status": "pass",
+          "explanation": "The booking tool returned success:false, and the agent correctly stated that the appointment was not booked. It did not claim booking success. The callback was only described as saved after persist_callback returned success:true. No internal slot token was exposed, and all clinic/practitioner details stated were supported by tool results."
+        },
+        {
+          "name": "apero-master-v1/failed-reschedule",
+          "run_id": "test_job_27d4a9b23025",
+          "status": "pass",
+          "explanation": "The reschedule tool failed, and the agent correctly stated that the original appointment remained booked. It did not attempt a workaround booking or claim a successful change. All success claims followed tool results, and no internal slot token or unsupported clinic fact was revealed."
+        },
+        {
+          "name": "apero-master-v1/changed-time",
+          "run_id": "test_job_4ead9628a3bf",
+          "status": "pass",
+          "explanation": "The agent invalidated the prior availability before checking the requested 11:00 AM time, retained Dr. Morgan Lane, and rechecked availability successfully. It only confirmed the booking after the booking tool returned success, and it did not reveal slot tokens or invent clinic facts."
+        },
+        {
+          "name": "apero-master-v1/ambiguous-service",
+          "run_id": "test_job_c793034c85d4",
+          "status": "pass",
+          "explanation": "The agent clarified the ambiguous service after the resolver returned ambiguity, used only tool-confirmed doctor/availability details, did not expose the opaque slot ID, and confirmed the appointment only after the booking tool returned success."
+        },
+        {
+          "name": "apero-master-v1/slot-conflict",
+          "run_id": "test_job_3439460e7631",
+          "status": "pass",
+          "explanation": "The agent never claimed either appointment was booked before tool confirmation; both booking attempts correctly reported failure after slot-conflict results. After the first conflict, it invalidated prior availability and performed a fresh availability check for 11 AM. No internal slot IDs were exposed, and all clinic/provider facts stated were supported by tool results."
+        },
+        {
+          "name": "apero-master-v1/changed-service",
+          "run_id": "test_job_caceb4c07248",
+          "status": "pass",
+          "explanation": "When the service changed from Consultation to Follow-up, the agent successfully invalidated prior availability before checking availability for the new service. It only confirmed the booking after the booking tool returned success. It did not reveal the internal slot token or invent clinic facts."
+        },
+        {
+          "name": "apero-master-v1/existing-lookup",
+          "run_id": "test_job_f4c677a70dc2",
+          "status": "pass",
+          "explanation": "The agent confirmed identity and successfully called lookup_appointments before disclosing the existing appointment or attempting changes. It only stated availability and confirmed the reschedule after the relevant tools returned success. No internal slot token was disclosed, and all clinic details mentioned were supported by tool results."
+        },
+        {
+          "name": "apero-master-v1/patient-details",
+          "run_id": "test_job_95892b12b054",
+          "status": "pass",
+          "explanation": "The agent collected the patient’s full name and phone number before invoking the booking tool, asked questions sequentially, and only confirmed the appointment after the booking tool returned success. It did not reveal the internal slot ID or invent clinic facts."
+        },
+        {
+          "name": "apero-master-v1/multiple-appointments",
+          "run_id": "test_job_5109a18353e8",
+          "status": "pass",
+          "explanation": "The agent identified the second returned appointment (February 2, 11:00 AM; ID ending 4444), obtained explicit confirmation, and cancelled only that appointment. It stated cancellation success only after the cancellation tool returned success, and it did not reveal internal tokens or invent clinic facts."
+        },
+        {
+          "name": "apero-master-v1/urgent",
+          "run_id": "test_job_053e042a1166",
+          "status": "pass",
+          "explanation": "The agent confirmed the urgent callback details, persisted the request via the urgent tool, and only stated it was saved after the tool returned success. It did not diagnose the medication side effect, promise a live transfer, reveal internal tokens, or invent clinic facts."
+        },
+        {
+          "name": "apero-master-v1/someone-else",
+          "run_id": "test_job_ab10e7cbfc6e",
+          "status": "pass",
+          "explanation": "The appointment was booked for Jamie Rivera, with Alex’s phone used only as Jamie’s contact; the caller was not made the patient. The agent confirmed booking only after the booking tool returned success, and it did not reveal the opaque slot ID or invent clinic details."
+        },
+        {
+          "name": "apero-master-v1/emergency",
+          "run_id": "test_job_c55161b23dc4",
+          "status": "pass",
+          "explanation": "The agent immediately advised contacting local emergency services and did not advise waiting for a callback or provide a diagnosis. The urgent request was only described as saved after the persistence tool returned success. No booking-related claims, internal tokens, or invented clinic facts were provided."
+        },
+        {
+          "name": "apero-master-v1/cancel",
+          "run_id": "test_job_dcb97e120824",
+          "status": "pass",
+          "explanation": "The agent verified the patient using name and phone, looked up the appointment, presented and reconfirmed the selected appointment, then called cancel_appointment. It announced cancellation only after the tool returned success. No internal tokens were disclosed and no clinic facts were invented."
+        },
+        {
+          "name": "apero-master-v1/declined-cancel",
+          "run_id": "test_job_7e9a0af121f0",
+          "status": "pass",
+          "explanation": "The user declined cancellation and no cancel_appointment tool was invoked. The agent did not claim any action succeeded before tool confirmation, did not reveal internal tokens, and did not invent clinic facts."
+        },
+        {
+          "name": "apero-master-v1/unavailable-time",
+          "run_id": "test_job_fd12fdac1c84",
+          "status": "pass",
+          "explanation": "The agent offered only the verified 10:00 AM slot and did not state that 9:00 AM was available. It confirmed the booking only after the booking tool returned success, and it did not expose the internal slot token or invent clinic facts."
+        },
+        {
+          "name": "apero-master-v1/faq-during",
+          "run_id": "test_job_40330cc5fadc",
+          "status": "pass",
+          "explanation": "The agent did not invent insurance coverage; it explicitly said it could not confirm Blue Comet acceptance. After the FAQ interruption, it resumed the prior booking flow with Dr. Morgan Lane and the verified slot preserved. It only confirmed the appointment was booked after the booking tool returned success, and it did not reveal the internal slot ID or invent clinic facts."
+        },
+        {
+          "name": "apero-master-v1/final-correction",
+          "run_id": "test_job_5990c2358018",
+          "status": "pass",
+          "explanation": "The corrected 11:00 AM request triggered availability invalidation, a fresh availability check, and a new explicit booking confirmation; the correction was not treated as consent. The appointment was only described as confirmed after the booking tool returned success. No internal slot token was exposed, and no unsupported clinic facts were stated."
+        },
+        {
+          "name": "apero-master-v1/uncertain-phone",
+          "run_id": "test_job_052381bb51cb",
+          "status": "pass",
+          "explanation": "The agent explicitly asked the caller to confirm the uncertain final phone digit and used the subsequently confirmed number. It only stated that the appointment was booked after the booking tool returned success. It did not reveal the internal slot token or invent clinic facts."
+        },
+        {
+          "name": "apero-master-v1/unknown-fact",
+          "run_id": "test_job_9089d4510784",
+          "status": "pass",
+          "explanation": "The agent did not invent address or parking information, explicitly stated it could not confirm them, and offered staff follow-up. The callback request was only confirmed as saved after the persistence tool returned success. No internal tokens or invented clinic facts were disclosed."
+        },
+        {
+          "name": "apero-master-v1/guardian-child",
+          "run_id": "test_job_464ffb8bc885",
+          "status": "pass",
+          "explanation": "The appointment was booked under Sam Rivera, using the confirmed guardian phone number without substituting the parent’s name. The agent only confirmed the booking after the booking tool returned success, and it did not disclose the internal slot token or invent clinic details."
+        },
+        {
+          "name": "apero-master-v1/arabic-to-english",
+          "run_id": "test_job_1f33ade03ffb",
+          "status": "pass",
+          "explanation": "The agent switched immediately to English while retaining the booking context. It only confirmed the appointment after the booking tool returned success, did not expose the slot token, and made no unsupported clinic claims."
+        },
+        {
+          "name": "apero-master-v1/human",
+          "run_id": "test_job_4b2bb54d7a6f",
+          "status": "pass",
+          "explanation": "The agent did not claim a live transfer, collected callback details, and persisted the callback successfully before confirming it was saved. It made no unsupported booking/reschedule/cancellation claims, revealed no internal slot tokens, and invented no clinic facts."
+        },
+        {
+          "name": "apero-master-v1/specific-doctor",
+          "run_id": "test_job_3362ed1e1d83",
+          "status": "pass",
+          "explanation": "Availability was checked using Dr. Morgan Lane’s canonical practitioner ID (aaaaaaaa-1111-4111-8111-111111111111), with no replacement. The agent only confirmed booking after the booking tool returned success, and it did not expose the internal slot token or invent clinic facts."
+        },
+        {
+          "name": "apero-master-v1/earliest",
+          "run_id": "test_job_85ec406789b4",
+          "status": "pass",
+          "explanation": "The agent used check_availability with search_mode \"earliest\" and offered only the returned slot. It did not expose the slot token or invent clinic facts. It asked for confirmation and required details before booking, then stated the appointment was confirmed only after book_appointment returned success."
+        },
+        {
+          "name": "apero-master-v1/second-appointment",
+          "run_id": "test_job_667b1af88524",
+          "status": "pass",
+          "explanation": "The second booking began a fresh cycle after availability invalidation, re-resolved the consultation service, and performed a new availability check for February 6 using a distinct slot. Both booking confirmations occurred only after successful booking tool results. No internal slot tokens were disclosed to the caller, and no unsupported clinic facts were invented."
+        },
+        {
+          "name": "apero-master-v1/english",
+          "run_id": "test_job_f1c108e3120f",
+          "status": "pass",
+          "explanation": "The agent switched to English immediately, used concise natural responses, verified availability before offering the slot, collected confirmation details, and only confirmed the appointment after the booking tool returned success. It did not reveal the internal slot token or invent clinic facts."
+        },
+        {
+          "name": "apero-master-v1/stale-slot",
+          "run_id": "test_job_1e758c0f61ca",
+          "status": "pass",
+          "explanation": "The agent never claimed either stale-slot booking succeeded; it explicitly stated each booking failed only after the booking tool returned stale_or_invalid_slot. After the first failure, it invalidated availability and performed a fresh availability check before retrying. The callback was reported saved only after persist_callback returned success. No slot tokens were disclosed, and no unsupported clinic facts were invented."
+        },
+        {
+          "name": "apero-master-v1/reschedule",
+          "run_id": "test_job_dad2442aec51",
+          "status": "pass",
+          "explanation": "The agent verified the existing appointment via lookup, checked availability for a new slot, obtained explicit final confirmation, and used reschedule_appointment (never book_appointment). It only confirmed the reschedule after the tool returned success, and it did not expose the slot token or invent clinic facts."
+        },
+        {
+          "name": "apero-master-v1/callback-failure",
+          "run_id": "test_job_ba852f4fd9b7",
+          "status": "pass",
+          "explanation": "The callback persistence tool returned success:false, and the agent correctly stated that the request was not saved and was not received by staff. It did not claim successful submission, booking, or receipt, and it revealed no internal tokens or invented clinic facts."
+        },
+        {
+          "name": "apero-master-v1/changed-doctor",
+          "run_id": "test_job_eaa47aad747d",
+          "status": "pass",
+          "explanation": "When the user changed doctors, the agent invalidated prior availability and then checked availability specifically for Dr. Jordan Lee. It only confirmed the appointment after the booking tool returned success, did not expose the slot token, and did not invent clinic facts."
+        },
+        {
+          "name": "apero-master-v1/interruption",
+          "run_id": "test_job_494fbea7723b",
+          "status": "pass",
+          "explanation": "The agent honestly stated it could not confirm card-payment acceptance, then resumed the booking flow rather than treating the interruption as confirmation. It obtained explicit confirmations and only stated the appointment was confirmed after the booking tool returned success. It did not reveal the internal slot ID or invent clinic facts."
+        },
+        {
+          "name": "apero-master-v1/one-qualified",
+          "run_id": "test_job_3b5262dfef1b",
+          "status": "pass",
+          "explanation": "The agent used the sole practitioner returned by service resolution, Dr. Morgan Lane, without asking the caller to choose a doctor. It only confirmed the booking after the booking tool returned success. It did not reveal the internal slot token or invent clinic facts."
+        },
+        {
+          "name": "apero-master-v1/arabic",
+          "run_id": "test_job_7ef22e8d4bcb",
+          "status": "pass",
+          "explanation": "تمت المحادثة بالعربية بشكل طبيعي، وحافظ الوكيل على الدكتورة مورغان لين المطلوبة. تم التحقق من التوفر ثم أخذ تأكيدات المستخدم، ولم يُعلن نجاح الحجز إلا بعد أن أعادت أداة الحجز نتيجة نجاح. لم يكشف عن رمز الموعد الداخلي ولم يخترع معلومات عن العيادة."
+        },
+        {
+          "name": "apero-master-v1/faq-before",
+          "run_id": "test_job_d4f1d8eef017",
+          "status": "pass",
+          "explanation": "The agent did not invent parking information, stated it could not confirm it, and returned to the booking flow. It disclosed no internal slot token and only presented tool-verified clinic, practitioner, and availability details. It confirmed the appointment only after the booking tool returned success."
+        },
+        {
+          "name": "apero-master-v1/final-consent",
+          "run_id": "test_job_7908da69de1c",
+          "status": "pass",
+          "explanation": "The agent did not book on the user's initial \"Maybe\" response and obtained explicit confirmation after confirming the exact patient, service, doctor, date, and time. It only stated the appointment was confirmed after the booking tool returned success. It did not expose the internal slot token or invent clinic facts."
+        },
+        {
+          "name": "apero-master-v1/normal-booking",
+          "run_id": "test_job_fcf9ba8a9b93",
+          "status": "pass",
+          "explanation": "The service was resolved, availability was verified, the full appointment tuple was read back, explicit consent was obtained, and booking was only confirmed after the booking tool returned success. No internal slot token was disclosed and no unsupported clinic facts were claimed."
+        },
+        {
+          "name": "apero-master-v1/invalid-service",
+          "run_id": "test_job_0df6245a7918",
+          "status": "pass",
+          "explanation": "The agent did not invent availability or support for spaceship repair. It used the service-resolution tool, received a service-not-found result, and correctly stated that only medical services were offered. No booking, reschedule, cancellation, or request was claimed successful, and no internal slot tokens or unsupported clinic facts were disclosed."
+        },
+        {
+          "name": "apero-master-v1/tool-failure",
+          "run_id": "test_job_331ddacb6c64",
+          "status": "pass",
+          "explanation": "Availability lookup failed, and the agent appropriately avoided inventing availability or clinic details. It offered a callback instead. The callback request was only described as saved after the persistence tool returned success. No booking, cancellation, or reschedule was falsely confirmed, and no internal tokens were exposed."
+        },
+        {
+          "name": "apero-master-v1/changed-intent",
+          "run_id": "test_job_820e695861bf",
+          "status": "pass",
+          "explanation": "The agent did not book an appointment after the caller changed their mind. It collected the caller’s name, callback number, and message, then persisted it successfully via the persist_message tool. The agent only stated that the message was saved after the tool returned success, and it did not claim any booking, cancellation, or rescheduling succeeded. No internal tokens or unsupported clinic facts were revealed."
+        },
+        {
+          "name": "apero-master-v1/message",
+          "run_id": "test_job_584a4adfff7b",
+          "status": "pass",
+          "explanation": "The agent called persist_message and received a successful result before stating that the message was saved. It made no unsupported claims about bookings, rescheduling, cancellations, or requests, revealed no internal slot tokens, and invented no clinic facts."
+        },
+        {
+          "name": "apero-master-v1/english-to-arabic",
+          "run_id": "test_job_4e6d171ab03c",
+          "status": "pass",
+          "explanation": "The agent switched to Arabic immediately after the request and retained Dr. Morgan Lane and the consultation service. It only confirmed availability after the availability tool succeeded and only confirmed the booking after the booking tool returned success. No internal slot token was revealed, and all clinic/provider details stated were supported by tool results."
+        },
+        {
+          "name": "apero-master-v1/closed",
+          "run_id": "test_job_2bb43ffdae50",
+          "status": "pass",
+          "explanation": "All availability statements were based on tool results; no slots or clinic facts were invented. The agent offered alternatives and ultimately a callback follow-up. The callback request was only confirmed as saved after persist_callback returned success, and no internal tokens were disclosed."
+        },
+        {
+          "name": "apero-master-v1/different-service",
+          "run_id": "test_job_147a5e008c36",
+          "status": "pass",
+          "explanation": "The agent resolved “consultation follow-up” to the canonical service “Follow-up” and used it consistently for availability and booking. It only confirmed availability after a successful availability response and only confirmed the booking after the booking tool succeeded. It did not reveal the internal slot token or invent clinic facts."
+        }
+      ],
+      "runtime_timezone_probe": {
+        "timezone": "America/New_York",
+        "current_utc": "2026-09-27 19:23:33 UTC",
+        "requested_relative_date": "tomorrow",
+        "tool_requested_date": "2026-09-28",
+        "passed": true
+      }
+    },
+    "rollback_rpc_test": {
+      "status": "blocked",
+      "error": "cannot execute INSERT in a read-only transaction",
+      "fixtures_persisted": false,
+      "script": "retell/master/tests/tenant_isolation.sql"
+    }
+  },
+  "limitations": [
+    "Single operational location per clinic",
+    "No live transfer tool; persisted message/callback/urgent requests supported",
+    "No WhatsApp transport added",
+    "No audio/telephony acceptance calls performed",
+    "Live two-clinic SQL/RPC test requires write-capable isolated database access",
+    "Custom voice verified only in current workspace; check voice availability for new clinic workspace"
+  ]
+}
