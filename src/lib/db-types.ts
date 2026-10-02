@@ -77,6 +77,10 @@ export type AperoDatabase = {
     };
     Views: Record<string, never>;
     Functions: {
+      set_clinic_member_role: {
+        Args: { p_profile_id: string; p_role: ProfileRole };
+        Returns: string;
+      };
       create_staff_with_schedule: {
         Args: { p_full_name: string; p_specialty: string; p_phone: string; p_email: string; p_services: string[]; p_schedule: Json };
         Returns: string;

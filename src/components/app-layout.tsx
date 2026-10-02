@@ -4,6 +4,7 @@ import { CalendarDays, Headphones, Home, Inbox, LogOut, Menu, MessageSquare, Pan
 import { AperoMark, ClinicBadge } from "@/components/apero-brand";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
+import { canAccess } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -24,11 +25,7 @@ function Nav({ compact, onSelect }: { compact?: boolean; onSelect?: () => void }
   const navigate = useNavigate();
   const { role, signOut } = useAuth();
   const [signingOut, setSigningOut] = useState(false);
-  const allowed = (item: NavItem) => {
-    if (item.to === "/staff") return role !== "staff";
-    if (item.to === "/requests") return role === "owner" || role === "manager";
-    return true;
-  };
+  const allowed = (item: NavItem) => canAccess(role, item.to);
   const row = (item: NavItem) => {
     const active = path === item.to || (item.to !== "/home" && path.startsWith(item.to + "/"));
     return <Link key={item.to} to={item.to} onClick={onSelect} aria-current={active ? "page" : undefined} title={compact ? item.label : undefined} className={cn("flex h-10 items-center gap-3 rounded-[10px] px-3 text-sm font-medium transition-colors", active ? "bg-nav-active text-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground", compact && "justify-center px-0")}><item.icon className="size-4" />{!compact && <span>{item.label}</span>}{active && !compact && <span className="ml-auto size-1.5 rounded-full bg-success" />}</Link>;

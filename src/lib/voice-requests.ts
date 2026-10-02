@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
+import { hasPermission } from "@/lib/permissions";
 import { db } from "@/lib/db";
 import type { VoiceRequestRow } from "@/lib/db-types";
 
@@ -10,9 +11,8 @@ export type VoiceRequestDisplay = Pick<
 >;
 
 export function useVoiceRequests() {
-  const { profile } = useAuth();
-  const clinicId = profile?.clinic_id;
-  const authorized = profile?.role === "owner" || profile?.role === "manager";
+  const { profile, clinicId } = useAuth();
+  const authorized = hasPermission(profile?.role ?? null, "requests.manage");
   return useQuery({
     queryKey: ["voice_requests", clinicId],
     enabled: !!clinicId && authorized,
@@ -38,12 +38,11 @@ export function useVoiceRequests() {
 }
 
 export function useCloseVoiceRequest() {
-  const { profile } = useAuth();
+  const { profile, clinicId } = useAuth();
   const queryClient = useQueryClient();
-  const clinicId = profile?.clinic_id;
   return useMutation({
     mutationFn: async (id: string) => {
-      if (!clinicId || !["owner", "manager"].includes(profile?.role ?? ""))
+      if (!clinicId || !hasPermission(profile?.role ?? null, "requests.manage"))
         throw new Error("Not authorized");
       const { data, error } = await db
         .from("voice_requests")

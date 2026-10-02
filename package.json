@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "test:invite-setup": "node tests/run-invite-setup-tests.mjs && node tests/run-invite-setup-tests.mjs --invite-invalid"
+    "test:invite-setup": "node tests/run-invite-setup-tests.mjs && node tests/run-invite-setup-tests.mjs --invite-invalid",
+    "test:permissions:ui": "node tests/run-clinic-permission-tests.mjs"
   },
   "overrides": {
     "rolldown": "1.2.1"

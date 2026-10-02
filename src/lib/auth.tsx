@@ -1,14 +1,18 @@
-import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { db } from "@/lib/db";
 import type { ClinicRow, ProfileRole, ProfileRow } from "@/lib/db-types";
+
+export { canAccess } from "@/lib/permissions";
 
 type AuthState = {
   loading: boolean;
   session: Session | null;
   profile: ProfileRow | null;
   clinic: ClinicRow | null;
+  clinicId: string | null;
   role: ProfileRole | null;
   authError: boolean;
   recoveringPassword: boolean;
@@ -21,7 +25,13 @@ type AuthState = {
 
 const AuthContext = createContext<AuthState | null>(null);
 
+function sameRow(left: object | null, right: object | null) {
+  return left === right || (!!left && !!right && Object.keys(left).length === Object.keys(right).length &&
+    Object.entries(right).every(([key, value]) => Reflect.get(left, key) === value));
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient();
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<ProfileRow | null>(null);
@@ -29,21 +39,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [authError, setAuthError] = useState(false);
   const [recoveringPassword, setRecoveringPassword] = useState(false);
   const requestId = useRef(0);
+  const permissionScope = useRef<string | null>(null);
 
-  const loadProfile = async (userId: string | undefined, id = ++requestId.current) => {
-    if (!userId) { setProfile(null); setClinic(null); setAuthError(false); return; }
+  const loadProfile = useCallback(async (userId: string | undefined, id = ++requestId.current) => {
+    if (!userId) { permissionScope.current = null; queryClient.clear(); setProfile(null); setClinic(null); setAuthError(false); return; }
     const { data, error } = await db.from("profiles").select("*").eq("auth_user_id", userId).maybeSingle();
     if (id !== requestId.current) return;
-    if (error) { setAuthError(true); setProfile(null); setClinic(null); return; }
-    setProfile((data as ProfileRow | null) ?? null);
+    if (error) { permissionScope.current = null; queryClient.clear(); setAuthError(true); setProfile(null); setClinic(null); return; }
+    const nextScope = data ? `${userId}:${data.clinic_id}:${data.role}` : null;
+    if (permissionScope.current !== nextScope) queryClient.clear();
+    permissionScope.current = nextScope;
+    setProfile((previous) => sameRow(previous, data) ? previous : data);
     if (data?.clinic_id) {
       const { data: c, error: clinicError } = await db.from("clinics").select("*").eq("id", data.clinic_id).maybeSingle();
       if (id !== requestId.current) return;
       if (clinicError) { setAuthError(true); setClinic(null); return; }
-      setClinic((c as ClinicRow | null) ?? null);
+      setClinic((previous) => sameRow(previous, c) ? previous : c);
     } else setClinic(null);
     setAuthError(false);
-  };
+  }, [queryClient]);
 
   useEffect(() => {
     let active = true;
@@ -71,14 +85,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (active && id === requestId.current) setLoading(false);
     }).catch(() => { if (active) { setAuthError(true); setLoading(false); } });
     return () => { active = false; sub.subscription.unsubscribe(); };
-  }, []);
+  }, [loadProfile]);
+
+  // Recheck trusted database role on focus; preserve unchanged form state.
+  useEffect(() => {
+    const userId = session?.user.id;
+    if (!userId) return;
+    const refresh = () => {
+      if (document.visibilityState === "hidden") return;
+      const id = ++requestId.current;
+      void loadProfile(userId, id).catch(() => {
+        if (id === requestId.current) { setAuthError(true); setProfile(null); setClinic(null); }
+      });
+    };
+    window.addEventListener("focus", refresh);
+    return () => window.removeEventListener("focus", refresh);
+  }, [session?.user.id, loadProfile]);
+
+  const readyProfile = !loading && !authError && profile?.auth_user_id === session?.user.id &&
+    clinic?.id === profile?.clinic_id ? profile : null;
+  const readyClinic = readyProfile ? clinic : null;
 
   const value: AuthState = {
     loading,
     session,
-    profile,
-    clinic,
-    role: profile?.role ?? null,
+    profile: readyProfile,
+    clinic: readyClinic,
+    clinicId: readyClinic?.id ?? null,
+    role: readyProfile?.role ?? null,
     authError,
     recoveringPassword,
     refreshProfile: () => loadProfile(session?.user?.id),
@@ -110,16 +144,4 @@ export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error("useAuth must be used inside AuthProvider");
   return ctx;
-}
-
-// Navigation permissions per role.
-const ROLE_ROUTES: Record<ProfileRole, string[]> = {
-  owner: ["/home", "/calendar", "/clients", "/staff", "/conversations", "/requests", "/support", "/account"],
-  manager: ["/home", "/calendar", "/clients", "/staff", "/conversations", "/requests", "/support", "/account"],
-  staff: ["/home", "/calendar", "/clients", "/conversations", "/support", "/account"],
-};
-
-export function canAccess(role: ProfileRole | null, path: string) {
-  if (!role) return false;
-  return (ROLE_ROUTES[role] ?? []).some((allowed) => path === allowed || path.startsWith(allowed + "/"));
 }

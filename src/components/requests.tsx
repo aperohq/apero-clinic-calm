@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Empty, PageHeader, Panel, PanelTitle } from "@/components/page-ui";
 import { useAuth } from "@/lib/auth";
+import { hasPermission } from "@/lib/permissions";
 import { formatDate, formatTime } from "@/lib/apero-store";
 import type { VoiceRequestRow } from "@/lib/db-types";
 import { useCloseVoiceRequest, useVoiceRequests, type VoiceRequestDisplay } from "@/lib/voice-requests";
@@ -125,7 +126,7 @@ function RequestState({
 export function HomeRequests() {
   const { profile, clinic } = useAuth();
   const query = useVoiceRequests();
-  if (profile?.role === "staff") return null;
+  if (!hasPermission(profile?.role ?? null, "requests.manage")) return null;
   const active = (query.data ?? [])
     .filter((row) => row.status !== "Closed")
     .sort(
