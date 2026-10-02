@@ -1,0 +1,297 @@
+// Local only: real Supabase SDK, test HTTP responses, and a simulated browser.
+// No production environment variables or remote services are used.
+import { mkdtemp, rm } from "node:fs/promises";
+import { MessageChannel } from "node:worker_threads";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
+import { build } from "esbuild";
+import { Window } from "happy-dom";
+
+const user = {
+  id: "00000000-0000-4000-8000-000000000001",
+  email: "clinic@example.test",
+  aud: "authenticated",
+  role: "authenticated",
+  app_metadata: { provider: "email" },
+  user_metadata: { clinic_id: "untrusted-clinic" },
+  created_at: "2026-01-01T00:00:00Z",
+};
+const clinic = { id: "test-clinic", name: "Test Clinic", timezone: "Asia/Kuwait" };
+const accounts = [
+  {
+    user,
+    clinicId: "test-clinic",
+    profileId: "test-profile",
+    fullName: "Clinic User",
+    role: "owner",
+  },
+  {
+    user: { ...user, id: "00000000-0000-4000-8000-000000000002", email: "a2@example.test" },
+    clinicId: "test-clinic",
+    profileId: "a2-profile",
+    fullName: "Clinic A second user",
+    role: "staff",
+  },
+  {
+    user: { ...user, id: "00000000-0000-4000-8000-000000000003", email: "b1@example.test" },
+    clinicId: "second-clinic",
+    profileId: "b1-profile",
+    fullName: "Clinic B user",
+    role: "owner",
+  },
+];
+const refreshUsers = new Map();
+let tokenNumber = 0;
+const session = (authUser = user) => {
+  const payload = Buffer.from(
+    JSON.stringify({
+      sub: authUser.id,
+      exp: Math.floor(Date.now() / 1000) + 3600,
+      n: ++tokenNumber,
+    }),
+  ).toString("base64url");
+  const refreshToken = `local-refresh-${tokenNumber}`;
+  refreshUsers.set(refreshToken, authUser);
+  return {
+    access_token: `eyJhbGciOiJIUzI1NiJ9.${payload}.test-signature`,
+    refresh_token: refreshToken,
+    token_type: "bearer",
+    expires_in: 3600,
+    user: authUser,
+  };
+};
+const fixture = {
+  accounts,
+  requests: [],
+  missingProfile: false,
+  profileError: false,
+  logoutError: false,
+  profileDelay: 0,
+  clinicDelay: 0,
+  missingClinic: false,
+  clinicError: false,
+  mismatchedUser: false,
+  mismatchedClinic: false,
+  profileClinicId: "test-clinic",
+  inviteInvalid: process.argv.includes("--invite-invalid"),
+  userDelay: 180,
+  passwordUpdates: [],
+  accountPasswords: new Map(),
+  passwordUpdateError: false,
+};
+const origin = "http://127.0.0.1:54321";
+const localFetch = async (req) => {
+  const url = new URL(req.url);
+  let account;
+  try {
+    const token = req.headers.get("authorization")?.replace(/^Bearer /, "");
+    const subject = JSON.parse(Buffer.from(token?.split(".")[1] ?? "", "base64url").toString()).sub;
+    account = accounts.find((item) => item.user.id === subject);
+  } catch {
+    /* Public Auth calls do not carry a user JWT. */
+  }
+  const resolvedClinicId =
+    account?.user.id === user.id ? fixture.profileClinicId : account?.clinicId;
+  fixture.requests.push({
+    path: url.pathname,
+    method: req.method,
+    grant: url.searchParams.get("grant_type"),
+    authorization: req.headers.get("authorization"),
+    search: Object.fromEntries(url.searchParams),
+  });
+  const reply = (status, data) =>
+    new Response(status === 204 ? null : JSON.stringify(data), {
+      status,
+      headers: { "content-type": "application/json" },
+    });
+  if (url.pathname === "/auth/v1/token") {
+    const input = await req.json();
+    const authUser =
+      url.searchParams.get("grant_type") === "refresh_token"
+        ? refreshUsers.get(input.refresh_token)
+        : input.password === (fixture.accountPasswords.get(input.email) ?? "local-test-password")
+          ? accounts.find((item) => item.user.email === input.email)?.user
+          : null;
+    if (authUser) return reply(200, session(authUser));
+    return reply(400, { code: "invalid_credentials", msg: "Invalid login credentials" });
+  }
+  if (url.pathname === "/auth/v1/logout")
+    return fixture.logoutError ? reply(500, { msg: "Local test failure" }) : reply(204, null);
+  if (url.pathname === "/auth/v1/user") {
+    if (fixture.userDelay) await new Promise((resolve) => setTimeout(resolve, fixture.userDelay));
+    if (req.method === "PUT") {
+      if (!account) return reply(401, { msg: "Session expired" });
+      const body = await req.json();
+      fixture.passwordUpdates.push({ body, userId: account.user.id });
+      if (fixture.passwordUpdateError) return reply(401, { msg: "Session expired" });
+      fixture.accountPasswords.set(account.user.email, body.password);
+      return reply(200, { user: account.user });
+    }
+    return reply(200, account?.user ?? user);
+  }
+  if (!req.headers.get("authorization")?.startsWith("Bearer eyJ"))
+    return reply(401, { message: "Missing user token" });
+  if (url.pathname === "/rest/v1/profiles") {
+    const missing = fixture.missingProfile;
+    const fail = fixture.profileError;
+    if (fixture.profileDelay)
+      await new Promise((resolve) => setTimeout(resolve, fixture.profileDelay));
+    if (fail) return reply(403, { message: "Local profile read failure" });
+    return reply(
+      200,
+      missing
+        ? []
+        : [
+            {
+              id: account?.profileId,
+              auth_user_id: fixture.mismatchedUser ? "different-auth-user" : account?.user.id,
+              clinic_id: resolvedClinicId,
+              full_name: account?.fullName,
+              email: account?.user.email,
+              role: account?.role,
+            },
+          ],
+    );
+  }
+  if (url.pathname === "/rest/v1/clinics") {
+    const nextClinic = {
+      ...clinic,
+      id: fixture.mismatchedClinic ? "wrong-clinic" : resolvedClinicId,
+    };
+    const missing = fixture.missingClinic;
+    const fail = fixture.clinicError;
+    if (fixture.clinicDelay)
+      await new Promise((resolve) => setTimeout(resolve, fixture.clinicDelay));
+    if (fail) return reply(403, { message: "Local clinic read failure" });
+    return reply(200, missing ? [] : [nextClinic]);
+  }
+  if (
+    [
+      "clients",
+      "staff",
+      "appointments",
+      "conversations",
+      "client_notes",
+      "staff_availability",
+      "staff_time_off",
+      "voice_requests",
+    ].some((table) => url.pathname === `/rest/v1/${table}`)
+  ) {
+    if (url.pathname === "/rest/v1/clients") {
+      const rows = ["test-clinic", "second-clinic"].map((clinicId) => ({
+        id: `${clinicId}-client`,
+        clinic_id: clinicId,
+        full_name: `${clinicId} Patient`,
+        phone: "123",
+        email: null,
+        notes: null,
+      }));
+      return reply(
+        200,
+        rows.filter(
+          (row) =>
+            row.clinic_id === resolvedClinicId &&
+            `eq.${row.clinic_id}` === url.searchParams.get("clinic_id"),
+        ),
+      );
+    }
+    return reply(200, []);
+  }
+  return reply(404, { message: "Unexpected test request" });
+};
+const inviteMode = true;
+const inviteSession = inviteMode ? session(accounts[1].user) : null;
+const inviteHash = fixture.inviteInvalid
+  ? "error=access_denied&error_code=otp_expired&error_description=Invitation+expired"
+  : inviteSession
+    ? new URLSearchParams({
+        access_token: inviteSession.access_token,
+        refresh_token: inviteSession.refresh_token,
+        expires_in: "3600",
+        token_type: "bearer",
+        type: "invite",
+      }).toString()
+    : "";
+const window = new Window({
+  url: inviteMode
+    ? `http://localhost:3000/account/setup#${inviteHash}`
+    : "http://localhost:3000/login",
+  settings: { disableCSSFileLoading: true, disableJavaScriptFileLoading: true },
+});
+for (const name of [
+  "self",
+  "window",
+  "document",
+  "navigator",
+  "location",
+  "localStorage",
+  "sessionStorage",
+  "HTMLElement",
+  "HTMLInputElement",
+  "Element",
+  "Node",
+  "MutationObserver",
+  "getComputedStyle",
+  "requestAnimationFrame",
+  "cancelAnimationFrame",
+  "scrollTo",
+]) {
+  Object.defineProperty(globalThis, name, {
+    value:
+      typeof window[name] === "function" &&
+      ["getComputedStyle", "requestAnimationFrame", "cancelAnimationFrame", "scrollTo"].includes(
+        name,
+      )
+        ? window[name].bind(window)
+        : window[name],
+    configurable: true,
+  });
+}
+const channels = [];
+globalThis.MessageChannel = class extends MessageChannel {
+  constructor() {
+    super();
+    channels.push(this);
+  }
+};
+globalThis.BroadcastChannel = undefined;
+globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+globalThis.__authFixture = fixture;
+// Fail closed if app code unexpectedly tries to contact a remote service.
+globalThis.fetch = (input, init) => {
+  const url = new URL(typeof input === "string" ? input : (input.url ?? input.toString()));
+  if (url.origin !== origin) throw new Error(`Non-local fetch blocked: ${url.origin}`);
+  return localFetch(new Request(input, init));
+};
+const directory = await mkdtemp(join(tmpdir(), "apero-auth-tests-"));
+globalThis.__cleanupAuthTests = async () => {
+  await window.happyDOM.abort();
+  for (const channel of channels) {
+    channel.port1.close();
+    channel.port2.close();
+  }
+  await rm(directory, { recursive: true, force: true });
+};
+try {
+  await build({
+    entryPoints: ["tests/invite-setup.test.tsx"],
+    outfile: join(directory, "tests.cjs"),
+    bundle: true,
+    platform: "node",
+    conditions: ["browser", "development"],
+    format: "cjs",
+    jsx: "automatic",
+    define: {
+      "import.meta.env": JSON.stringify({
+        VITE_SUPABASE_URL: origin,
+        VITE_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_local_test_only",
+      }),
+      "process.env.NODE_ENV": '"development"',
+    },
+  });
+  await import(pathToFileURL(join(directory, "tests.cjs")).href);
+} catch (error) {
+  await globalThis.__cleanupAuthTests();
+  throw error;
+}

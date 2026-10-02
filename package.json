@@ -9,7 +9,8 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "test:invite-setup": "node tests/run-invite-setup-tests.mjs && node tests/run-invite-setup-tests.mjs --invite-invalid"
   },
   "overrides": {
     "rolldown": "1.2.1"
@@ -89,6 +90,8 @@
     "prettier": "^3.7.3",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.56.1",
-    "vite": "8.1.5"
+    "vite": "8.1.5",
+    "esbuild": "^0.28.2",
+    "happy-dom": "^20.14.5"
   }
 }
