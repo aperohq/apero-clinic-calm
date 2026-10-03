@@ -282,6 +282,23 @@ try {
     conditions: ["browser", "development"],
     format: "cjs",
     jsx: "automatic",
+    plugins: [
+      {
+        name: "local-stylesheet-url",
+        setup(plugin) {
+          // Production root imports a Vite stylesheet URL. No assets or network
+          // requests are needed to exercise the real generated route hierarchy.
+          plugin.onResolve({ filter: /\.css\?url$/ }, (args) => ({
+            path: args.path,
+            namespace: "test-stylesheet",
+          }));
+          plugin.onLoad({ filter: /.*/, namespace: "test-stylesheet" }, () => ({
+            contents: 'export default "";',
+            loader: "js",
+          }));
+        },
+      },
+    ],
     define: {
       "import.meta.env": JSON.stringify({
         VITE_SUPABASE_URL: origin,

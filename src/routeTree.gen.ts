@@ -23,6 +23,7 @@ import { Route as StaffRouteImport } from './routes/staff'
 import { Route as SupportRouteImport } from './routes/support'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AccountSetupRouteImport } from './routes/account_.setup'
+import { Route as AccountTeamRouteImport } from './routes/account_.team'
 import { Route as ClientsIndexRouteImport } from './routes/clients.index'
 import { Route as ClientsIdRouteImport } from './routes/clients.$id'
 import { Route as ConversationsIndexRouteImport } from './routes/conversations.index'
@@ -100,6 +101,11 @@ const AccountSetupRoute = AccountSetupRouteImport.update({
   path: '/account/setup',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AccountTeamRoute = AccountTeamRouteImport.update({
+  id: '/account_/team',
+  path: '/account/team',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ClientsIndexRoute = ClientsIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -146,6 +152,7 @@ export interface FileRoutesByFullPath {
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
   '/account/setup': typeof AccountSetupRoute
+  '/account/team': typeof AccountTeamRoute
   '/clients/$id': typeof ClientsIdRoute
   '/conversations/$id': typeof ConversationsIdRoute
   '/staff/$id': typeof StaffIdRoute
@@ -165,6 +172,7 @@ export interface FileRoutesByTo {
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
   '/account/setup': typeof AccountSetupRoute
+  '/account/team': typeof AccountTeamRoute
   '/clients/$id': typeof ClientsIdRoute
   '/conversations/$id': typeof ConversationsIdRoute
   '/staff/$id': typeof StaffIdRoute
@@ -188,6 +196,7 @@ export interface FileRoutesById {
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
   '/account_/setup': typeof AccountSetupRoute
+  '/account_/team': typeof AccountTeamRoute
   '/clients/$id': typeof ClientsIdRoute
   '/conversations/$id': typeof ConversationsIdRoute
   '/staff/$id': typeof StaffIdRoute
@@ -212,6 +221,7 @@ export interface FileRouteTypes {
     | '/support'
     | '/terms'
     | '/account/setup'
+    | '/account/team'
     | '/clients/$id'
     | '/conversations/$id'
     | '/staff/$id'
@@ -231,6 +241,7 @@ export interface FileRouteTypes {
     | '/support'
     | '/terms'
     | '/account/setup'
+    | '/account/team'
     | '/clients/$id'
     | '/conversations/$id'
     | '/staff/$id'
@@ -253,6 +264,7 @@ export interface FileRouteTypes {
     | '/support'
     | '/terms'
     | '/account_/setup'
+    | '/account_/team'
     | '/clients/$id'
     | '/conversations/$id'
     | '/staff/$id'
@@ -276,6 +288,7 @@ export interface RootRouteChildren {
   SupportRoute: typeof SupportRoute
   TermsRoute: typeof TermsRoute
   AccountSetupRoute: typeof AccountSetupRoute
+  AccountTeamRoute: typeof AccountTeamRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -378,6 +391,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AccountSetupRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/account_/team': {
+      id: '/account_/team'
+      path: '/account/team'
+      fullPath: '/account/team'
+      preLoaderRoute: typeof AccountTeamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/clients/': {
       id: '/clients/'
       path: '/'
@@ -477,6 +497,7 @@ const rootRouteChildren: RootRouteChildren = {
   SupportRoute: SupportRoute,
   TermsRoute: TermsRoute,
   AccountSetupRoute: AccountSetupRoute,
+  AccountTeamRoute: AccountTeamRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

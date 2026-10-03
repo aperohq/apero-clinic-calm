@@ -33,6 +33,28 @@ correct existing clinic workspace, refresh, logout, and normal password login.
 If the user already accepted an older link, do not assume a new invite can be
 issued for that verified identity; use a new approved/unaccepted test user.
 
+### A correct invitation link still opens the login page
+
+An Admin-generated action link can contain the correct `redirect_to` even if
+that URL is not allowed in the project's Auth redirect configuration. Supabase
+can then fall back to the configured Site URL. Check the exact setup URL in
+Redirect URLs before changing the provisioning code or frontend guards.
+Also verify the published portal contains the setup route. Do not paste the
+action link or callback tokens into logs, screenshots, or support messages.
+
+The saved action link is a verification request, not the resulting browser
+callback. It cannot establish whether the hosted callback contained session
+tokens, a code, or an error. The current browser client uses Supabase's default
+implicit flow and waits for SDK initialization. Local regressions exercise
+invite session tokens in the URL fragment and expired-invite error fragments
+against the production route tree.
+
+Opening an invitation can consume its token even when the final destination
+is wrong. Do not assume the original link can be reused. If the invited user
+has a valid session, they can open `/account/setup` directly. Otherwise check
+their Auth confirmation state privately before issuing another link or
+choosing a fresh approved test identity; do not change their clinic profile.
+
 ## Local regression tests
 
 ```bash

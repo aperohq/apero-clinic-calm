@@ -34,7 +34,7 @@ export function InviteSetupPage() {
       const result = await updatePassword(password);
       if (result.error) {
         setError(
-          "Could not create your password. Please try again, or ask Apero for a new invitation if this one has expired.",
+          "Could not create your password. Please try again, or ask your clinic Owner for a new invitation if this one has expired.",
         );
         return;
       }
@@ -43,7 +43,7 @@ export function InviteSetupPage() {
       await navigate({ to: "/home", replace: true });
     } catch {
       setError(
-        "Could not create your password. Please try again, or ask Apero for a new invitation if this one has expired.",
+        "Could not create your password. Please try again, or ask your clinic Owner for a new invitation if this one has expired.",
       );
     } finally {
       setBusy(false);
@@ -64,8 +64,8 @@ export function InviteSetupPage() {
             </p>
           ) : !session ? (
             <p role="alert" className="mt-2 text-sm text-muted-foreground">
-              This invitation is invalid or has expired. Ask Apero for a new invitation, or return
-              to sign in.
+              This invitation is invalid or has expired. Ask your clinic Owner for a new invitation,
+              or return to sign in.
             </p>
           ) : (
             <>

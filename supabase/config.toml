@@ -1,1 +1,11 @@
 project_id = "svoybvzvmygszklcmudh"
+
+[functions.provision-clinic-user]
+# The handler's withSupabase(auth: "secret") verifies runtime project secret keys.
+# Platform JWT verification does not support sb_secret_ API keys.
+verify_jwt = false
+
+[functions.manage-clinic-users]
+# The handler validates user bearer tokens with Auth getUser and enforces the
+# live Owner membership again in the database. No browser secret-key access.
+verify_jwt = false

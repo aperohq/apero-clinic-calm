@@ -13,6 +13,7 @@ const main = [
   { to: "/calendar", label: "Calendar", icon: CalendarDays },
   { to: "/clients", label: "Clients", icon: Users },
   { to: "/staff", label: "Staff", icon: UserRound },
+  { to: "/account/team", label: "Team", icon: Users },
   { to: "/conversations", label: "Conversations", icon: MessageSquare },
   { to: "/requests", label: "Requests", icon: Inbox },
 ] as const;

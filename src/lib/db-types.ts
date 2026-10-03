@@ -10,6 +10,12 @@ export type ClinicRow = {
 export type ProfileRow = {
   id: string; auth_user_id: string; clinic_id: string; full_name: string;
   email: string; phone: string | null; role: ProfileRole; created_at: string;
+  revoked_at: string | null;
+};
+export type TeamMemberRow = {
+  id: string; full_name: string; email: string; role: ProfileRole;
+  revoked_at: string | null; invite_status: "active" | "pending" | "accepted" | "revoked";
+  invited_at: string | null; invite_accepted_at: string | null;
 };
 export type ClientRow = {
   id: string; clinic_id: string; full_name: string; phone: string;
@@ -77,6 +83,8 @@ export type AperoDatabase = {
     };
     Views: Record<string, never>;
     Functions: {
+      clinic_team_members: { Args: Record<string, never>; Returns: TeamMemberRow[] };
+      revoke_clinic_member: { Args: { p_profile_id: string }; Returns: string };
       appointment_available_slots: {
         Args: { p_clinic_id: string; p_staff_id: string; p_service: string; p_date: string; p_exclude_id: string | null };
         Returns: { start_time: string; end_time: string; duration_minutes: number }[];

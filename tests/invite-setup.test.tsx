@@ -3,19 +3,13 @@ import { after, test } from "node:test";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import {
-  createMemoryHistory,
-  createRootRoute,
-  createRoute,
-  createRouter,
-  Outlet,
-  RouterProvider,
-} from "@tanstack/react-router";
+import { createMemoryHistory, createRouter, Outlet, RouterProvider } from "@tanstack/react-router";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
-import { InviteSetupPage } from "@/components/invite-setup-page";
-import { LoginPage } from "@/components/clinic-pages";
 import { RouteShell } from "@/components/route-shell";
+import { routeTree } from "@/routeTree.gen";
+import { Route as AccountRoute } from "@/routes/account";
+import { Route as HomeRoute } from "@/routes/home";
 
 const fixture = globalThis.__authFixture;
 let auth: ReturnType<typeof useAuth>;
@@ -69,7 +63,10 @@ after(async () => {
 });
 
 test("invite setup uses actual browser SDK callback initialization and password update", async (t) => {
-  const rootRoute = createRootRoute({
+  // Exercise the production route hierarchy and setup route rather than a
+  // handwritten approximation that could miss an account-parent auth guard.
+  routeTree.update({
+    shellComponent: ({ children }) => children,
     component: () => (
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
@@ -79,34 +76,25 @@ test("invite setup uses actual browser SDK callback initialization and password 
       </QueryClientProvider>
     ),
   });
-  const routes = [
-    createRoute({
-      getParentRoute: () => rootRoute,
-      path: "/account/setup",
-      component: InviteSetupPage,
-    }),
-    createRoute({ getParentRoute: () => rootRoute, path: "/login", component: LoginPage }),
-    createRoute({
-      getParentRoute: () => rootRoute,
-      path: "/home",
-      component: () => (
-        <RouteShell>
-          <p>Existing clinic workspace</p>
-        </RouteShell>
-      ),
-    }),
-    createRoute({
-      getParentRoute: () => rootRoute,
-      path: "/account",
-      component: () => (
-        <RouteShell>
-          <p>Normal account content</p>
-        </RouteShell>
-      ),
-    }),
-  ];
+  // Keep workspace views small; retain their actual protected shell, and use
+  // the unmodified production setup and login pages.
+  HomeRoute.update({
+    component: () => (
+      <RouteShell>
+        <p>Existing clinic workspace</p>
+      </RouteShell>
+    ),
+  });
+  AccountRoute.update({
+    component: () => (
+      <RouteShell>
+        <p>Normal account content</p>
+      </RouteShell>
+    ),
+  });
   router = createRouter({
-    routeTree: rootRoute.addChildren(routes),
+    routeTree,
+    context: { queryClient },
     history: createMemoryHistory({ initialEntries: ["/account/setup"] }),
   });
   container = document.createElement("div");
@@ -114,6 +102,14 @@ test("invite setup uses actual browser SDK callback initialization and password 
   root = createRoot(container);
   await act(async () => {
     root.render(<RouterProvider router={router} />);
+  });
+
+  await t.test("production setup route bypasses the protected account parent", () => {
+    assert.deepEqual(
+      router.state.matches.map((match) => match.routeId),
+      ["__root__", "/account_/setup"],
+    );
+    assert.equal(router.state.location.pathname, "/account/setup");
   });
 
   if (fixture.inviteInvalid) {

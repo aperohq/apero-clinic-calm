@@ -4,7 +4,6 @@ import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { db } from "@/lib/db";
 import type { ClinicRow, ProfileRole, ProfileRow } from "@/lib/db-types";
-
 export { canAccess } from "@/lib/permissions";
 
 type AuthState = {
@@ -24,45 +23,79 @@ type AuthState = {
 };
 
 const AuthContext = createContext<AuthState | null>(null);
-
-function sameRow(left: object | null, right: object | null) {
-  return left === right || (!!left && !!right && Object.keys(left).length === Object.keys(right).length &&
-    Object.entries(right).every(([key, value]) => Reflect.get(left, key) === value));
+type ClinicAccount = { profile: ProfileRow; clinic: ClinicRow };
+function sameRow(left: object, right: object) {
+  return Object.keys(left).length === Object.keys(right).length &&
+    Object.entries(right).every(([key, value]) => Reflect.get(left, key) === value);
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<ProfileRow | null>(null);
-  const [clinic, setClinic] = useState<ClinicRow | null>(null);
+  const [account, setAccount] = useState<ClinicAccount | null>(null);
+  const resolvedClinicId = useRef<string | null>(null);
+  const resolvedRole = useRef<ProfileRole | null>(null);
   const [authError, setAuthError] = useState(false);
   const [recoveringPassword, setRecoveringPassword] = useState(false);
   const requestId = useRef(0);
-  const permissionScope = useRef<string | null>(null);
-
-  const loadProfile = useCallback(async (userId: string | undefined, id = ++requestId.current) => {
-    if (!userId) { permissionScope.current = null; queryClient.clear(); setProfile(null); setClinic(null); setAuthError(false); return; }
-    const { data, error } = await db.from("profiles").select("*").eq("auth_user_id", userId).maybeSingle();
-    if (id !== requestId.current) return;
-    if (error) { permissionScope.current = null; queryClient.clear(); setAuthError(true); setProfile(null); setClinic(null); return; }
-    const nextScope = data ? `${userId}:${data.clinic_id}:${data.role}` : null;
-    if (permissionScope.current !== nextScope) queryClient.clear();
-    permissionScope.current = nextScope;
-    setProfile((previous) => sameRow(previous, data) ? previous : data);
-    if (data?.clinic_id) {
-      const { data: c, error: clinicError } = await db.from("clinics").select("*").eq("id", data.clinic_id).maybeSingle();
-      if (id !== requestId.current) return;
-      if (clinicError) { setAuthError(true); setClinic(null); return; }
-      setClinic((previous) => sameRow(previous, c) ? previous : c);
-    } else setClinic(null);
-    setAuthError(false);
+  const invalidateProfileRequests = useCallback(() => { requestId.current++; }, []);
+  const publishAccount = useCallback((next: ClinicAccount | null) => {
+    const nextClinicId = next?.clinic.id ?? null;
+    const nextRole = next?.profile.role ?? null;
+    if (resolvedClinicId.current !== nextClinicId || resolvedRole.current !== nextRole) queryClient.clear();
+    resolvedClinicId.current = nextClinicId;
+    resolvedRole.current = nextRole;
+    setAccount((previous) => previous && next &&
+      sameRow(previous.profile, next.profile) && sameRow(previous.clinic, next.clinic)
+      ? previous : next);
   }, [queryClient]);
+
+  const loadProfile = useCallback(async (userId: string | undefined, id = ++requestId.current, background = false) => {
+    if (!background) setLoading(true);
+    try {
+      if (!userId) { publishAccount(null); setAuthError(false); return; }
+      const { data, error } = await db.from("profiles").select("*").eq("auth_user_id", userId).maybeSingle();
+      if (id !== requestId.current) return;
+      if (error) throw error;
+      if (!data?.clinic_id || data.revoked_at || data.auth_user_id !== userId) {
+        publishAccount(null); setAuthError(false); return;
+      }
+      const { data: clinic, error: clinicError } = await db.from("clinics").select("*").eq("id", data.clinic_id).maybeSingle();
+      if (id !== requestId.current) return;
+      if (clinicError) throw clinicError;
+      // Resolve from authenticated database relationships, never URL/storage input.
+      publishAccount(clinic?.id === data.clinic_id ? { profile: data, clinic } : null);
+      setAuthError(false);
+    } catch {
+      if (id !== requestId.current) return;
+      publishAccount(null); setAuthError(true);
+    } finally {
+      if (id === requestId.current) setLoading(false);
+    }
+  }, [publishAccount]);
 
   useEffect(() => {
     let active = true;
+    let authEvents = 0;
+    let currentUserId: string | undefined;
+    const applySession = (next: Session | null) => {
+      if (!active) return;
+      if (currentUserId !== next?.user.id) {
+        currentUserId = next?.user.id;
+        // Discard in-flight profile reads and cached portal data across accounts.
+        requestId.current++;
+        queryClient.clear();
+        publishAccount(null); setAuthError(false);
+        setLoading(!!next);
+      }
+      setSession(next);
+      if (!next) setLoading(false);
+    };
+    setRecoveringPassword(sessionStorage.getItem("apero-password-recovery") === "1");
     const { data: sub } = supabase.auth.onAuthStateChange((event, next) => {
       if (!active) return;
+      authEvents++;
       if (event === "PASSWORD_RECOVERY") {
         sessionStorage.setItem("apero-password-recovery", "1");
         setRecoveringPassword(true);
@@ -70,49 +103,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         sessionStorage.removeItem("apero-password-recovery");
         setRecoveringPassword(false);
       }
-      setSession(next);
-      setLoading(true);
-      const id = ++requestId.current;
-      void loadProfile(next?.user?.id, id).finally(() => { if (active && id === requestId.current) setLoading(false); });
+      // Keep this callback synchronous. Profile reads run in their own effect.
+      applySession(next);
     });
-    void supabase.auth.getSession().then(async ({ data, error }) => {
-      if (!active) return;
+    const initialEvents = authEvents;
+    void supabase.auth.getSession().then(({ data, error }) => {
+      // A slow initial read must never overwrite a newer sign-in or sign-out.
+      if (!active || authEvents !== initialEvents) return;
       if (error) { setAuthError(true); setLoading(false); return; }
-      setRecoveringPassword(sessionStorage.getItem("apero-password-recovery") === "1");
-      setSession(data.session);
-      const id = ++requestId.current;
-      await loadProfile(data.session?.user?.id, id);
-      if (active && id === requestId.current) setLoading(false);
-    }).catch(() => { if (active) { setAuthError(true); setLoading(false); } });
-    return () => { active = false; sub.subscription.unsubscribe(); };
-  }, [loadProfile]);
+      applySession(data.session);
+    }).catch(() => {
+      if (active && authEvents === initialEvents) { setAuthError(true); setLoading(false); }
+    });
+    return () => { active = false; invalidateProfileRequests(); sub.subscription.unsubscribe(); };
+  }, [queryClient, publishAccount, invalidateProfileRequests]);
 
-  // Recheck trusted database role on focus; preserve unchanged form state.
+  const userId = session?.user.id;
   useEffect(() => {
-    const userId = session?.user.id;
+    if (!userId) return;
+    const id = ++requestId.current;
+    void loadProfile(userId, id);
+    return invalidateProfileRequests;
+  }, [userId, loadProfile, invalidateProfileRequests]);
+
+  useEffect(() => {
     if (!userId) return;
     const refresh = () => {
-      if (document.visibilityState === "hidden") return;
-      const id = ++requestId.current;
-      void loadProfile(userId, id).catch(() => {
-        if (id === requestId.current) { setAuthError(true); setProfile(null); setClinic(null); }
-      });
+      if (document.visibilityState !== "hidden") void loadProfile(userId, ++requestId.current, true);
     };
     window.addEventListener("focus", refresh);
-    return () => window.removeEventListener("focus", refresh);
-  }, [session?.user.id, loadProfile]);
+    const interval = window.setInterval(refresh, 30_000);
+    return () => { window.removeEventListener("focus", refresh); window.clearInterval(interval); };
+  }, [userId, loadProfile]);
 
-  const readyProfile = !loading && !authError && profile?.auth_user_id === session?.user.id &&
-    clinic?.id === profile?.clinic_id ? profile : null;
-  const readyClinic = readyProfile ? clinic : null;
-
+  // Expose the association only when this session's complete account is ready.
+  const readyAccount = !loading && !authError && account?.profile.auth_user_id === session?.user.id ? account : null;
+  const profile = readyAccount?.profile ?? null;
+  const clinic = readyAccount?.clinic ?? null;
   const value: AuthState = {
     loading,
     session,
-    profile: readyProfile,
-    clinic: readyClinic,
-    clinicId: readyClinic?.id ?? null,
-    role: readyProfile?.role ?? null,
+    profile,
+    clinic,
+    clinicId: clinic?.id ?? null,
+    role: profile?.role ?? null,
     authError,
     recoveringPassword,
     refreshProfile: () => loadProfile(session?.user?.id),
@@ -121,9 +155,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: error ? error.message : null };
     },
     signOut: async () => {
-      const { error } = await supabase.auth.signOut();
-      if (!error) { requestId.current++; setSession(null); setProfile(null); setClinic(null); sessionStorage.removeItem("apero-password-recovery"); setRecoveringPassword(false); }
-      return { error: error ? "Could not log out. Please try again." : null };
+      const { error } = await supabase.auth.signOut({ scope: "local" });
+      // SIGNED_OUT clears state and caches through the auth subscription.
+      if (error) {
+        // The SDK can clear this device's session even if remote revocation fails.
+        const { data, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError || data.session) return { error: "Could not log out. Please try again." };
+      }
+      return { error: null };
     },
     sendPasswordReset: async (email) => {
       const redirectTo = typeof window !== "undefined" ? `${window.location.origin}/reset-password` : undefined;

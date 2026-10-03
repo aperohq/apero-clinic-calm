@@ -1,0 +1,11 @@
+{
+  "extends": "../tsconfig.json",
+  "include": [
+    "../supabase/functions/_shared/clinic-users.ts",
+    "../supabase/functions/_shared/request-security.ts",
+    "../supabase/functions/provision-clinic-user/function.ts",
+    "../supabase/functions/provision-clinic-user/handler.ts",
+    "../supabase/functions/manage-clinic-users/function.ts",
+    "../supabase/functions/manage-clinic-users/handler.ts"
+  ]
+}
