@@ -1,0 +1,1657 @@
+{
+  "environment": {
+    "database": "apero_concurrency_acceptance",
+    "directory": "/tmp/apero-concurrency-postgres/data",
+    "version": "17.11 (Ubuntu 17.11-1.pgdg24.04+2)",
+    "address": null,
+    "migration_sha256": "397542358ba162ce11d48f0c15c06b4efca4ea3ed45b0c65077e472026a23b51",
+    "backend_pids": [53103, 53104],
+    "monitor_pid": 53098,
+    "constraints": [
+      {
+        "conname": "appointments_no_staff_overlap",
+        "definition": "EXCLUDE USING gist (staff_id WITH =, tstzrange(start_time, end_time, '[)'::text) WITH &&) WHERE ((status <> 'Cancelled'::text))"
+      },
+      {
+        "conname": "appointments_shared_no_overlap",
+        "definition": "EXCLUDE USING gist (clinic_id WITH =, staff_id WITH =, tstzrange(start_time, end_time, '[)'::text) WITH &&) WHERE ((status <> 'Cancelled'::text))"
+      }
+    ]
+  },
+  "races": [
+    {
+      "mode": "both-constraints",
+      "scenario": "dashboard-vs-dashboard",
+      "dashboard_role": "owner",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53103,
+          "wait_event": "advisory",
+          "blockers": [53098]
+        },
+        {
+          "pid": 53104,
+          "wait_event": "advisory",
+          "blockers": [53098]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53103,
+            "wait_event": null,
+            "blockers": []
+          },
+          {
+            "pid": 53104,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53103,
+            "wait_event": "transactionid",
+            "blockers": [53104]
+          },
+          {
+            "pid": 53104,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53103,
+            "wait_event": "transactionid",
+            "blockers": [53104]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_no_staff_overlap",
+        "message": "conflicting key value violates exclusion constraint \"appointments_no_staff_overlap\""
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "both-constraints",
+      "scenario": "dashboard-vs-voice",
+      "dashboard_role": "manager",
+      "winner": "voice",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53103,
+          "wait_event": "advisory",
+          "blockers": [53098]
+        },
+        {
+          "pid": 53104,
+          "wait_event": "advisory",
+          "blockers": [53098]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53103,
+            "wait_event": "transactionid",
+            "blockers": []
+          },
+          {
+            "pid": 53104,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53103,
+            "wait_event": "transactionid",
+            "blockers": [53104]
+          },
+          {
+            "pid": 53104,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53103,
+            "wait_event": "transactionid",
+            "blockers": [53104]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_no_staff_overlap",
+        "message": "conflicting key value violates exclusion constraint \"appointments_no_staff_overlap\""
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "both-constraints",
+      "scenario": "voice-vs-voice",
+      "dashboard_role": "owner",
+      "winner": "voice",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53103,
+          "wait_event": "advisory",
+          "blockers": [53098]
+        },
+        {
+          "pid": 53104,
+          "wait_event": "advisory",
+          "blockers": [53098]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53103,
+            "wait_event": "transactionid",
+            "blockers": [53104]
+          },
+          {
+            "pid": 53104,
+            "wait_event": "transactionid",
+            "blockers": [53103]
+          }
+        ],
+        [
+          {
+            "pid": 53103,
+            "wait_event": "transactionid",
+            "blockers": [53104]
+          },
+          {
+            "pid": 53104,
+            "wait_event": "transactionid",
+            "blockers": [53103]
+          }
+        ],
+        [
+          {
+            "pid": 53103,
+            "wait_event": "transactionid",
+            "blockers": [53104]
+          },
+          {
+            "pid": 53104,
+            "wait_event": "transactionid",
+            "blockers": [53103]
+          }
+        ],
+        [
+          {
+            "pid": 53103,
+            "wait_event": "transactionid",
+            "blockers": [53104]
+          },
+          {
+            "pid": 53104,
+            "wait_event": "transactionid",
+            "blockers": [53103]
+          }
+        ],
+        [
+          {
+            "pid": 53103,
+            "wait_event": "transactionid",
+            "blockers": [53104]
+          },
+          {
+            "pid": 53104,
+            "wait_event": "transactionid",
+            "blockers": [53103]
+          }
+        ],
+        [
+          {
+            "pid": 53103,
+            "wait_event": "ClientRead",
+            "blockers": []
+          },
+          {
+            "pid": 53104,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "FAIL: unclassified deadlock instead of booking-conflict response",
+      "failure": {
+        "code": "40P01",
+        "message": "deadlock detected"
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "both-constraints",
+      "scenario": "reschedule-vs-booking",
+      "dashboard_role": "staff",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53103,
+          "wait_event": "advisory",
+          "blockers": [53098]
+        },
+        {
+          "pid": 53104,
+          "wait_event": "advisory",
+          "blockers": [53098]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53103,
+            "wait_event": null,
+            "blockers": []
+          },
+          {
+            "pid": 53104,
+            "wait_event": "BufferContent",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53103,
+            "wait_event": "transactionid",
+            "blockers": [53104]
+          },
+          {
+            "pid": 53104,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53103,
+            "wait_event": "transactionid",
+            "blockers": [53104]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_no_staff_overlap",
+        "message": "conflicting key value violates exclusion constraint \"appointments_no_staff_overlap\""
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "both-constraints",
+      "scenario": "dashboard-vs-dashboard",
+      "dashboard_role": "owner",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53103,
+          "wait_event": "advisory",
+          "blockers": [53098]
+        },
+        {
+          "pid": 53104,
+          "wait_event": "advisory",
+          "blockers": [53098]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53103,
+            "wait_event": null,
+            "blockers": []
+          },
+          {
+            "pid": 53104,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53103,
+            "wait_event": "transactionid",
+            "blockers": [53104]
+          },
+          {
+            "pid": 53104,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53103,
+            "wait_event": "transactionid",
+            "blockers": [53104]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_no_staff_overlap",
+        "message": "conflicting key value violates exclusion constraint \"appointments_no_staff_overlap\""
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "both-constraints",
+      "scenario": "dashboard-vs-voice",
+      "dashboard_role": "manager",
+      "winner": "voice",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53103,
+          "wait_event": "advisory",
+          "blockers": [53098]
+        },
+        {
+          "pid": 53104,
+          "wait_event": "advisory",
+          "blockers": [53098]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53103,
+            "wait_event": "transactionid",
+            "blockers": [53104]
+          },
+          {
+            "pid": 53104,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53103,
+            "wait_event": "transactionid",
+            "blockers": [53104]
+          },
+          {
+            "pid": 53104,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53103,
+            "wait_event": "transactionid",
+            "blockers": [53104]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_no_staff_overlap",
+        "message": "conflicting key value violates exclusion constraint \"appointments_no_staff_overlap\""
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "both-constraints",
+      "scenario": "voice-vs-voice",
+      "dashboard_role": "owner",
+      "winner": "voice",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53103,
+          "wait_event": "advisory",
+          "blockers": [53098]
+        },
+        {
+          "pid": 53104,
+          "wait_event": "advisory",
+          "blockers": [53098]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53103,
+            "wait_event": "transactionid",
+            "blockers": [53104]
+          },
+          {
+            "pid": 53104,
+            "wait_event": "transactionid",
+            "blockers": [53103]
+          }
+        ],
+        [
+          {
+            "pid": 53103,
+            "wait_event": "transactionid",
+            "blockers": [53104]
+          },
+          {
+            "pid": 53104,
+            "wait_event": "transactionid",
+            "blockers": [53103]
+          }
+        ],
+        [
+          {
+            "pid": 53103,
+            "wait_event": "transactionid",
+            "blockers": [53104]
+          },
+          {
+            "pid": 53104,
+            "wait_event": "transactionid",
+            "blockers": [53103]
+          }
+        ],
+        [
+          {
+            "pid": 53103,
+            "wait_event": "transactionid",
+            "blockers": [53104]
+          },
+          {
+            "pid": 53104,
+            "wait_event": "transactionid",
+            "blockers": [53103]
+          }
+        ],
+        [
+          {
+            "pid": 53103,
+            "wait_event": "transactionid",
+            "blockers": [53104]
+          },
+          {
+            "pid": 53104,
+            "wait_event": "transactionid",
+            "blockers": [53103]
+          }
+        ],
+        [
+          {
+            "pid": 53103,
+            "wait_event": "ClientRead",
+            "blockers": []
+          },
+          {
+            "pid": 53104,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "FAIL: unclassified deadlock instead of booking-conflict response",
+      "failure": {
+        "code": "40P01",
+        "message": "deadlock detected"
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "both-constraints",
+      "scenario": "reschedule-vs-booking",
+      "dashboard_role": "staff",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53103,
+          "wait_event": "advisory",
+          "blockers": [53098]
+        },
+        {
+          "pid": 53104,
+          "wait_event": "advisory",
+          "blockers": [53098]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53103,
+            "wait_event": null,
+            "blockers": []
+          },
+          {
+            "pid": 53104,
+            "wait_event": "transactionid",
+            "blockers": [53103]
+          }
+        ],
+        [
+          {
+            "pid": 53104,
+            "wait_event": "transactionid",
+            "blockers": [53103]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_no_staff_overlap",
+        "message": "conflicting key value violates exclusion constraint \"appointments_no_staff_overlap\""
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "both-constraints",
+      "scenario": "dashboard-vs-dashboard",
+      "dashboard_role": "owner",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53103,
+          "wait_event": "advisory",
+          "blockers": [53098]
+        },
+        {
+          "pid": 53104,
+          "wait_event": "advisory",
+          "blockers": [53098]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53103,
+            "wait_event": "transactionid",
+            "blockers": [53104]
+          },
+          {
+            "pid": 53104,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53103,
+            "wait_event": "transactionid",
+            "blockers": [53104]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_no_staff_overlap",
+        "message": "conflicting key value violates exclusion constraint \"appointments_no_staff_overlap\""
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "both-constraints",
+      "scenario": "dashboard-vs-voice",
+      "dashboard_role": "manager",
+      "winner": "voice",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53103,
+          "wait_event": "advisory",
+          "blockers": [53098]
+        },
+        {
+          "pid": 53104,
+          "wait_event": "advisory",
+          "blockers": [53098]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53103,
+            "wait_event": "transactionid",
+            "blockers": [53104]
+          },
+          {
+            "pid": 53104,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53103,
+            "wait_event": "transactionid",
+            "blockers": [53104]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_no_staff_overlap",
+        "message": "conflicting key value violates exclusion constraint \"appointments_no_staff_overlap\""
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "both-constraints",
+      "scenario": "voice-vs-voice",
+      "dashboard_role": "owner",
+      "winner": "voice",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53103,
+          "wait_event": "advisory",
+          "blockers": [53098]
+        },
+        {
+          "pid": 53104,
+          "wait_event": "advisory",
+          "blockers": [53098]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53103,
+            "wait_event": null,
+            "blockers": []
+          },
+          {
+            "pid": 53104,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53103,
+            "wait_event": "ClientRead",
+            "blockers": []
+          },
+          {
+            "pid": 53104,
+            "wait_event": "transactionid",
+            "blockers": [53103]
+          }
+        ],
+        [
+          {
+            "pid": 53104,
+            "wait_event": "transactionid",
+            "blockers": [53103]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "success": false,
+        "error_type": "slot_conflict"
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "both-constraints",
+      "scenario": "reschedule-vs-booking",
+      "dashboard_role": "staff",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53103,
+          "wait_event": "advisory",
+          "blockers": [53098]
+        },
+        {
+          "pid": 53104,
+          "wait_event": "advisory",
+          "blockers": [53098]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53103,
+            "wait_event": "transactionid",
+            "blockers": [53104]
+          },
+          {
+            "pid": 53104,
+            "wait_event": "transactionid",
+            "blockers": [53103]
+          }
+        ],
+        [
+          {
+            "pid": 53103,
+            "wait_event": "transactionid",
+            "blockers": [53104]
+          },
+          {
+            "pid": 53104,
+            "wait_event": "transactionid",
+            "blockers": [53103]
+          }
+        ],
+        [
+          {
+            "pid": 53103,
+            "wait_event": "transactionid",
+            "blockers": [53104]
+          },
+          {
+            "pid": 53104,
+            "wait_event": "transactionid",
+            "blockers": [53103]
+          }
+        ],
+        [
+          {
+            "pid": 53103,
+            "wait_event": "transactionid",
+            "blockers": [53104]
+          },
+          {
+            "pid": 53104,
+            "wait_event": "transactionid",
+            "blockers": [53103]
+          }
+        ],
+        [
+          {
+            "pid": 53103,
+            "wait_event": "transactionid",
+            "blockers": [53104]
+          },
+          {
+            "pid": 53104,
+            "wait_event": "transactionid",
+            "blockers": [53103]
+          }
+        ],
+        [
+          {
+            "pid": 53103,
+            "wait_event": "ClientRead",
+            "blockers": []
+          },
+          {
+            "pid": 53104,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "FAIL: unclassified deadlock instead of booking-conflict response",
+      "failure": {
+        "code": "40P01",
+        "message": "deadlock detected"
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "dashboard-vs-dashboard",
+      "dashboard_role": "owner",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53103,
+          "wait_event": "advisory",
+          "blockers": [53098]
+        },
+        {
+          "pid": 53104,
+          "wait_event": "advisory",
+          "blockers": [53098]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53103,
+            "wait_event": "transactionid",
+            "blockers": [53104]
+          },
+          {
+            "pid": 53104,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53103,
+            "wait_event": "transactionid",
+            "blockers": [53104]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_shared_no_overlap",
+        "message": "conflicting key value violates exclusion constraint \"appointments_shared_no_overlap\""
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "dashboard-vs-voice",
+      "dashboard_role": "manager",
+      "winner": "voice",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53103,
+          "wait_event": "advisory",
+          "blockers": [53098]
+        },
+        {
+          "pid": 53104,
+          "wait_event": "advisory",
+          "blockers": [53098]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53103,
+            "wait_event": null,
+            "blockers": []
+          },
+          {
+            "pid": 53104,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53103,
+            "wait_event": "transactionid",
+            "blockers": [53104]
+          },
+          {
+            "pid": 53104,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53103,
+            "wait_event": "transactionid",
+            "blockers": [53104]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_shared_no_overlap",
+        "message": "conflicting key value violates exclusion constraint \"appointments_shared_no_overlap\""
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "voice-vs-voice",
+      "dashboard_role": "owner",
+      "winner": "voice",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53103,
+          "wait_event": "advisory",
+          "blockers": [53098]
+        },
+        {
+          "pid": 53104,
+          "wait_event": "advisory",
+          "blockers": [53098]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53103,
+            "wait_event": "transactionid",
+            "blockers": [53104]
+          },
+          {
+            "pid": 53104,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53103,
+            "wait_event": "transactionid",
+            "blockers": [53104]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "success": false,
+        "error_type": "slot_conflict"
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "reschedule-vs-booking",
+      "dashboard_role": "staff",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53103,
+          "wait_event": "advisory",
+          "blockers": [53098]
+        },
+        {
+          "pid": 53104,
+          "wait_event": "advisory",
+          "blockers": [53098]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53103,
+            "wait_event": null,
+            "blockers": []
+          },
+          {
+            "pid": 53104,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53103,
+            "wait_event": "ClientRead",
+            "blockers": []
+          },
+          {
+            "pid": 53104,
+            "wait_event": "transactionid",
+            "blockers": [53103]
+          }
+        ],
+        [
+          {
+            "pid": 53104,
+            "wait_event": "transactionid",
+            "blockers": [53103]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_shared_no_overlap",
+        "message": "conflicting key value violates exclusion constraint \"appointments_shared_no_overlap\""
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "dashboard-vs-dashboard",
+      "dashboard_role": "owner",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53103,
+          "wait_event": "advisory",
+          "blockers": [53098]
+        },
+        {
+          "pid": 53104,
+          "wait_event": "advisory",
+          "blockers": [53098]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53103,
+            "wait_event": null,
+            "blockers": []
+          },
+          {
+            "pid": 53104,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53103,
+            "wait_event": "ClientRead",
+            "blockers": []
+          },
+          {
+            "pid": 53104,
+            "wait_event": "transactionid",
+            "blockers": [53103]
+          }
+        ],
+        [
+          {
+            "pid": 53104,
+            "wait_event": "transactionid",
+            "blockers": [53103]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_shared_no_overlap",
+        "message": "conflicting key value violates exclusion constraint \"appointments_shared_no_overlap\""
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "dashboard-vs-voice",
+      "dashboard_role": "manager",
+      "winner": "voice",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53103,
+          "wait_event": "advisory",
+          "blockers": [53098]
+        },
+        {
+          "pid": 53104,
+          "wait_event": "advisory",
+          "blockers": [53098]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53103,
+            "wait_event": "transactionid",
+            "blockers": [53104]
+          },
+          {
+            "pid": 53104,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53103,
+            "wait_event": "transactionid",
+            "blockers": [53104]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_shared_no_overlap",
+        "message": "conflicting key value violates exclusion constraint \"appointments_shared_no_overlap\""
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "voice-vs-voice",
+      "dashboard_role": "owner",
+      "winner": "voice",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53103,
+          "wait_event": "advisory",
+          "blockers": [53098]
+        },
+        {
+          "pid": 53104,
+          "wait_event": "advisory",
+          "blockers": [53098]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53103,
+            "wait_event": null,
+            "blockers": []
+          },
+          {
+            "pid": 53104,
+            "wait_event": "BufferContent",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53103,
+            "wait_event": "ClientRead",
+            "blockers": []
+          },
+          {
+            "pid": 53104,
+            "wait_event": "transactionid",
+            "blockers": [53103]
+          }
+        ],
+        [
+          {
+            "pid": 53104,
+            "wait_event": "transactionid",
+            "blockers": [53103]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "success": false,
+        "error_type": "slot_conflict"
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "reschedule-vs-booking",
+      "dashboard_role": "staff",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53103,
+          "wait_event": "advisory",
+          "blockers": [53098]
+        },
+        {
+          "pid": 53104,
+          "wait_event": "advisory",
+          "blockers": [53098]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53103,
+            "wait_event": null,
+            "blockers": []
+          },
+          {
+            "pid": 53104,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53103,
+            "wait_event": "transactionid",
+            "blockers": [53104]
+          },
+          {
+            "pid": 53104,
+            "wait_event": "transactionid",
+            "blockers": [53103]
+          }
+        ],
+        [
+          {
+            "pid": 53103,
+            "wait_event": "transactionid",
+            "blockers": [53104]
+          },
+          {
+            "pid": 53104,
+            "wait_event": "transactionid",
+            "blockers": [53103]
+          }
+        ],
+        [
+          {
+            "pid": 53103,
+            "wait_event": "transactionid",
+            "blockers": [53104]
+          },
+          {
+            "pid": 53104,
+            "wait_event": "transactionid",
+            "blockers": [53103]
+          }
+        ],
+        [
+          {
+            "pid": 53103,
+            "wait_event": "transactionid",
+            "blockers": [53104]
+          },
+          {
+            "pid": 53104,
+            "wait_event": "transactionid",
+            "blockers": [53103]
+          }
+        ],
+        [
+          {
+            "pid": 53103,
+            "wait_event": "ClientRead",
+            "blockers": []
+          },
+          {
+            "pid": 53104,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "FAIL: unclassified deadlock instead of booking-conflict response",
+      "failure": {
+        "code": "40P01",
+        "message": "deadlock detected"
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "dashboard-vs-dashboard",
+      "dashboard_role": "owner",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53103,
+          "wait_event": "advisory",
+          "blockers": [53098]
+        },
+        {
+          "pid": 53104,
+          "wait_event": "advisory",
+          "blockers": [53098]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53103,
+            "wait_event": null,
+            "blockers": []
+          },
+          {
+            "pid": 53104,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53103,
+            "wait_event": "ClientRead",
+            "blockers": []
+          },
+          {
+            "pid": 53104,
+            "wait_event": "transactionid",
+            "blockers": [53103]
+          }
+        ],
+        [
+          {
+            "pid": 53104,
+            "wait_event": "transactionid",
+            "blockers": [53103]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_shared_no_overlap",
+        "message": "conflicting key value violates exclusion constraint \"appointments_shared_no_overlap\""
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "dashboard-vs-voice",
+      "dashboard_role": "manager",
+      "winner": "voice",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53103,
+          "wait_event": "advisory",
+          "blockers": [53098]
+        },
+        {
+          "pid": 53104,
+          "wait_event": "advisory",
+          "blockers": [53098]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53103,
+            "wait_event": null,
+            "blockers": []
+          },
+          {
+            "pid": 53104,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53103,
+            "wait_event": "transactionid",
+            "blockers": [53104]
+          },
+          {
+            "pid": 53104,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53103,
+            "wait_event": "transactionid",
+            "blockers": [53104]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_shared_no_overlap",
+        "message": "conflicting key value violates exclusion constraint \"appointments_shared_no_overlap\""
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "voice-vs-voice",
+      "dashboard_role": "owner",
+      "winner": "voice",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53103,
+          "wait_event": "advisory",
+          "blockers": [53098]
+        },
+        {
+          "pid": 53104,
+          "wait_event": "advisory",
+          "blockers": [53098]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53103,
+            "wait_event": "ClientRead",
+            "blockers": []
+          },
+          {
+            "pid": 53104,
+            "wait_event": "transactionid",
+            "blockers": [53103]
+          }
+        ],
+        [
+          {
+            "pid": 53103,
+            "wait_event": "ClientRead",
+            "blockers": []
+          },
+          {
+            "pid": 53104,
+            "wait_event": "transactionid",
+            "blockers": [53103]
+          }
+        ],
+        [
+          {
+            "pid": 53104,
+            "wait_event": "transactionid",
+            "blockers": [53103]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "success": false,
+        "error_type": "slot_conflict"
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "reschedule-vs-booking",
+      "dashboard_role": "staff",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53103,
+          "wait_event": "advisory",
+          "blockers": [53098]
+        },
+        {
+          "pid": 53104,
+          "wait_event": "advisory",
+          "blockers": [53098]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53103,
+            "wait_event": "ClientRead",
+            "blockers": []
+          },
+          {
+            "pid": 53104,
+            "wait_event": "transactionid",
+            "blockers": [53103]
+          }
+        ],
+        [
+          {
+            "pid": 53104,
+            "wait_event": "transactionid",
+            "blockers": [53103]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_shared_no_overlap",
+        "message": "conflicting key value violates exclusion constraint \"appointments_shared_no_overlap\""
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    }
+  ],
+  "adjacent": [
+    {
+      "mode": "both-constraints",
+      "success_count": 2,
+      "result": [
+        {
+          "success": true,
+          "appointment_id": "00000000-0000-4000-8000-000000005056"
+        },
+        {
+          "success": true,
+          "staff_id": "00000000-0000-4000-8000-000000000104",
+          "start_time": "2040-01-13T12:45:00+03:00",
+          "service_name": "Consultation",
+          "appointment_id": "abe89645-4eff-4f06-a7a0-03e9d10186ab",
+          "appointment_booked": true,
+          "appointment_rescheduled": false
+        }
+      ]
+    },
+    {
+      "mode": "new-only",
+      "success_count": 2,
+      "result": [
+        {
+          "success": true,
+          "appointment_id": "00000000-0000-4000-8000-000000005121"
+        },
+        {
+          "success": true,
+          "staff_id": "00000000-0000-4000-8000-000000000104",
+          "start_time": "2040-01-27T12:45:00+03:00",
+          "service_name": "Consultation",
+          "appointment_id": "5422a683-c4ea-4b1d-a4c9-e6a7c6314e3f",
+          "appointment_booked": true,
+          "appointment_rescheduled": false
+        }
+      ]
+    }
+  ],
+  "cancellation": [
+    {
+      "mode": "both-constraints",
+      "preserved_history": true,
+      "availability_reopened": true,
+      "voice_rebook_success": true
+    },
+    {
+      "mode": "new-only",
+      "preserved_history": true,
+      "availability_reopened": true,
+      "voice_rebook_success": true
+    }
+  ],
+  "roles": [
+    {
+      "role": "owner",
+      "load_create_reschedule_cancel": "PASS"
+    },
+    {
+      "role": "manager",
+      "load_create_reschedule_cancel": "PASS"
+    },
+    {
+      "role": "staff",
+      "load_create_reschedule_cancel": "PASS"
+    }
+  ],
+  "isolation": [
+    {
+      "role": "owner",
+      "cross_clinic_read_write_cancel_reschedule_references_rpc": "PASS"
+    },
+    {
+      "role": "manager",
+      "cross_clinic_read_write_cancel_reschedule_references_rpc": "PASS"
+    },
+    {
+      "role": "staff",
+      "cross_clinic_read_write_cancel_reschedule_references_rpc": "PASS"
+    }
+  ],
+  "cleanup": {
+    "instrumentation_removed": true,
+    "idle_or_aborted_transactions": 0,
+    "clients_closed": true,
+    "test_database_dropped": true,
+    "synthetic_roles_dropped": true,
+    "server_stopped": true,
+    "socket_removed": true,
+    "production_accessed": false
+  },
+  "verdict": "STILL NEEDS CHANGES",
+  "additional_observations": {
+    "dashboard_deadlock_in_initial_run": true,
+    "all_probe_deadlock_events": 8
+  },
+  "migration_unchanged": true
+}

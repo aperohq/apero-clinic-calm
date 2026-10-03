@@ -34,3 +34,14 @@ export function appointmentRange(date: string, time: string, minutes: number, ti
   const start = fromClinicInput(`${date}T${time}`, timeZone);
   return { start, end: new Date(Date.parse(start) + minutes * 60_000).toISOString() };
 }
+
+// Some clinic zones advance the clock at midnight. The week query starts at
+// the first real instant of that clinic date, including those DST transitions.
+export function clinicDayBoundary(date: string, timeZone: string): string {
+  const day = new Date(`${date}T00:00:00Z`);
+  for (let minute = 0; minute <= 1440; minute++) {
+    const candidate = new Date(day.getTime() + minute * 60_000).toISOString().slice(0, 16);
+    try { return fromClinicInput(candidate, timeZone); } catch { /* Try the next wall minute. */ }
+  }
+  throw new Error("Clinic date is unavailable in this timezone.");
+}

@@ -1,0 +1,5562 @@
+{
+  "environment": {
+    "database": "apero_concurrency_acceptance",
+    "directory": "/tmp/apero-concurrency-postgres/data",
+    "version": "17.11 (Ubuntu 17.11-1.pgdg24.04+2)",
+    "address": null,
+    "migration_sha256": "74a0282709a5f8b1a8e55e1381c4474a714e316d8855633e55d0f00be3882acd",
+    "backend_pids": [53651, 53652],
+    "monitor_pid": 53646,
+    "constraints": [
+      {
+        "conname": "appointments_no_staff_overlap",
+        "definition": "EXCLUDE USING gist (staff_id WITH =, tstzrange(start_time, end_time, '[)'::text) WITH &&) WHERE ((status <> 'Cancelled'::text))"
+      },
+      {
+        "conname": "appointments_shared_no_overlap",
+        "definition": "EXCLUDE USING gist (clinic_id WITH =, staff_id WITH =, tstzrange(start_time, end_time, '[)'::text) WITH &&) WHERE ((status <> 'Cancelled'::text))"
+      }
+    ]
+  },
+  "races": [
+    {
+      "mode": "both-constraints",
+      "scenario": "dashboard-vs-dashboard",
+      "dashboard_role": "owner",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": null,
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "ClientRead",
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "40P01",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "both-constraints",
+      "scenario": "dashboard-vs-voice",
+      "dashboard_role": "manager",
+      "winner": "voice",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_no_staff_overlap",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "both-constraints",
+      "scenario": "voice-vs-voice",
+      "dashboard_role": "owner",
+      "winner": "voice",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "success": false,
+        "error_type": "slot_conflict"
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "both-constraints",
+      "scenario": "reschedule-vs-booking",
+      "dashboard_role": "staff",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": null,
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_no_staff_overlap",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "both-constraints",
+      "scenario": "dashboard-vs-dashboard",
+      "dashboard_role": "owner",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "ClientRead",
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "40P01",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "both-constraints",
+      "scenario": "dashboard-vs-voice",
+      "dashboard_role": "manager",
+      "winner": "voice",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_no_staff_overlap",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "both-constraints",
+      "scenario": "voice-vs-voice",
+      "dashboard_role": "owner",
+      "winner": "voice",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "ClientRead",
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "success": false,
+        "error_type": "slot_conflict"
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "both-constraints",
+      "scenario": "reschedule-vs-booking",
+      "dashboard_role": "staff",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": null,
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "ClientRead",
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": null,
+            "blockers": []
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "40P01",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "both-constraints",
+      "scenario": "dashboard-vs-dashboard",
+      "dashboard_role": "owner",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": null,
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "ClientRead",
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_no_staff_overlap",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "both-constraints",
+      "scenario": "dashboard-vs-voice",
+      "dashboard_role": "manager",
+      "winner": "voice",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_no_staff_overlap",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "both-constraints",
+      "scenario": "voice-vs-voice",
+      "dashboard_role": "owner",
+      "winner": "voice",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": null,
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "success": false,
+        "error_type": "slot_conflict"
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "both-constraints",
+      "scenario": "reschedule-vs-booking",
+      "dashboard_role": "staff",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "advisory",
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": "advisory",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "ClientRead",
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_no_staff_overlap",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "both-constraints",
+      "scenario": "dashboard-vs-dashboard",
+      "dashboard_role": "owner",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": null,
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_no_staff_overlap",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "both-constraints",
+      "scenario": "dashboard-vs-voice",
+      "dashboard_role": "manager",
+      "winner": "voice",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_no_staff_overlap",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "both-constraints",
+      "scenario": "voice-vs-voice",
+      "dashboard_role": "owner",
+      "winner": "voice",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": null,
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "ClientRead",
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "success": false,
+        "error_type": "slot_conflict"
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "both-constraints",
+      "scenario": "reschedule-vs-booking",
+      "dashboard_role": "staff",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": null,
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_no_staff_overlap",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "both-constraints",
+      "scenario": "dashboard-vs-dashboard",
+      "dashboard_role": "owner",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "ClientRead",
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "40P01",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "both-constraints",
+      "scenario": "dashboard-vs-voice",
+      "dashboard_role": "manager",
+      "winner": "voice",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_no_staff_overlap",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "both-constraints",
+      "scenario": "voice-vs-voice",
+      "dashboard_role": "owner",
+      "winner": "voice",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "ClientRead",
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "success": false,
+        "error_type": "slot_conflict"
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "both-constraints",
+      "scenario": "reschedule-vs-booking",
+      "dashboard_role": "staff",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": null,
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_no_staff_overlap",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "both-constraints",
+      "scenario": "dashboard-vs-dashboard",
+      "dashboard_role": "owner",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_no_staff_overlap",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "both-constraints",
+      "scenario": "dashboard-vs-voice",
+      "dashboard_role": "manager",
+      "winner": "voice",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_no_staff_overlap",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "both-constraints",
+      "scenario": "voice-vs-voice",
+      "dashboard_role": "owner",
+      "winner": "voice",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "ClientRead",
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "success": false,
+        "error_type": "slot_conflict"
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "both-constraints",
+      "scenario": "reschedule-vs-booking",
+      "dashboard_role": "staff",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "ClientRead",
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "40P01",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "both-constraints",
+      "scenario": "dashboard-vs-dashboard",
+      "dashboard_role": "owner",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "BufferContent",
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_no_staff_overlap",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "both-constraints",
+      "scenario": "dashboard-vs-voice",
+      "dashboard_role": "manager",
+      "winner": "voice",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_no_staff_overlap",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "both-constraints",
+      "scenario": "voice-vs-voice",
+      "dashboard_role": "owner",
+      "winner": "voice",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "ClientRead",
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "success": false,
+        "error_type": "slot_conflict"
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "both-constraints",
+      "scenario": "reschedule-vs-booking",
+      "dashboard_role": "staff",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": null,
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_no_staff_overlap",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "both-constraints",
+      "scenario": "dashboard-vs-dashboard",
+      "dashboard_role": "owner",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": null,
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_no_staff_overlap",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "both-constraints",
+      "scenario": "dashboard-vs-voice",
+      "dashboard_role": "manager",
+      "winner": "voice",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": null,
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_no_staff_overlap",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "both-constraints",
+      "scenario": "voice-vs-voice",
+      "dashboard_role": "owner",
+      "winner": "voice",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "ClientRead",
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "success": false,
+        "error_type": "slot_conflict"
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "both-constraints",
+      "scenario": "reschedule-vs-booking",
+      "dashboard_role": "staff",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "ClientRead",
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_no_staff_overlap",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "both-constraints",
+      "scenario": "dashboard-vs-dashboard",
+      "dashboard_role": "owner",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "ClientRead",
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "40P01",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "both-constraints",
+      "scenario": "dashboard-vs-voice",
+      "dashboard_role": "manager",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "ClientRead",
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": "advisory",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "ClientRead",
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "success": false,
+        "error_type": "slot_conflict"
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "both-constraints",
+      "scenario": "voice-vs-voice",
+      "dashboard_role": "owner",
+      "winner": "voice",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "success": false,
+        "error_type": "slot_conflict"
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "both-constraints",
+      "scenario": "reschedule-vs-booking",
+      "dashboard_role": "staff",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": null,
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_no_staff_overlap",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "both-constraints",
+      "scenario": "dashboard-vs-dashboard",
+      "dashboard_role": "owner",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": null,
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": "BufferContent",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "ClientRead",
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_no_staff_overlap",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "both-constraints",
+      "scenario": "dashboard-vs-voice",
+      "dashboard_role": "manager",
+      "winner": "voice",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": null,
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_no_staff_overlap",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "both-constraints",
+      "scenario": "voice-vs-voice",
+      "dashboard_role": "owner",
+      "winner": "voice",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "ClientRead",
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "success": false,
+        "error_type": "slot_conflict"
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "both-constraints",
+      "scenario": "reschedule-vs-booking",
+      "dashboard_role": "staff",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": null,
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_no_staff_overlap",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "dashboard-vs-dashboard",
+      "dashboard_role": "owner",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": null,
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": "advisory",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "ClientRead",
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_shared_no_overlap",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "dashboard-vs-voice",
+      "dashboard_role": "manager",
+      "winner": "voice",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "advisory",
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_shared_no_overlap",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "voice-vs-voice",
+      "dashboard_role": "owner",
+      "winner": "voice",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "success": false,
+        "error_type": "slot_conflict"
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "reschedule-vs-booking",
+      "dashboard_role": "staff",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_shared_no_overlap",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "dashboard-vs-dashboard",
+      "dashboard_role": "owner",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": null,
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "ClientRead",
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_shared_no_overlap",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "dashboard-vs-voice",
+      "dashboard_role": "manager",
+      "winner": "voice",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "advisory",
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": "advisory",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_shared_no_overlap",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "voice-vs-voice",
+      "dashboard_role": "owner",
+      "winner": "voice",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "success": false,
+        "error_type": "slot_conflict"
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "reschedule-vs-booking",
+      "dashboard_role": "staff",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "advisory",
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_shared_no_overlap",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "dashboard-vs-dashboard",
+      "dashboard_role": "owner",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": null,
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "ClientRead",
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "40P01",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "dashboard-vs-voice",
+      "dashboard_role": "manager",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "advisory",
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": "advisory",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "ClientRead",
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "success": false,
+        "error_type": "slot_conflict"
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "voice-vs-voice",
+      "dashboard_role": "owner",
+      "winner": "voice",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": null,
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "success": false,
+        "error_type": "slot_conflict"
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "reschedule-vs-booking",
+      "dashboard_role": "staff",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "ClientRead",
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "40P01",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "dashboard-vs-dashboard",
+      "dashboard_role": "owner",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_shared_no_overlap",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "dashboard-vs-voice",
+      "dashboard_role": "manager",
+      "winner": "voice",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_shared_no_overlap",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "voice-vs-voice",
+      "dashboard_role": "owner",
+      "winner": "voice",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "ClientRead",
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "success": false,
+        "error_type": "slot_conflict"
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "reschedule-vs-booking",
+      "dashboard_role": "staff",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "BufferContent",
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "ClientRead",
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "40P01",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "dashboard-vs-dashboard",
+      "dashboard_role": "owner",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "ClientRead",
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "40P01",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "dashboard-vs-voice",
+      "dashboard_role": "manager",
+      "winner": "voice",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_shared_no_overlap",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "voice-vs-voice",
+      "dashboard_role": "owner",
+      "winner": "voice",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "ClientRead",
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "success": false,
+        "error_type": "slot_conflict"
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "reschedule-vs-booking",
+      "dashboard_role": "staff",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "BufferContent",
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_shared_no_overlap",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "dashboard-vs-dashboard",
+      "dashboard_role": "owner",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "BufferContent",
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_shared_no_overlap",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "dashboard-vs-voice",
+      "dashboard_role": "manager",
+      "winner": "voice",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_shared_no_overlap",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "voice-vs-voice",
+      "dashboard_role": "owner",
+      "winner": "voice",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": null,
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "ClientRead",
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "success": false,
+        "error_type": "slot_conflict"
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "reschedule-vs-booking",
+      "dashboard_role": "staff",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "BufferContent",
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "ClientRead",
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "40P01",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "dashboard-vs-dashboard",
+      "dashboard_role": "owner",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_shared_no_overlap",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "dashboard-vs-voice",
+      "dashboard_role": "manager",
+      "winner": "voice",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_shared_no_overlap",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "voice-vs-voice",
+      "dashboard_role": "owner",
+      "winner": "voice",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "success": false,
+        "error_type": "slot_conflict"
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "reschedule-vs-booking",
+      "dashboard_role": "staff",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": null,
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "ClientRead",
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "40P01",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "dashboard-vs-dashboard",
+      "dashboard_role": "owner",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": null,
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": "BufferContent",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "ClientRead",
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_shared_no_overlap",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "dashboard-vs-voice",
+      "dashboard_role": "manager",
+      "winner": "voice",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_shared_no_overlap",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "voice-vs-voice",
+      "dashboard_role": "owner",
+      "winner": "voice",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "ClientRead",
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "success": false,
+        "error_type": "slot_conflict"
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "reschedule-vs-booking",
+      "dashboard_role": "staff",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": null,
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "ClientRead",
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "40P01",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "dashboard-vs-dashboard",
+      "dashboard_role": "owner",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": null,
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_shared_no_overlap",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "dashboard-vs-voice",
+      "dashboard_role": "manager",
+      "winner": "voice",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": null,
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_shared_no_overlap",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "voice-vs-voice",
+      "dashboard_role": "owner",
+      "winner": "voice",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "success": false,
+        "error_type": "slot_conflict"
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "reschedule-vs-booking",
+      "dashboard_role": "staff",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": null,
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": "BufferContent",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "ClientRead",
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_shared_no_overlap",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "dashboard-vs-dashboard",
+      "dashboard_role": "owner",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "ClientRead",
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_shared_no_overlap",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "dashboard-vs-voice",
+      "dashboard_role": "manager",
+      "winner": "voice",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_shared_no_overlap",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "voice-vs-voice",
+      "dashboard_role": "owner",
+      "winner": "voice",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": null,
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "ClientRead",
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ],
+        [
+          {
+            "pid": 53652,
+            "wait_event": "transactionid",
+            "blockers": [53651]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "success": false,
+        "error_type": "slot_conflict"
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    },
+    {
+      "mode": "new-only",
+      "scenario": "reschedule-vs-booking",
+      "dashboard_role": "staff",
+      "winner": "dashboard",
+      "both_prechecks_completed": true,
+      "gates": [
+        {
+          "pid": 53651,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        },
+        {
+          "pid": 53652,
+          "wait_event": "advisory",
+          "blockers": [53646]
+        }
+      ],
+      "exclusion_wait": [
+        [
+          {
+            "pid": 53651,
+            "wait_event": null,
+            "blockers": []
+          },
+          {
+            "pid": 53652,
+            "wait_event": null,
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          },
+          {
+            "pid": 53652,
+            "wait_event": "ClientRead",
+            "blockers": []
+          }
+        ],
+        [
+          {
+            "pid": 53651,
+            "wait_event": "transactionid",
+            "blockers": [53652]
+          }
+        ]
+      ],
+      "database_protection": "PASS",
+      "application_contract": "PASS",
+      "failure": {
+        "code": "23P01",
+        "constraint": "appointments_shared_no_overlap",
+        "message": "That time is unavailable. Refresh available slots."
+      },
+      "active_rows": 1,
+      "rollback_clean": true
+    }
+  ],
+  "adjacent": [
+    {
+      "mode": "both-constraints",
+      "success_count": 2,
+      "result": [
+        {
+          "success": true,
+          "appointment_id": "00000000-0000-4000-8000-000000005175"
+        },
+        {
+          "success": true,
+          "staff_id": "00000000-0000-4000-8000-000000000104",
+          "start_time": "2040-02-10T12:45:00+03:00",
+          "service_name": "Consultation",
+          "appointment_id": "bdbd4b2c-caa3-44bb-b6d7-05e34d629233",
+          "appointment_booked": true,
+          "appointment_rescheduled": false
+        }
+      ]
+    },
+    {
+      "mode": "new-only",
+      "success_count": 2,
+      "result": [
+        {
+          "success": true,
+          "appointment_id": "00000000-0000-4000-8000-000000005359"
+        },
+        {
+          "success": true,
+          "staff_id": "00000000-0000-4000-8000-000000000104",
+          "start_time": "2040-03-23T12:45:00+03:00",
+          "service_name": "Consultation",
+          "appointment_id": "91df4ec6-d851-4286-a134-c313f68fb3a9",
+          "appointment_booked": true,
+          "appointment_rescheduled": false
+        }
+      ]
+    }
+  ],
+  "cancellation": [
+    {
+      "mode": "both-constraints",
+      "preserved_history": true,
+      "availability_reopened": true,
+      "voice_rebook_success": true
+    },
+    {
+      "mode": "new-only",
+      "preserved_history": true,
+      "availability_reopened": true,
+      "voice_rebook_success": true
+    }
+  ],
+  "roles": [
+    {
+      "role": "owner",
+      "load_create_reschedule_cancel": "PASS"
+    },
+    {
+      "role": "manager",
+      "load_create_reschedule_cancel": "PASS"
+    },
+    {
+      "role": "staff",
+      "load_create_reschedule_cancel": "PASS"
+    }
+  ],
+  "isolation": [
+    {
+      "role": "owner",
+      "cross_clinic_read_write_cancel_reschedule_references_rpc": "PASS"
+    },
+    {
+      "role": "manager",
+      "cross_clinic_read_write_cancel_reschedule_references_rpc": "PASS"
+    },
+    {
+      "role": "staff",
+      "cross_clinic_read_write_cancel_reschedule_references_rpc": "PASS"
+    }
+  ],
+  "cleanup": {
+    "instrumentation_removed": true,
+    "idle_or_aborted_transactions": 0,
+    "clients_closed": true,
+    "test_database_dropped": true,
+    "synthetic_roles_dropped": true,
+    "server_stopped": true,
+    "socket_removed": true,
+    "production_accessed": false
+  },
+  "deadlocks_reproduced": {
+    "dashboard": 13,
+    "voice": 8
+  },
+  "verdict": "PASS"
+}

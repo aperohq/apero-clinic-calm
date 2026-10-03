@@ -11,7 +11,11 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "test:invite-setup": "node tests/run-invite-setup-tests.mjs && node tests/run-invite-setup-tests.mjs --invite-invalid",
-    "test:permissions:ui": "node tests/run-clinic-permission-tests.mjs"
+    "test:permissions:ui": "node tests/run-clinic-permission-tests.mjs",
+    "test:appointments": "node --max-old-space-size=384 tests/appointments.test.mjs && node tests/run-calendar-tests.mjs",
+    "test:appointment-migration": "node --max-old-space-size=384 tests/appointment-migration-safety.test.mjs",
+    "test:appointment-conflicts": "node --max-old-space-size=384 tests/appointment-conflicts.test.mjs",
+    "test:appointment-concurrency": "node tests/appointments-concurrency.test.mjs"
   },
   "overrides": {
     "rolldown": "1.2.1"
@@ -93,6 +97,7 @@
     "typescript-eslint": "^8.56.1",
     "vite": "8.1.5",
     "esbuild": "^0.28.2",
-    "happy-dom": "^20.14.5"
+    "happy-dom": "^20.14.5",
+    "@electric-sql/pglite": "^0.5.8"
   }
 }

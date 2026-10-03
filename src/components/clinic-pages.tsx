@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { useIsFetching, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { notifyManager, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, CalendarDays, Check, CheckCircle2, ChevronLeft, ChevronRight, Clock, Eye, EyeOff, FileText, Filter, Mail, MoreHorizontal, Phone, Plus, Search, Users } from "lucide-react";
 import { toast } from "sonner";
@@ -19,12 +19,13 @@ import { AccountAccessPanel } from "@/components/account-access-panel";
 import {
   DAY_NAMES, durationLabel, formatDate, formatDuration, formatTime, initialsOf,
   useAddClient, useAddClientNote, useAddStaff, useAppointments, useAvailability,
-  useCancelAppointment, useClientNotes, useClients, useConversations, useCreateAppointment,
+  useAppointmentSlots, useCancelAppointment, useClientNotes, useClients, useConversations, useCreateAppointment,
   useRescheduleAppointment, useRemoveTimeOff, useSaveAvailability, useSaveTimeOff, useStaff, useTimeOff, useUpdateClient, useUpdateStaff,
   type Client, type StaffMember,
 } from "@/lib/apero-store";
 import type { AppointmentRow, ConversationRow, StaffAvailabilityRow, StaffTimeOffRow } from "@/lib/db-types";
-import { fromClinicInput, toClinicInput } from "@/lib/clinic-time";
+import { clinicDayBoundary, fromClinicInput, toClinicInput } from "@/lib/clinic-time";
+import { calendarSegments, clinicWeek } from "@/lib/calendar-layout";
 import { buildWeeklyRows, schedulePayload } from "@/lib/staff-schedule";
 import { cn } from "@/lib/utils";
 
@@ -36,13 +37,18 @@ function IconStat({ icon: Icon, label, value, note }: { icon: typeof Users; labe
 function SearchBox({ value, onChange, placeholder = "Search" }: { value: string; onChange: (v: string) => void; placeholder?: string }) { return <div className="relative"><Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" /><Input aria-label={placeholder} className={cn(field, "pl-9")} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} /></div>; }
 function DataRow({ children }: { children: React.ReactNode }) { return <div className="grid min-w-0 gap-3 break-words border-b border-border px-1 py-4 last:border-0 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1fr)_auto] xl:items-center">{children}</div>; }
 
-function useDataStatus(keys: string[]) {
-  const { profile } = useAuth();
+function useDataStatus(keys: (string | readonly unknown[])[]) {
+  const { clinicId } = useAuth();
   const queryClient = useQueryClient();
-  useIsFetching();
-  if (!profile?.clinic_id) return null;
-  const states = keys.map((key) => queryClient.getQueryState([key, profile.clinic_id]));
-  if (states.some((state) => state?.status === "error")) return <Panel><Empty>We couldn’t load this page. <Button variant="outline" size="sm" className="ml-2" onClick={() => keys.forEach((key) => void queryClient.invalidateQueries({ queryKey: [key, profile.clinic_id] }))}>Try again</Button></Empty></Panel>;
+  const queryKeys = keys.map((key) => typeof key === "string" ? [key, clinicId] : key);
+  useSyncExternalStore(
+    (listener) => queryClient.getQueryCache().subscribe(notifyManager.batchCalls(listener)),
+    () => queryKeys.map((key) => { const state = queryClient.getQueryState(key); return `${state?.status}:${state?.fetchStatus}`; }).join("|"),
+    () => "",
+  );
+  if (!clinicId) return null;
+  const states = queryKeys.map((key) => queryClient.getQueryState(key));
+  if (states.some((state) => state?.status === "error")) return <Panel><Empty>We couldn’t load this page. <Button variant="outline" size="sm" className="ml-2" onClick={() => queryKeys.forEach((key) => void queryClient.invalidateQueries({ queryKey: key }))}>Try again</Button></Empty></Panel>;
   if (states.some((state) => !state || state.status === "pending")) return <Panel><p className="text-sm text-muted-foreground" role="status">Loading clinic information…</p></Panel>;
   return null;
 }
@@ -113,52 +119,58 @@ export function HomePage() {
 // --------------------------------------------------------------- calendar
 const weekDayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
 const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-function startOfWeek(date: Date, timeZone: string) { const clinicDate = toClinicInput(date.toISOString(), timeZone).slice(0, 10); const d = new Date(`${clinicDate}T12:00:00Z`); d.setUTCDate(d.getUTCDate() - d.getUTCDay()); return d; }
 
 export function CalendarPage() {
-  const staffList = useStaff(); const appointments = useAppointments(); const clients = useClients();
-  const { clinic } = useAuth(); const timeZone = clinic?.timezone ?? "UTC";
-  const dataStatus = useDataStatus(["staff", "appointments", "clients"]);
+  const staffList = useStaff(); const clients = useClients();
+  const { clinic, clinicId } = useAuth(); const timeZone = clinic?.timezone ?? "UTC";
   const [staffFilter, setStaffFilter] = useState("all");
   const [dialog, setDialog] = useState<"new" | "details" | null>(null);
   const [selected, setSelected] = useState<AppointmentRow | null>(null);
   const [weekOffset, setWeekOffset] = useState(0);
-  const week = useMemo(() => {
-    const start = startOfWeek(new Date(), timeZone);
-    start.setUTCDate(start.getUTCDate() + weekOffset * 7);
-    return weekDayNames.map((name, i) => { const d = new Date(start); d.setUTCDate(d.getUTCDate() + i); return { name, label: `${name} ${d.getUTCDate()}`, date: d }; });
-  }, [weekOffset, timeZone]);
   const todayDate = toClinicInput(new Date().toISOString(), timeZone).slice(0, 10);
+  const week = useMemo(() => {
+    return clinicWeek(new Date(`${todayDate}T12:00:00Z`), "UTC", weekOffset).map((date, i) => ({ name: weekDayNames[i], label: `${weekDayNames[i]} ${date.getUTCDate()}`, date }));
+  }, [weekOffset, todayDate]);
+  const windowStart = clinicDayBoundary(week[0]!.date.toISOString().slice(0, 10), timeZone);
+  const nextWeek = new Date(week[6]!.date); nextWeek.setUTCDate(nextWeek.getUTCDate() + 1);
+  const windowEnd = clinicDayBoundary(nextWeek.toISOString().slice(0, 10), timeZone);
+  const appointments = useAppointments({ start: windowStart, end: windowEnd });
+  const dataStatus = useDataStatus(["staff", ["appointments", clinicId, windowStart, windowEnd], "clients"]);
   const first = week[0]!; const last = week[6]!;
   const rangeLabel = `${monthNames[first.date.getUTCMonth()]} ${first.date.getUTCDate()}–${first.date.getUTCMonth() === last.date.getUTCMonth() ? "" : `${monthNames[last.date.getUTCMonth()]} `}${last.date.getUTCDate()}, ${last.date.getUTCFullYear()}`;
-  const sameDay = (a: Date, iso: string) => a.toISOString().slice(0, 10) === toClinicInput(iso, timeZone).slice(0, 10);
-  const visible = appointments.filter((a) => a.status !== "Cancelled" && (staffFilter === "all" || a.staff_id === staffFilter) && week.some((d) => sameDay(d.date, a.start_time)));
-  const appointmentHours = visible.map((a) => Number(toClinicInput(a.start_time, timeZone).slice(11, 13)));
-  const firstHour = Math.min(7, ...appointmentHours);
-  const lastHour = Math.max(21, ...appointmentHours);
-  const hourCount = lastHour - firstHour + 1;
+  const segments = calendarSegments(appointments, week.map((d) => d.date), timeZone, staffFilter);
+  const visible = [...new Set(segments.map((s) => s.appointment))];
+  const firstHour = Math.min(7, ...segments.map((s) => Math.floor(s.start / 60)));
+  const lastHour = Math.max(22, ...segments.map((s) => Math.ceil(s.end / 60)));
+  const hourCount = lastHour - firstHour;
   const clientName = (id: string | null) => clients.find((c) => c.id === id)?.name ?? "Unknown client";
   if (dataStatus) return dataStatus;
-  return <><PageHeader title="Calendar" description={`${rangeLabel} · Clinic time`} action={<div className="flex flex-wrap gap-2"><Button className="rounded-[10px]" onClick={() => { setSelected(null); setDialog("new"); }}><Plus />New appointment</Button></div>} /><Panel className="overflow-hidden p-0"><div className="flex flex-wrap items-center justify-between gap-3 border-b border-border p-4"><div className="flex gap-2"><Button size="icon" variant="outline" className="size-10" aria-label="Previous week" onClick={() => setWeekOffset(weekOffset - 1)}><ChevronLeft /></Button><Button variant="outline" onClick={() => setWeekOffset(0)}>Today</Button><Button size="icon" variant="outline" className="size-10" aria-label="Next week" onClick={() => setWeekOffset(weekOffset + 1)}><ChevronRight /></Button></div><Select value={staffFilter} onValueChange={setStaffFilter}><SelectTrigger className="w-full sm:w-[210px]"><Filter /><SelectValue placeholder="All staff" /></SelectTrigger><SelectContent><SelectItem value="all">All staff</SelectItem>{staffList.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select></div><p className="border-b border-border px-4 py-2 text-xs text-muted-foreground lg:hidden">Scroll sideways to see the full week.</p><div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Weekly appointment calendar"><div className="min-w-[1050px]"><div className="grid grid-cols-[70px_repeat(7,1fr)] border-b border-border bg-muted/40"><div />{week.map((d) => <div key={d.label} className={cn("border-l border-border p-3 text-center text-sm font-semibold", d.date.toISOString().slice(0, 10) === todayDate && "bg-nav-active text-foreground")} aria-current={d.date.toISOString().slice(0, 10) === todayDate ? "date" : undefined}>{d.label}</div>)}</div><div className="relative grid grid-cols-[70px_repeat(7,1fr)]" style={{ height: hourCount * 60, gridTemplateRows: `repeat(${hourCount}, minmax(0, 1fr))` }}>{Array.from({ length: hourCount }, (_, i) => { const hour = i + firstHour; return `${hour % 12 || 12} ${hour < 12 ? "AM" : "PM"}`; }).map((t, i) => <div key={t} className="col-span-8 grid grid-cols-[70px_1fr] border-b border-border" style={{ gridRow: i + 1 }}><span className="p-2 text-right text-[11px] text-muted-foreground">{t}</span><span className="border-l border-border" /></div>)}{visible.map((a) => { const start = new Date(a.start_time); const col = week.findIndex((d) => sameDay(d.date, a.start_time)) + 2; const row = Number(toClinicInput(a.start_time, timeZone).slice(11, 13)) - firstHour + 1; return <Button key={a.id} variant="outline" onClick={() => { setSelected(a); setDialog("details"); }} className={cn("z-10 m-1 h-auto items-start justify-start whitespace-normal p-2 text-left", a.status === "Booked" ? "border-success-border bg-success-soft text-success-strong hover:bg-success-soft" : "border-border bg-muted text-muted-foreground hover:bg-muted")} style={{ gridColumn: col, gridRow: row }}><span><b className="block text-xs">{new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit", timeZone }).format(start)}</b><span className="block break-words [overflow-wrap:anywhere] text-xs">{clientName(a.client_id)}</span><span className="block break-words [overflow-wrap:anywhere] text-[10px] opacity-75">{a.service}</span></span></Button>; })}</div></div></div>{!visible.length && <div className="border-t border-border p-4 text-center text-sm text-muted-foreground">No appointments scheduled for this week.</div>}</Panel><AppointmentDialog mode={dialog} onClose={() => { setDialog(null); setSelected(null); }} appointment={selected} /></>;
+  return <><PageHeader title="Calendar" description={`${rangeLabel} · Clinic time`} action={<div className="flex flex-wrap gap-2"><Button className="rounded-[10px]" onClick={() => { setSelected(null); setDialog("new"); }}><Plus />New appointment</Button></div>} /><Panel className="overflow-hidden p-0"><div className="flex flex-wrap items-center justify-between gap-3 border-b border-border p-4"><div className="flex gap-2"><Button size="icon" variant="outline" className="size-10" aria-label="Previous week" onClick={() => setWeekOffset(weekOffset - 1)}><ChevronLeft /></Button><Button variant="outline" onClick={() => setWeekOffset(0)}>Today</Button><Button size="icon" variant="outline" className="size-10" aria-label="Next week" onClick={() => setWeekOffset(weekOffset + 1)}><ChevronRight /></Button></div><Select value={staffFilter} onValueChange={setStaffFilter}><SelectTrigger className="w-full sm:w-[210px]"><Filter /><SelectValue placeholder="All staff" /></SelectTrigger><SelectContent><SelectItem value="all">All staff</SelectItem>{staffList.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select></div><p className="border-b border-border px-4 py-2 text-xs text-muted-foreground lg:hidden">Scroll sideways to see the full week.</p><div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Weekly appointment calendar"><div className="min-w-[1050px]"><div className="grid grid-cols-[70px_repeat(7,1fr)] border-b border-border bg-muted/40"><div />{week.map((d) => <div key={d.label} className={cn("border-l border-border p-3 text-center text-sm font-semibold", d.date.toISOString().slice(0, 10) === todayDate && "bg-nav-active text-foreground")} aria-current={d.date.toISOString().slice(0, 10) === todayDate ? "date" : undefined}>{d.label}</div>)}</div><div className="relative grid grid-cols-[70px_repeat(7,1fr)]" style={{ height: hourCount * 60, gridTemplateRows: `repeat(${hourCount}, minmax(0, 1fr))` }}>{Array.from({ length: hourCount }, (_, i) => { const hour = i + firstHour; return `${hour % 12 || 12} ${hour < 12 ? "AM" : "PM"}`; }).map((t, i) => <div key={t} className="col-span-8 grid grid-cols-[70px_1fr] border-b border-border" style={{ gridRow: i + 1 }}><span className="p-2 text-right text-[11px] text-muted-foreground">{t}</span><span className="border-l border-border" /></div>)}{segments.map(({ appointment: a, day, start, end, lane, lanes }) => <Button key={`${a.id}-${day}`} variant="outline" onClick={() => { setSelected(a); setDialog("details"); }} aria-label={`${clientName(a.client_id)}, ${a.service}, ${formatTime(a.start_time, timeZone)}, ${durationLabel(a.start_time, a.end_time)}`} className={cn("absolute z-10 items-start justify-start overflow-hidden whitespace-normal p-2 text-left", a.status === "Booked" ? "border-success-border bg-success-soft text-success-strong hover:bg-success-soft" : "border-border bg-muted text-muted-foreground hover:bg-muted")} style={{ top: start - firstHour * 60, height: Math.max(24, end - start), left: `calc(70px + (100% - 70px) * ${(day + lane / lanes) / 7} + 2px)`, width: `calc((100% - 70px) / ${7 * lanes} - 4px)` }}><span><b className="block text-xs">{formatTime(a.start_time, timeZone)}</b><span className="block break-words [overflow-wrap:anywhere] text-xs">{clientName(a.client_id)}</span><span className="block break-words [overflow-wrap:anywhere] text-[10px] opacity-75">{a.service}</span></span></Button>)}</div></div></div>{!visible.length && <div className="border-t border-border p-4 text-center text-sm text-muted-foreground">No appointments scheduled for this week.</div>}</Panel><AppointmentDialog mode={dialog} onClose={() => { setDialog(null); setSelected(null); }} appointment={selected} onSaved={(start) => { const target = clinicWeek(new Date(start), timeZone, 0)[0]!; const current = clinicWeek(new Date(), timeZone, 0)[0]!; setWeekOffset(Math.round((target.getTime() - current.getTime()) / (7 * 86400000))); }} /></>;
 }
 
-function AppointmentDialog({ mode, onClose, appointment }: { mode: "new" | "details" | null; onClose: () => void; appointment: AppointmentRow | null }) {
+function AppointmentDialog({ mode, onClose, appointment, onSaved }: { onSaved: (start: string) => void; mode: "new" | "details" | null; onClose: () => void; appointment: AppointmentRow | null }) {
   const clientList = useClients(); const staffList = useStaff();
   const { clinic } = useAuth(); const timeZone = clinic?.timezone ?? "UTC";
   const create = useCreateAppointment(); const reschedule = useRescheduleAppointment(); const cancel = useCancelAppointment();
   const [action, setAction] = useState<"view" | "reschedule" | "cancel">("view");
   const [clientId, setClientId] = useState(""); const [staffId, setStaffId] = useState("");
   const [service, setService] = useState("");
-  const [date, setDate] = useState(""); const [time, setTime] = useState("");
+  const [date, setDate] = useState(""); const [slotStart, setSlotStart] = useState("");
   const [reason, setReason] = useState("");
   const detail = mode === "details" && appointment !== null;
+  const choosingSlot = mode === "new" || (detail && action === "reschedule");
+  const slots = useAppointmentSlots(staffId, service, date, detail ? appointment.id : null, choosingSlot);
+  const selectedSlot = slots.data?.find((slot) => slot.start_time === slotStart);
+  const services = staffList.find((s) => s.id === staffId)?.services ?? [];
+  const changeDate = (value: string) => { setDate(value); setSlotStart(""); };
+
 
   useEffect(() => {
     if (!mode) return;
     setAction("view"); setReason("");
     const local = toClinicInput(appointment?.start_time ?? new Date().toISOString(), timeZone);
     setDate(local.slice(0, 10));
-    setTime(appointment ? local.slice(11, 16) : "");
+    setSlotStart("");
     setClientId(appointment?.client_id ?? "");
     setStaffId(appointment?.staff_id ?? "");
     setService(appointment?.service ?? "");
@@ -169,22 +181,23 @@ function AppointmentDialog({ mode, onClose, appointment }: { mode: "new" | "deta
   const appointmentClient = clientList.find((c) => c.id === (appointment?.client_id ?? clientId));
 
   const save = async () => {
-    if (action !== "cancel" && (!date || !time)) { toast.error("Choose a date and time in the clinic timezone."); return; }
+    if (action !== "cancel" && !selectedSlot) { toast.error("Choose an available slot in the clinic timezone."); return; }
     try {
       if (detail && action === "cancel" && appointment) { await cancel.mutateAsync({ id: appointment.id, reason }); toast.success("Appointment cancelled"); }
-      else if (detail && appointment) { await reschedule.mutateAsync({ id: appointment.id, date, time, minutes: Math.max(1, Math.round((new Date(appointment.end_time).getTime() - new Date(appointment.start_time).getTime()) / 60000)) }); toast.success("Appointment rescheduled"); }
+      else if (detail && appointment) { await reschedule.mutateAsync({ id: appointment.id, slot: selectedSlot! }); toast.success("Appointment rescheduled"); }
       else {
         if (!clientId || !staffId || !service.trim()) { toast.error("Choose a client, a practitioner and a service."); return; }
-        await create.mutateAsync({ clientId, staffId, service, date, time }); toast.success("Appointment created");
+        await create.mutateAsync({ clientId, staffId, service, slot: selectedSlot! }); toast.success("Appointment created");
       }
+      if (action !== "cancel" && selectedSlot) onSaved(selectedSlot.start_time);
       onClose();
-    } catch { toast.error("Could not save the appointment."); }
+    } catch (error) { toast.error(error && typeof error === "object" && "message" in error && typeof error.message === "string" ? error.message : "Could not save the appointment. Refresh availability and try again."); if (choosingSlot) { setSlotStart(""); void slots.refetch(); } }
   };
 
-  return <Dialog open onOpenChange={(o) => { if (!o && !isSaving) { setAction("view"); onClose(); } }}><DialogContent className="max-h-[85vh] overflow-y-auto rounded-2xl"><DialogHeader><DialogTitle>{mode === "new" ? "New Appointment" : action === "reschedule" ? "Reschedule Appointment" : action === "cancel" ? "Cancel Appointment" : "Appointment Details"}</DialogTitle><DialogDescription>{detail ? `${appointmentClient?.name ?? "Client"} · ${appointment?.service}` : "Update the clinic calendar."}</DialogDescription></DialogHeader>{detail && action === "view" ? <div className="space-y-3 rounded-xl bg-muted p-4 text-sm"><p><b>Time:</b> {new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeZone }).format(new Date(appointment.start_time))}, {new Intl.DateTimeFormat(undefined, { timeStyle: "short", timeZone }).format(new Date(appointment.start_time))}</p><p><b>Practitioner:</b> {staffList.find((s) => s.id === appointment.staff_id)?.name ?? "Unassigned"}</p><p><b>Service:</b> {appointment.service}</p><StatusBadge status={appointment.status} /></div>
+  return <Dialog open onOpenChange={(o) => { if (!o && !isSaving) { setAction("view"); onClose(); } }}><DialogContent className="max-h-[85vh] overflow-y-auto rounded-2xl"><DialogHeader><DialogTitle>{mode === "new" ? "New Appointment" : action === "reschedule" ? "Reschedule Appointment" : action === "cancel" ? "Cancel Appointment" : "Appointment Details"}</DialogTitle><DialogDescription>{detail ? `${appointmentClient?.name ?? "Client"} · ${appointment?.service}` : "Update the clinic calendar."}</DialogDescription></DialogHeader>{detail && action === "view" ? <div className="space-y-3 rounded-xl bg-muted p-4 text-sm"><p><b>Time:</b> {new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeZone }).format(new Date(appointment.start_time))}, {new Intl.DateTimeFormat(undefined, { timeStyle: "short", timeZone }).format(new Date(appointment.start_time))}</p><p><b>Duration:</b> {durationLabel(appointment.start_time, appointment.end_time)}</p>{appointmentClient?.phone && <p><b>Phone:</b> {appointmentClient.phone}</p>}{appointment.source && <p><b>Source:</b> {appointment.source}</p>}{appointment.notes && <p className="whitespace-pre-wrap"><b>Notes:</b> {appointment.notes}</p>}<p><b>Practitioner:</b> {staffList.find((s) => s.id === appointment.staff_id)?.name ?? "Unassigned"}</p><p><b>Service:</b> {appointment.service}</p><StatusBadge status={appointment.status} /></div>
     : action === "cancel" ? <Textarea aria-label="Cancellation reason" placeholder="Cancellation reason" value={reason} onChange={(e) => setReason(e.target.value)} />
-    : <div className="grid gap-4">{!detail && <div><Label>Client</Label><Select value={clientId} onValueChange={setClientId}><SelectTrigger aria-label="Client" className="mt-2"><SelectValue placeholder="Select a client" /></SelectTrigger><SelectContent>{clientList.map((c) => <SelectItem value={c.id} key={c.id}>{c.name}</SelectItem>)}</SelectContent></Select></div>}{!detail && <div><Label>Practitioner</Label><Select value={staffId} onValueChange={setStaffId}><SelectTrigger aria-label="Practitioner" className="mt-2"><SelectValue placeholder="Select a practitioner" /></SelectTrigger><SelectContent>{staffList.filter((s) => s.active).map((s) => <SelectItem value={s.id} key={s.id}>{s.name}</SelectItem>)}</SelectContent></Select></div>}{!detail && <div><Label>Service</Label><Input aria-label="Service" className="mt-2" value={service} onChange={(e) => setService(e.target.value)} /></div>}<div className="grid grid-cols-2 gap-3"><Input aria-label="Appointment date" type="date" value={date} onChange={(e) => setDate(e.target.value)} /><Input aria-label="Appointment time" type="time" value={time} onChange={(e) => setTime(e.target.value)} /></div></div>}
-    <DialogFooter>{detail && action === "view" ? <><Button variant="destructive" onClick={() => setAction("cancel")}>Cancel appointment</Button><Button variant="outline" onClick={() => setAction("reschedule")}>Reschedule</Button></> : <><Button variant="outline" disabled={isSaving} onClick={() => { setAction("view"); onClose(); }}>Cancel</Button><Button disabled={isSaving} onClick={() => void save()}>{create.isPending || reschedule.isPending || cancel.isPending ? "Saving…" : action === "cancel" ? "Confirm cancellation" : "Save"}</Button></>}</DialogFooter></DialogContent></Dialog>;
+    : <div className="grid gap-4">{!detail && <div><Label>Client</Label><Select value={clientId} onValueChange={setClientId}><SelectTrigger aria-label="Client" className="mt-2"><SelectValue placeholder="Select a client" /></SelectTrigger><SelectContent>{clientList.map((c) => <SelectItem value={c.id} key={c.id}>{c.name}</SelectItem>)}</SelectContent></Select></div>}{!detail && <div><Label>Practitioner</Label><Select value={staffId} onValueChange={(value) => { setStaffId(value); setService(""); setSlotStart(""); }}><SelectTrigger aria-label="Practitioner" className="mt-2"><SelectValue placeholder="Select a practitioner" /></SelectTrigger><SelectContent>{staffList.filter((s) => s.active).map((s) => <SelectItem value={s.id} key={s.id}>{s.name}</SelectItem>)}</SelectContent></Select></div>}{!detail && <div><Label>Service</Label><Select value={service} onValueChange={(value) => { setService(value); setSlotStart(""); }}><SelectTrigger aria-label="Service" className="mt-2"><SelectValue placeholder="Select a service" /></SelectTrigger><SelectContent>{services.map((name) => <SelectItem key={name} value={name}>{name}</SelectItem>)}</SelectContent></Select></div>}<div className="grid gap-3"><Input aria-label="Appointment date" type="date" min={toClinicInput(new Date().toISOString(), timeZone).slice(0, 10)} value={date} onChange={(e) => changeDate(e.target.value)} /><p className="text-xs text-muted-foreground">Times in {timeZone}</p>{!staffId || !service ? <p className="text-sm text-muted-foreground">Choose a practitioner and service to see availability.</p> : slots.isPending ? <p role="status" className="text-sm">Loading available slots…</p> : slots.isError ? <p role="alert" className="text-sm">Could not load availability. <Button variant="outline" size="sm" onClick={() => void slots.refetch()}>Try again</Button></p> : !slots.data?.length ? <p className="text-sm text-muted-foreground">No available slots on this date.</p> : <Select value={selectedSlot ? slotStart : ""} onValueChange={setSlotStart}><SelectTrigger aria-label="Available appointment time"><SelectValue placeholder="Select an available time" /></SelectTrigger><SelectContent>{slots.data.map((slot) => <SelectItem key={slot.start_time} value={slot.start_time}>{formatTime(slot.start_time, timeZone)} · {slot.duration_minutes} min</SelectItem>)}</SelectContent></Select>}</div></div>}
+    <DialogFooter>{detail && action === "view" ? <>{appointment.status === "Booked" && <><Button variant="destructive" onClick={() => setAction("cancel")}>Cancel appointment</Button><Button variant="outline" onClick={() => { setSlotStart(""); setAction("reschedule"); }}>Reschedule</Button></>}<Button variant="outline" onClick={onClose}>Close</Button></> : <><Button variant="outline" disabled={isSaving} onClick={() => { setAction("view"); onClose(); }}>Cancel</Button><Button disabled={isSaving || (action !== "cancel" && (!selectedSlot || slots.isFetching || (mode === "new" && !clientId)))} onClick={() => void save()}>{create.isPending || reschedule.isPending || cancel.isPending ? "Saving…" : action === "cancel" ? "Confirm cancellation" : "Save"}</Button></>}</DialogFooter></DialogContent></Dialog>;
 }
 
 // ---------------------------------------------------------------- clients

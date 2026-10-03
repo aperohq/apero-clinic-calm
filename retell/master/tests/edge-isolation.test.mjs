@@ -65,6 +65,10 @@ class Database {
   constructor() {
     this.tables = {
       voice_integrations: structuredClone(integrations),
+      clinics: [
+        { id: A, timezone: "UTC" },
+        { id: B, timezone: "UTC" },
+      ],
       staff: [
         {
           id: SA,
@@ -169,12 +173,15 @@ class Database {
         Promise.resolve()
           .then(() => {
             if (mutation) {
-              const row = structuredClone(mutation.row);
-              const old =
-                mutation.field &&
-                db.tables[table].find((r) => r[mutation.field] === row[mutation.field]);
-              if (old) Object.assign(old, row);
-              else db.tables[table].push(row);
+              for (const row of structuredClone(
+                Array.isArray(mutation.row) ? mutation.row : [mutation.row],
+              )) {
+                const old =
+                  mutation.field &&
+                  db.tables[table].find((r) => r[mutation.field] === row[mutation.field]);
+                if (old) Object.assign(old, row);
+                else db.tables[table].push(row);
+              }
             }
             const rows = db.tables[table].filter((r) => filters.every((f) => f(r))).slice(0, limit);
             return { data: structuredClone(single ? (rows[0] ?? null) : rows), error: null };
@@ -185,9 +192,39 @@ class Database {
   }
   async rpc(name, args) {
     this.rpcCalls.push({ name, args });
+    if (name === "appointment_available_slots")
+      return {
+        data: [
+          {
+            start_time: `${args.p_date}T10:00:00Z`,
+            end_time: `${args.p_date}T10:45:00Z`,
+            duration_minutes: 45,
+          },
+        ],
+        error: null,
+      };
     // Deliberately never implement appointment mutation in this adapter.
     return { data: { success: false, error_type: "local_rpc_not_executed" }, error: null };
   }
+}
+
+// Formatting shim for handler contract tests; production Luxon/DST is not
+// simulated here. Database/browser suites cover the real appointment instants.
+function utcTime(iso) {
+  const millis = Date.parse(iso);
+  return {
+    isValid: Number.isFinite(millis),
+    valueOf: () => millis,
+    toUTC: () => ({ toISO: () => new Date(millis).toISOString() }),
+    toFormat: (pattern) =>
+      pattern === "yyyy-MM-dd"
+        ? new Date(millis).toISOString().slice(0, 10)
+        : new Date(millis).toISOString().slice(11, 16),
+    startOf: () => utcTime(new Date(millis).toISOString().slice(0, 10) + "T00:00Z"),
+    plus: ({ days = 0, minutes = 0 }) =>
+      utcTime(new Date(millis + days * 86400000 + minutes * 60000).toISOString()),
+    setZone: () => utcTime(iso),
+  };
 }
 
 function environment() {
@@ -205,6 +242,13 @@ function environment() {
   const common = {
     ...security,
     ...logic,
+    // Only a UTC formatting shim for the RPC/checked-slot contract test.
+    // Actual clinic timezone and duration math are covered in PostgreSQL tests.
+    DateTime: {
+      fromFormat: (date) => utcTime(`${date}T00:00:00Z`),
+      fromISO: (iso) => utcTime(iso),
+      now: () => utcTime(new Date().toISOString()),
+    },
     resolveVoiceIntegration,
     normalizePhone: logic.phone,
     withSupabase: (_options, fn) => (req) => fn(req, { supabaseAdmin: db }),
@@ -212,7 +256,7 @@ function environment() {
   const operations = compile(
     "../../../supabase/functions/clinic-operations/index.ts",
     common,
-    "\nreturn {handler, readToken, tokenFor};",
+    "\nreturn {handler, readToken, tokenFor, availableSlots};",
   );
   const webhook = compile(
     "../../../supabase/functions/retell-webhook/index.ts",
@@ -319,8 +363,14 @@ test("actual checked-slot verifier rejects another clinic, key, expired token an
     "call-a",
     "check-a",
     "slot-a",
+    45,
   );
   assert.ok(await operations.readToken(token, keys.RETELL_A, A));
+  const priorPayload = JSON.parse(Buffer.from(token.split(".")[0], "base64url").toString());
+  delete priorPayload.m;
+  const priorBody = Buffer.from(JSON.stringify(priorPayload)).toString("base64url");
+  const priorMac = createHmac("sha256", keys.RETELL_A).update(priorBody).digest("base64url");
+  assert.ok(await operations.readToken(`${priorBody}.${priorMac}`, keys.RETELL_A, A));
   assert.equal(await operations.readToken(token, keys.RETELL_A, B), null);
   assert.equal(await operations.readToken(token, keys.RETELL_B, A), null);
   assert.equal(await operations.readToken(token + "x", keys.RETELL_A, A), null);
@@ -341,6 +391,7 @@ test("book and reschedule reject foreign tokens before any mutation RPC", async 
     "local-agent-a",
     "check-a",
     "slot-a",
+    45,
   );
   for (const action of ["book", "reschedule"]) {
     const r = await send(operations.handler, "agent-b", {
@@ -381,3 +432,110 @@ test("webhook scopes patient/appointment links and rejects reassigning another c
   db.tables.conversations[0].clinic_id = A;
   assert.equal((await send(webhook, "agent-b", {}, { event: "call_analyzed", call })).status, 403);
 });
+
+test("actual voice slot adapter queries the same clinic availability RPC and signs its duration", async () => {
+  const { operations, db } = environment();
+  const ranges = await operations.availableSlots(
+    db,
+    B,
+    [db.tables.staff[1]],
+    "Consultation",
+    "2099-01-01",
+    "UTC",
+    keys.RETELL_B,
+    "call-b",
+    "check-b",
+    undefined,
+  );
+  assert.equal(db.rpcCalls[0].name, "appointment_available_slots");
+  assert.deepEqual(db.rpcCalls[0].args, {
+    p_clinic_id: B,
+    p_staff_id: SB,
+    p_service: "Consultation",
+    p_date: "2099-01-01",
+    p_exclude_id: null,
+  });
+  assert.equal(ranges[0].duration_minutes, 45);
+  assert.equal(ranges[0].end_time, "2099-01-01T10:45:00Z");
+  const decoded = await operations.readToken(ranges[0].slot_id, keys.RETELL_B, B);
+  assert.equal(decoded.m, 45);
+  assert.equal(decoded.c, B);
+});
+
+test("AI reschedule availability preserves the existing practitioner even with any preference", async () => {
+  const { operations, send, db } = environment();
+  db.tables.staff.push({
+    ...db.tables.staff[1],
+    id: "bbbbbbbb-2222-4222-8222-222222222223",
+    full_name: "Another practitioner",
+  });
+  const response = await send(operations.handler, "agent-b", {
+    action: "availability",
+    service_name: "Vaccination",
+    practitioner_mode: "any",
+    appointment_id: APPB,
+    client_name: "Alex Test",
+    client_phone: "+12025550101",
+    requested_date: "2099-01-01",
+  });
+  const result = await response.json();
+  assert.equal(result.success, true, JSON.stringify(result));
+  assert.equal(result.selected_practitioner_id, SB);
+  assert.deepEqual(
+    result.slots.map((s) => s.practitioner_id),
+    [SB],
+  );
+  assert.equal(db.rpcCalls[0].args.p_exclude_id, APPB);
+  assert.equal(db.tables.voice_checked_slots[0].staff_id, SB);
+});
+
+for (const [label, rpcResult, expected] of [
+  [
+    "canonical protected-write conflict",
+    { data: { success: false, error_type: "slot_conflict" }, error: null },
+    "slot_conflict",
+  ],
+  [
+    "unrelated internal database failure",
+    { data: null, error: { code: "XX000", message: "private diagnostic" } },
+    "database_error",
+  ],
+  [
+    "deadlock outside protected appointment write",
+    { data: null, error: { code: "40P01", message: "private diagnostic" } },
+    "database_error",
+  ],
+]) {
+  test(`Edge booking preserves ${label} without raw database leakage`, async () => {
+    const { operations, send, db } = environment();
+    const response = await send(operations.handler, "agent-b", {
+      action: "availability",
+      service_name: "Consultation",
+      practitioner_id: SB,
+      practitioner_mode: "specific",
+      requested_date: "2099-01-01",
+    });
+    const available = await response.json();
+    assert.equal(available.success, true, JSON.stringify(available));
+    const slot = available.slots[0];
+    assert.ok(slot);
+    const originalRpc = db.rpc.bind(db);
+    db.rpc = async (name, args) =>
+      name === "voice_apply_appointment" ? rpcResult : originalRpc(name, args);
+    const booked = await send(operations.handler, "agent-b", {
+      action: "book",
+      slot_id: slot.slot_id,
+      client_name: "Alex Test",
+      client_phone: "+12025550101",
+      practitioner_id: SB,
+      service_name: "Consultation",
+      appointment_date: slot.date,
+      appointment_time: slot.time,
+    });
+    const result = await booked.json();
+    assert.equal(result.success, false);
+    assert.equal(result.error_type, expected, JSON.stringify(result));
+    assert.ok(!JSON.stringify(result).includes("private"));
+    assert.ok(!JSON.stringify(result).includes("40P01"));
+  });
+}

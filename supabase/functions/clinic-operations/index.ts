@@ -9,7 +9,7 @@ import { DateTime } from "npm:luxon@3";
 const encoder = new TextEncoder();
 type Slot = { slot_id: string; checked_slot_id: string; start_time: string; end_time: string; practitioner_id: string; practitioner_name: string; service_name: string; date: string; time: string; duration_minutes: number; timezone: string };
 
-import { resolveStaff, resolveService, slotIsOpen, phone as normalizePhone, value, type Staff } from "./logic.ts";
+import { resolveStaff, resolveService, phone as normalizePhone, value, type Staff } from "./logic.ts";
 
 function failure(error_type: string, message = error_type) { return { success: false, available: false, appointment_booked: false, error_type, message }; }
 function bytesToBase64(bytes: Uint8Array): string { return btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, ""); }
@@ -18,16 +18,16 @@ async function sign(text: string, secret: string): Promise<string> {
   const key = await crypto.subtle.importKey("raw", encoder.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
   return bytesToBase64(new Uint8Array(await crypto.subtle.sign("HMAC", key, encoder.encode(text))));
 }
-async function tokenFor(clinicId: string, staff: Staff, service: string, start: DateTime, secret: string, callId: string, checkId: string, slotId: string): Promise<string> {
-  const body = bytesToBase64(encoder.encode(JSON.stringify({ c: clinicId, s: staff.id, v: service, t: start.toUTC().toISO(), e: Date.now() + 10 * 60_000, k: callId, i: checkId, q: slotId })));
+async function tokenFor(clinicId: string, staff: Staff, service: string, start: DateTime, secret: string, callId: string, checkId: string, slotId: string, minutes: number): Promise<string> {
+  const body = bytesToBase64(encoder.encode(JSON.stringify({ c: clinicId, s: staff.id, v: service, t: start.toUTC().toISO(), e: Date.now() + 10 * 60_000, k: callId, i: checkId, q: slotId, m: minutes })));
   return `${body}.${await sign(body, secret)}`;
 }
-async function readToken(token: string, secret: string, clinicId: string): Promise<{ c: string; s: string; v: string; t: string; e: number; k: string; i: string; q: string } | null> {
+async function readToken(token: string, secret: string, clinicId: string): Promise<{ c: string; s: string; v: string; t: string; e: number; k: string; i: string; q: string; m?: number } | null> {
   try {
     const [body, mac] = token.split(".");
     if (!body || !mac || mac !== await sign(body, secret)) return null;
     const data = JSON.parse(new TextDecoder().decode(base64ToBytes(body)));
-    if (data.c !== clinicId || typeof data.e !== "number" || data.e < Date.now()) return null;
+    if ((data.m !== undefined && (!Number.isInteger(data.m) || data.m < 1 || data.m > 1440)) || data.c !== clinicId || typeof data.e !== "number" || data.e < Date.now()) return null;
     return data;
   } catch { return null; }
 }
@@ -46,35 +46,23 @@ async function loadTimezone(db: any, clinicId: string): Promise<string> {
   if (error || !data) throw error ?? new Error("Clinic missing");
   return data.timezone;
 }
-async function availableSlots(db: any, clinicId: string, slotMinutes: number, staff: Staff[], service: string, date: string, timezone: string, secret: string, callId: string, checkId: string, excludeId?: string): Promise<Slot[]> {
+async function availableSlots(db: any, clinicId: string, staff: Staff[], service: string, date: string, timezone: string, secret: string, callId: string, checkId: string, excludeId: string | undefined): Promise<Slot[]> {
   const day = DateTime.fromFormat(date, "yyyy-MM-dd", { zone: timezone });
   if (!day.isValid || day.toFormat("yyyy-MM-dd") !== date) return [];
-  const now = DateTime.now().setZone(timezone);
   const slots: Slot[] = [];
   for (const person of staff) {
-    const [shifts, appointments, timeOff] = await Promise.all([
-      db.from("staff_availability").select("start_time,end_time,is_available").eq("clinic_id", clinicId).eq("staff_id", person.id).eq("day_of_week", day.weekday % 7),
-      db.from("appointments").select("id,start_time,end_time").eq("clinic_id", clinicId).eq("staff_id", person.id).neq("status", "Cancelled").lt("start_time", day.plus({ days: 1 }).toUTC().toISO()).gt("end_time", day.toUTC().toISO()),
-      db.from("staff_time_off").select("start_time,end_time").eq("clinic_id", clinicId).eq("staff_id", person.id).lt("start_time", day.plus({ days: 1 }).toUTC().toISO()).gt("end_time", day.toUTC().toISO()),
-    ]);
-    if (shifts.error || appointments.error || timeOff.error) throw shifts.error ?? appointments.error ?? timeOff.error;
-    for (const shift of shifts.data ?? []) {
-      if (!shift.is_available) continue;
-      let start = DateTime.fromISO(`${date}T${shift.start_time}`, { zone: timezone });
-      const end = DateTime.fromISO(`${date}T${shift.end_time}`, { zone: timezone });
-      if (start.isValid) start = start.plus({ minutes: (30 - start.minute % 30) % 30 }).set({ second: 0, millisecond: 0 });
-      while (start.isValid && end.isValid && start.plus({ minutes: slotMinutes }) <= end) {
-        const finish = start.plus({ minutes: slotMinutes });
-        if (start > now && slotIsOpen(shift, start.toFormat("HH:mm"), finish.toFormat("HH:mm"),
-          start.toUTC().toISO()!, finish.toUTC().toISO()!,
-          (appointments.data ?? []).filter((a: any) => a.id !== excludeId), timeOff.data ?? [])) {
-          const checkedSlotId = crypto.randomUUID();
-          slots.push({ slot_id: await tokenFor(clinicId, person, service, start, secret, callId, checkId, checkedSlotId),
-            checked_slot_id: checkedSlotId, start_time: start.toUTC().toISO()!, end_time: finish.toUTC().toISO()!, practitioner_id: person.id,
-            practitioner_name: person.full_name, service_name: service, date, time: start.toFormat("HH:mm"), duration_minutes: slotMinutes, timezone });
-        }
-        start = finish;
-      }
+    const { data: ranges, error } = await db.rpc("appointment_available_slots", {
+      p_clinic_id: clinicId, p_staff_id: person.id, p_service: service,
+      p_date: date, p_exclude_id: excludeId ?? null,
+    });
+    if (error) throw error;
+    for (const range of ranges ?? []) {
+      const start = DateTime.fromISO(range.start_time, { zone: timezone });
+      const checkedSlotId = crypto.randomUUID();
+      slots.push({ slot_id: await tokenFor(clinicId, person, service, start, secret, callId, checkId, checkedSlotId, range.duration_minutes),
+        checked_slot_id: checkedSlotId, start_time: range.start_time, end_time: range.end_time, practitioner_id: person.id,
+        practitioner_name: person.full_name, service_name: service, date, time: start.toFormat("HH:mm"),
+        duration_minutes: range.duration_minutes, timezone });
     }
   }
   return slots.sort((a, b) => `${a.date}T${a.time}`.localeCompare(`${b.date}T${b.time}`));
@@ -90,7 +78,6 @@ export default {
     if (!identity) return new Response("Unauthorized", { status: 401 });
     const { secret } = identity;
     const clinicId = identity.integration.clinic_id;
-    const slotMinutes = identity.integration.slot_minutes ?? 45;
     const phone = (input: unknown) => normalizePhone(input, identity.integration.dialing_prefix, identity.integration.local_number_length);
     try {
       const payload = JSON.parse(raw);
@@ -157,7 +144,7 @@ export default {
           const patientPhone = phone(args.client_phone);
           if (!patientName || !patientPhone) return Response.json(failure("invalid_patient_or_phone"));
           const { data: existing, error: existingError } = await db.from("appointments")
-            .select("id,client_id,start_time").eq("id", existingId).eq("clinic_id", clinicId)
+            .select("id,client_id,start_time,staff_id,service").eq("id", existingId).eq("clinic_id", clinicId)
             .neq("status", "Cancelled").maybeSingle();
           if (existingError) throw existingError;
           if (!existing || DateTime.fromISO(existing.start_time) <= DateTime.now())
@@ -167,6 +154,11 @@ export default {
           if (patientError) throw patientError;
           if (!patient || patient.full_name.trim().toLowerCase() !== patientName.toLowerCase() || phone(patient.phone) !== patientPhone)
             return Response.json(failure("patient_mismatch"));
+          if (existing.service !== service) return Response.json(failure("service_mismatch"));
+          selected = selected.filter(person => person.id === existing.staff_id);
+          if (!selected.length) return Response.json(failure("practitioner_mismatch"));
+          base.selected_practitioner_id = selected[0]!.id;
+          base.selected_practitioner_name = selected[0]!.full_name;
           excludeAppointmentId = existing.id;
         }
         const requestedDate = value(args, "requested_date");
@@ -182,7 +174,7 @@ export default {
         let all: Slot[] = [];
         for (let offset = 0; offset < maxDays; offset++) {
           const day = first.plus({ days: offset }).toFormat("yyyy-MM-dd");
-          const found = (await availableSlots(db, clinicId, slotMinutes, selected, service, day, timezone, secret, callId, checkId, excludeAppointmentId)).filter(s =>
+          const found = (await availableSlots(db, clinicId, selected, service, day, timezone, secret, callId, checkId, excludeAppointmentId)).filter(s =>
             (!windowStart || s.time >= windowStart) && (!windowEnd || s.time < windowEnd));
           all.push(...found);
           if (earliest && all.length) break;
@@ -234,7 +226,7 @@ export default {
           p_client_name: patientName, p_client_phone: patientPhone,
           p_caller_name: value(args, "caller_name") || null, p_caller_phone: phone(args.caller_phone),
           p_staff_id: slot.s, p_service: slot.v,
-          p_start: start.toUTC().toISO(), p_end: start.plus({ minutes: slotMinutes }).toUTC().toISO(),
+          p_start: start.toUTC().toISO(), p_end: start.plus({ minutes: slot.m ?? identity.integration.slot_minutes ?? 45 }).toUTC().toISO(),
           p_check_id: slot.i, p_slot_id: slot.q,
         });
         if (error) { logDatabaseFailure("Voice operation", error); return Response.json(failure("database_error")); }

@@ -62,6 +62,19 @@ const session = (authUser = user) => {
   };
 };
 const fixture = {
+  calendar: process.argv.includes("--calendar")
+    ? {
+        appointments: [],
+        mutations: [],
+        slotRequests: [],
+        error: false,
+        delay: 0,
+        slotsError: false,
+        slotsEmpty: false,
+        conflict: false,
+        conflictCode: "23P01",
+      }
+    : null,
   accounts,
   requests: [],
   missingProfile: false,
@@ -201,6 +214,86 @@ const localFetch = async (req) => {
     if (fail) return reply(403, { message: "Local clinic read failure" });
     return reply(200, missing ? [] : [nextClinic]);
   }
+  if (fixture.calendar && url.pathname === "/rest/v1/rpc/appointment_available_slots") {
+    const body = await req.json();
+    fixture.calendar.slotRequests.push(body);
+    if (fixture.calendar.slotsError) return reply(500, { message: "Availability failed" });
+    const ranges = fixture.calendar.slotsEmpty
+      ? []
+      : ["12:30", "13:15"].map((time) => {
+          const begin = new Date(`${body.p_date}T${time}:00+03:00`);
+          return {
+            start_time: begin.toISOString(),
+            end_time: new Date(begin.getTime() + 45 * 60000).toISOString(),
+            duration_minutes: 45,
+          };
+        });
+    return reply(200, ranges);
+  }
+  if (fixture.calendar && url.pathname === "/rest/v1/staff")
+    return reply(200, [
+      {
+        id: "staff-a",
+        clinic_id: resolvedClinicId,
+        full_name: "Practitioner One",
+        specialty: "General",
+        services: ["Consultation"],
+        active: true,
+      },
+      {
+        id: "staff-b",
+        clinic_id: resolvedClinicId,
+        full_name: "Practitioner Two",
+        specialty: "General",
+        services: ["Consultation"],
+        active: true,
+      },
+    ]);
+  if (fixture.calendar && url.pathname === "/rest/v1/appointments") {
+    const state = fixture.calendar;
+    if (state.delay) await new Promise((resolve) => setTimeout(resolve, state.delay));
+    if (state.error) return reply(500, { message: "Appointments failed" });
+    const appointmentId = url.searchParams.get("id")?.slice(3);
+    let rows = state.appointments.filter((row) => !appointmentId || row.id === appointmentId);
+    if (req.method !== "GET") {
+      const body = await req.json();
+      state.mutations.push({
+        method: req.method,
+        body,
+        id: appointmentId,
+        clinic: url.searchParams.get("clinic_id"),
+      });
+      if (state.conflict)
+        return reply(409, {
+          code: state.conflictCode,
+          message: "private Postgres diagnostic: deadlock detected or exclusion violation",
+        });
+      if (req.method === "POST") {
+        const record = {
+          ...body,
+          id: `new-${state.mutations.length}`,
+          updated_at: new Date().toISOString(),
+          notes: null,
+        };
+        state.appointments.push(record);
+        rows = [record];
+      } else rows.forEach((row) => Object.assign(row, body));
+    } else if (!appointmentId) {
+      const before = url.searchParams.get("start_time")?.slice(3);
+      const after = url.searchParams.get("end_time")?.slice(3);
+      rows = rows.filter(
+        (row) =>
+          (!before || Date.parse(row.start_time) < Date.parse(before)) &&
+          (!after || Date.parse(row.end_time) > Date.parse(after)),
+      );
+      const offset = Number(url.searchParams.get("offset") ?? 0);
+      rows = rows.slice(offset, offset + 1000);
+    }
+    return reply(
+      200,
+      req.headers.get("accept")?.includes("application/vnd.pgrst.object+json") ? rows[0] : rows,
+    );
+  }
   if (
     [
       "clients",
@@ -249,6 +342,17 @@ for (const name of [
   "sessionStorage",
   "HTMLElement",
   "HTMLInputElement",
+  "HTMLFormElement",
+  "HTMLTextAreaElement",
+  "NodeFilter",
+  "Event",
+  "KeyboardEvent",
+  "FocusEvent",
+  "HTMLSelectElement",
+  "DocumentFragment",
+  "CustomEvent",
+  "PointerEvent",
+  "ResizeObserver",
   "Element",
   "Node",
   "MutationObserver",
@@ -295,7 +399,9 @@ globalThis.__cleanupAuthTests = async () => {
 };
 try {
   await build({
-    entryPoints: ["tests/clinic-permission-ui.test.tsx"],
+    entryPoints: [
+      fixture.calendar ? "tests/calendar-ui.test.tsx" : "tests/clinic-permission-ui.test.tsx",
+    ],
     outfile: join(directory, "tests.cjs"),
     bundle: true,
     platform: "node",

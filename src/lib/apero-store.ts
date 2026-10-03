@@ -1,5 +1,7 @@
+import { appointmentWriteError } from "@/lib/appointment-conflicts";
 // Supabase-backed data layer for the Apero clinic workspace.
-// All reads and writes are scoped to the signed-in user's clinic by RLS.
+// Use the resolved account clinic for queries and writes; existing RLS remains
+// the database enforcement boundary.
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { db } from "@/lib/db";
 import { useAuth } from "@/lib/auth";
@@ -7,7 +9,6 @@ import type {
   AppointmentRow, ClientNoteRow, ClientRow, ConversationRow,
   StaffAvailabilityRow, StaffTimeOffRow, StaffRow,
 } from "@/lib/db-types";
-import { appointmentRange } from "@/lib/clinic-time";
 
 export type Client = ClientRow & { name: string; initials: string };
 export type StaffMember = StaffRow & { name: string; initials: string; role: string };
@@ -21,8 +22,8 @@ const decorateClient = (row: ClientRow): Client => ({ ...row, name: row.full_nam
 const decorateStaff = (row: StaffRow): StaffMember => ({ ...row, name: row.full_name, initials: initialsOf(row.full_name), role: row.specialty });
 
 function useClinicId() {
-  const { profile } = useAuth();
-  return profile?.clinic_id ?? null;
+  const { clinicId } = useAuth();
+  return clinicId;
 }
 
 export function useClients() {
@@ -31,7 +32,7 @@ export function useClients() {
     queryKey: ["clients", clinicId],
     enabled: !!clinicId,
     queryFn: async () => {
-      const { data, error } = await db.from("clients").select("*").order("created_at", { ascending: false });
+      const { data, error } = await db.from("clients").select("*").eq("clinic_id", clinicId!).order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []).map(decorateClient);
     },
@@ -45,7 +46,7 @@ export function useStaff() {
     queryKey: ["staff", clinicId],
     enabled: !!clinicId,
     queryFn: async () => {
-      const { data, error } = await db.from("staff").select("*").order("created_at", { ascending: true });
+      const { data, error } = await db.from("staff").select("*").eq("clinic_id", clinicId!).order("created_at", { ascending: true });
       if (error) throw error;
       return (data ?? []).map(decorateStaff);
     },
@@ -53,15 +54,23 @@ export function useStaff() {
   return query.data ?? [];
 }
 
-export function useAppointments() {
+export function useAppointments(window?: { start: string; end: string }) {
   const clinicId = useClinicId();
   const query = useQuery({
-    queryKey: ["appointments", clinicId],
+    queryKey: window ? ["appointments", clinicId, window.start, window.end] : ["appointments", clinicId],
+    refetchInterval: 30_000,
     enabled: !!clinicId,
     queryFn: async () => {
-      const { data, error } = await db.from("appointments").select("*").order("start_time", { ascending: true });
-      if (error) throw error;
-      return (data ?? []) as AppointmentRow[];
+      const rows: AppointmentRow[] = [];
+      for (let offset = 0; ; offset += 1000) {
+        let request = db.from("appointments").select("*").eq("clinic_id", clinicId!).order("start_time", { ascending: true }).order("id").range(offset, offset + 999);
+        if (window) request = request.lt("start_time", window.end).gt("end_time", window.start);
+        const { data, error } = await request;
+        if (error) throw error;
+        rows.push(...(data ?? []));
+        if ((data?.length ?? 0) < 1000) break;
+      }
+      return rows;
     },
   });
   return query.data ?? [];
@@ -73,7 +82,7 @@ export function useConversations() {
     queryKey: ["conversations", clinicId],
     enabled: !!clinicId,
     queryFn: async () => {
-      const { data, error } = await db.from("conversations").select("*").order("started_at", { ascending: false });
+      const { data, error } = await db.from("conversations").select("*").eq("clinic_id", clinicId!).order("started_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as ConversationRow[];
     },
@@ -101,7 +110,7 @@ export function useClientNotes(clientId: string) {
     queryKey: ["client_notes", clinicId, clientId],
     enabled: !!clinicId && !!clientId,
     queryFn: async () => {
-      const { data, error } = await db.from("client_notes").select("*").eq("client_id", clientId).order("created_at");
+      const { data, error } = await db.from("client_notes").select("*").eq("clinic_id", clinicId!).eq("client_id", clientId).order("created_at");
       if (error) throw error;
       return (data ?? []) as ClientNoteRow[];
     },
@@ -288,58 +297,71 @@ export function useAddClientNote() {
   });
 }
 
+export type AppointmentSlot = { start_time: string; end_time: string; duration_minutes: number };
+
+export function useAppointmentSlots(staffId: string, service: string, date: string, appointmentId: string | null, enabled: boolean) {
+  const clinicId = useClinicId();
+  return useQuery({
+    queryKey: ["appointment_slots", clinicId, staffId, service, date, appointmentId],
+    enabled: enabled && !!clinicId && !!staffId && !!service && !!date,
+    staleTime: 0,
+    refetchInterval: enabled ? 30_000 : false,
+    queryFn: async () => {
+      const { data, error } = await db.rpc("appointment_available_slots", {
+        p_clinic_id: clinicId!, p_staff_id: staffId, p_service: service,
+        p_date: date, p_exclude_id: appointmentId,
+      });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
 export function useCreateAppointment() {
-  const { clinic } = useAuth();
-  return useClinicMutation<{ clientId: string; staffId: string; service: string; date: string; time: string; minutes?: number; notes?: string }>(["appointments"], async (clinicId, input) => {
-    if (!clinic?.timezone) throw new Error("Clinic timezone is unavailable.");
-    const range = appointmentRange(input.date, input.time, input.minutes ?? 45, clinic.timezone);
-    const start = new Date(range.start); const end = new Date(range.end);
-    const values = {
+  return useClinicMutation<{ clientId: string; staffId: string; service: string; slot: AppointmentSlot }>(["appointments", "appointment_slots"], async (clinicId, input) => {
+    const { data, error } = await db.from("appointments").insert({
       clinic_id: clinicId, client_id: input.clientId, staff_id: input.staffId,
-      service: input.service.trim(), start_time: start.toISOString(), end_time: end.toISOString(),
-      status: "Booked", source: "Front desk", notes: input.notes?.trim() || null,
-    };
-    const { data, error } = await db.from("appointments").insert(values).select("id").single();
-    if (error) throw error;
-    const { data: saved, error: readError } = await db.from("appointments")
-      .select("client_id,staff_id,service,start_time,end_time,status,source,notes")
+      service: input.service, start_time: input.slot.start_time, end_time: input.slot.end_time,
+      status: "Booked", source: "Front desk",
+    }).select("id").single();
+    if (error) throw appointmentWriteError(error);
+    const { data: saved, error: readError } = await db.from("appointments").select("*")
       .eq("id", data.id).eq("clinic_id", clinicId).single();
-    if (readError || !saved || saved.client_id !== values.client_id || saved.staff_id !== values.staff_id ||
-      saved.service !== values.service || Date.parse(saved.start_time) !== start.getTime() || Date.parse(saved.end_time) !== end.getTime() ||
-      saved.status !== values.status || saved.source !== values.source || saved.notes !== values.notes)
+    if (readError || !saved || saved.client_id !== input.clientId || saved.staff_id !== input.staffId ||
+      saved.service !== input.service || Date.parse(saved.start_time) !== Date.parse(input.slot.start_time) ||
+      Date.parse(saved.end_time) !== Date.parse(input.slot.end_time) || saved.status !== "Booked" || saved.source !== "Front desk")
       throw new Error("The appointment could not be verified.");
   });
 }
 
 export function useRescheduleAppointment() {
-  const { clinic } = useAuth();
-  return useClinicMutation<{ id: string; date: string; time: string; minutes?: number }>(["appointments"], async (clinicId, input) => {
-    if (!clinic?.timezone) throw new Error("Clinic timezone is unavailable.");
-    const range = appointmentRange(input.date, input.time, input.minutes ?? 45, clinic.timezone);
-    const start = new Date(range.start); const end = new Date(range.end);
-    const { data, error } = await db.from("appointments")
-      .update({ start_time: start.toISOString(), end_time: end.toISOString(), status: "Booked" })
-      .eq("id", input.id).eq("clinic_id", clinicId).select("id").single();
-    if (error) throw error;
-    if (!data) throw new Error("The appointment was not updated.");
-    const { data: saved, error: readError } = await db.from("appointments")
-      .select("start_time,end_time,status").eq("id", input.id).eq("clinic_id", clinicId).single();
-    if (readError || !saved || Date.parse(saved.start_time) !== start.getTime() || Date.parse(saved.end_time) !== end.getTime() || saved.status !== "Booked")
+  return useClinicMutation<{ id: string; slot: AppointmentSlot }>(["appointments", "appointment_slots"], async (clinicId, input) => {
+    const { error } = await db.from("appointments")
+      .update({ start_time: input.slot.start_time, end_time: input.slot.end_time })
+      .eq("id", input.id).eq("clinic_id", clinicId).eq("status", "Booked").select("id").single();
+    if (error) throw appointmentWriteError(error);
+    const { data: saved, error: readError } = await db.from("appointments").select("start_time,end_time,status")
+      .eq("id", input.id).eq("clinic_id", clinicId).single();
+    if (readError || !saved || Date.parse(saved.start_time) !== Date.parse(input.slot.start_time) ||
+      Date.parse(saved.end_time) !== Date.parse(input.slot.end_time) || saved.status !== "Booked")
       throw new Error("The appointment changes could not be verified.");
   });
 }
 
 export function useCancelAppointment() {
-  return useClinicMutation<{ id: string; reason?: string }>(["appointments"], async (clinicId, input) => {
-    const notes = input.reason?.trim() || null;
-    const { data, error } = await db.from("appointments")
-      .update({ status: "Cancelled", notes })
-      .eq("id", input.id).eq("clinic_id", clinicId).select("id").single();
+  return useClinicMutation<{ id: string; reason?: string }>(["appointments", "appointment_slots"], async (clinicId, input) => {
+    const { data: existing, error: readError } = await db.from("appointments").select("notes,updated_at")
+      .eq("id", input.id).eq("clinic_id", clinicId).eq("status", "Booked").single();
+    if (readError) throw readError;
+    const reason = input.reason?.trim();
+    const notes = reason ? [existing.notes, `Cancellation: ${reason}`].filter(Boolean).join("\n") : existing.notes;
+    const { error } = await db.from("appointments").update({ status: "Cancelled", notes })
+      .eq("id", input.id).eq("clinic_id", clinicId).eq("status", "Booked")
+      .eq("updated_at", existing.updated_at).select("id").single();
     if (error) throw error;
-    if (!data) throw new Error("The appointment was not cancelled.");
-    const { data: saved, error: readError } = await db.from("appointments")
-      .select("status,notes").eq("id", input.id).eq("clinic_id", clinicId).single();
-    if (readError || !saved || saved.status !== "Cancelled" || saved.notes !== notes)
+    const { data: saved, error: verifyError } = await db.from("appointments").select("status,notes")
+      .eq("id", input.id).eq("clinic_id", clinicId).single();
+    if (verifyError || !saved || saved.status !== "Cancelled" || saved.notes !== notes)
       throw new Error("The cancellation could not be verified.");
   });
 }
