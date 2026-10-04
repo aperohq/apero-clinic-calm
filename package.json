@@ -14,6 +14,7 @@
     "test:appointment-conflicts": "node --max-old-space-size=384 tests/appointment-conflicts.test.mjs",
     "test:appointment-concurrency": "node tests/appointments-concurrency.test.mjs",
     "test:appointments": "node --max-old-space-size=384 tests/appointments.test.mjs && node tests/run-calendar-tests.mjs",
+    "test:analytics": "node --max-old-space-size=384 tests/analytics.test.mjs && node tests/analytics-ui.test.mjs",
     "test:auth": "node tests/run-clinic-auth-tests.mjs",
     "test:invite-setup": "node tests/run-invite-setup-tests.mjs && node tests/run-invite-setup-tests.mjs --invite-invalid",
     "test:security": "node --max-old-space-size=384 tests/clinic-isolation.test.mjs",

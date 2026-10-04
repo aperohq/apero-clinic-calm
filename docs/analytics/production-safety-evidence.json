@@ -1,0 +1,1026 @@
+{
+  "additionalChecks": {
+    "read_only": "on",
+    "role_enum": [
+      "owner",
+      "manager",
+      "staff"
+    ],
+    "audited_at": "2026-10-04T07:16:44.453459+00:00",
+    "auth_select": [
+      {
+        "table": "conversations",
+        "select": true
+      },
+      {
+        "table": "appointments",
+        "select": true
+      },
+      {
+        "table": "staff",
+        "select": true
+      },
+      {
+        "table": "profiles",
+        "select": true
+      },
+      {
+        "table": "clinics",
+        "select": true
+      }
+    ],
+    "timezone_valid": true,
+    "duplicate_staff_names": 0,
+    "duplicate_membership_uids": 0,
+    "authenticated_schema_create": false
+  },
+  "scope": "Read-only hosted production audit; Analytics migration was not applied. Proposed SELECT evaluated without installing RPC. No patient/contact/transcript/secret data queried.",
+  "schema": {
+    "columns": [
+      {
+        "udt_name": "uuid",
+        "data_type": "uuid",
+        "table_name": "appointments",
+        "column_name": "clinic_id",
+        "is_nullable": "NO"
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "appointments",
+        "column_name": "service",
+        "is_nullable": "NO"
+      },
+      {
+        "udt_name": "uuid",
+        "data_type": "uuid",
+        "table_name": "appointments",
+        "column_name": "staff_id",
+        "is_nullable": "YES"
+      },
+      {
+        "udt_name": "timestamptz",
+        "data_type": "timestamp with time zone",
+        "table_name": "appointments",
+        "column_name": "start_time",
+        "is_nullable": "NO"
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "appointments",
+        "column_name": "status",
+        "is_nullable": "NO"
+      },
+      {
+        "udt_name": "uuid",
+        "data_type": "uuid",
+        "table_name": "clinics",
+        "column_name": "id",
+        "is_nullable": "NO"
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "clinics",
+        "column_name": "timezone",
+        "is_nullable": "NO"
+      },
+      {
+        "udt_name": "uuid",
+        "data_type": "uuid",
+        "table_name": "conversations",
+        "column_name": "clinic_id",
+        "is_nullable": "NO"
+      },
+      {
+        "udt_name": "timestamptz",
+        "data_type": "timestamp with time zone",
+        "table_name": "conversations",
+        "column_name": "started_at",
+        "is_nullable": "NO"
+      },
+      {
+        "udt_name": "uuid",
+        "data_type": "uuid",
+        "table_name": "profiles",
+        "column_name": "auth_user_id",
+        "is_nullable": "NO"
+      },
+      {
+        "udt_name": "uuid",
+        "data_type": "uuid",
+        "table_name": "profiles",
+        "column_name": "clinic_id",
+        "is_nullable": "NO"
+      },
+      {
+        "udt_name": "timestamptz",
+        "data_type": "timestamp with time zone",
+        "table_name": "profiles",
+        "column_name": "revoked_at",
+        "is_nullable": "YES"
+      },
+      {
+        "udt_name": "profile_role",
+        "data_type": "USER-DEFINED",
+        "table_name": "profiles",
+        "column_name": "role",
+        "is_nullable": "NO"
+      },
+      {
+        "udt_name": "uuid",
+        "data_type": "uuid",
+        "table_name": "staff",
+        "column_name": "clinic_id",
+        "is_nullable": "NO"
+      },
+      {
+        "udt_name": "text",
+        "data_type": "text",
+        "table_name": "staff",
+        "column_name": "full_name",
+        "is_nullable": "NO"
+      },
+      {
+        "udt_name": "uuid",
+        "data_type": "uuid",
+        "table_name": "staff",
+        "column_name": "id",
+        "is_nullable": "NO"
+      }
+    ],
+    "indexes": [
+      {
+        "indexdef": "CREATE UNIQUE INDEX profiles_auth_user_id_key ON public.profiles USING btree (auth_user_id)",
+        "indexname": "profiles_auth_user_id_key",
+        "tablename": "profiles"
+      },
+      {
+        "indexdef": "CREATE UNIQUE INDEX staff_pkey ON public.staff USING btree (id)",
+        "indexname": "staff_pkey",
+        "tablename": "staff"
+      },
+      {
+        "indexdef": "CREATE INDEX appointments_clinic_idx ON public.appointments USING btree (clinic_id, start_time)",
+        "indexname": "appointments_clinic_idx",
+        "tablename": "appointments"
+      },
+      {
+        "indexdef": "CREATE INDEX conversations_clinic_idx ON public.conversations USING btree (clinic_id, started_at DESC)",
+        "indexname": "conversations_clinic_idx",
+        "tablename": "conversations"
+      }
+    ],
+    "functions": [
+      {
+        "acl": [
+          "postgres=X/postgres",
+          "authenticated=X/postgres",
+          "service_role=X/postgres"
+        ],
+        "config": [
+          "search_path=public, pg_temp"
+        ],
+        "definer": true,
+        "signature": "current_clinic_id()",
+        "definition": "CREATE OR REPLACE FUNCTION public.current_clinic_id()\n RETURNS uuid\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$ select clinic_id from public.profiles\r\n  where auth_user_id = auth.uid() and revoked_at is null limit 1 $function$\n"
+      },
+      {
+        "acl": [
+          "postgres=X/postgres",
+          "authenticated=X/postgres",
+          "service_role=X/postgres"
+        ],
+        "config": [
+          "search_path=public, pg_temp"
+        ],
+        "definer": true,
+        "signature": "current_profile_role()",
+        "definition": "CREATE OR REPLACE FUNCTION public.current_profile_role()\n RETURNS profile_role\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$ select role from public.profiles\r\n  where auth_user_id = auth.uid() and revoked_at is null limit 1 $function$\n"
+      }
+    ],
+    "read_only": "on",
+    "audited_at": "2026-10-04T07:14:36.440075+00:00"
+  },
+  "security": {
+    "roles": [
+      {
+        "rolname": "authenticated",
+        "rolsuper": false,
+        "rolbypassrls": false
+      },
+      {
+        "rolname": "anon",
+        "rolsuper": false,
+        "rolbypassrls": false
+      },
+      {
+        "rolname": "service_role",
+        "rolsuper": false,
+        "rolbypassrls": true
+      }
+    ],
+    "grants": null,
+    "legacy": {
+      "null_staff": 0,
+      "null_status": 0,
+      "blank_service": 0,
+      "noncanonical_cancelled": 0
+    },
+    "policies": [
+      {
+        "cmd": "DELETE",
+        "qual": "((clinic_id = current_clinic_id()) AND (current_profile_role() = ANY (ARRAY['owner'::profile_role, 'manager'::profile_role])))",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "appointments",
+        "policyname": "appointments delete",
+        "with_check": null
+      },
+      {
+        "cmd": "INSERT",
+        "qual": null,
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "appointments",
+        "policyname": "appointments insert",
+        "with_check": "(clinic_id = current_clinic_id())"
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "(clinic_id = current_clinic_id())",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "appointments",
+        "policyname": "appointments select",
+        "with_check": null
+      },
+      {
+        "cmd": "UPDATE",
+        "qual": "(clinic_id = current_clinic_id())",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "appointments",
+        "policyname": "appointments update",
+        "with_check": "(clinic_id = current_clinic_id())"
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "(id = current_clinic_id())",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "clinics",
+        "policyname": "clinic members read own clinic",
+        "with_check": null
+      },
+      {
+        "cmd": "UPDATE",
+        "qual": "((id = current_clinic_id()) AND (current_profile_role() = 'owner'::profile_role))",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "clinics",
+        "policyname": "clinic owners update own clinic",
+        "with_check": "(id = current_clinic_id())"
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "(clinic_id = current_clinic_id())",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "conversations",
+        "policyname": "conversations select",
+        "with_check": null
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "((clinic_id = current_clinic_id()) AND ((auth_user_id = auth.uid()) OR (current_profile_role() = ANY (ARRAY['owner'::profile_role, 'manager'::profile_role]))))",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "profiles",
+        "policyname": "read clinic profiles",
+        "with_check": null
+      },
+      {
+        "cmd": "UPDATE",
+        "qual": "(auth_user_id = auth.uid())",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "profiles",
+        "policyname": "update own profile",
+        "with_check": "((auth_user_id = auth.uid()) AND (clinic_id = current_clinic_id()))"
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "(clinic_id = current_clinic_id())",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "staff",
+        "policyname": "staff select",
+        "with_check": null
+      },
+      {
+        "cmd": "ALL",
+        "qual": "((clinic_id = current_clinic_id()) AND (current_profile_role() = ANY (ARRAY['owner'::profile_role, 'manager'::profile_role])))",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "staff",
+        "policyname": "staff write",
+        "with_check": "((clinic_id = current_clinic_id()) AND (current_profile_role() = ANY (ARRAY['owner'::profile_role, 'manager'::profile_role])))"
+      }
+    ],
+    "statuses": [
+      {
+        "count": 10,
+        "source": "appointments",
+        "status": "Booked"
+      },
+      {
+        "count": 1,
+        "source": "appointments",
+        "status": "Cancelled"
+      },
+      {
+        "count": 1,
+        "source": "conversations",
+        "status": "Missed"
+      },
+      {
+        "count": 13,
+        "source": "conversations",
+        "status": "Completed"
+      },
+      {
+        "count": 6,
+        "source": "conversations",
+        "status": "Booked"
+      },
+      {
+        "count": 9,
+        "source": "conversations",
+        "status": "Needs Review"
+      }
+    ],
+    "constraints": [
+      {
+        "conname": "profiles_auth_user_id_fkey",
+        "relation": "profiles",
+        "definition": "FOREIGN KEY (auth_user_id) REFERENCES auth.users(id) ON DELETE CASCADE"
+      },
+      {
+        "conname": "profiles_auth_user_id_key",
+        "relation": "profiles",
+        "definition": "UNIQUE (auth_user_id)"
+      },
+      {
+        "conname": "profiles_clinic_id_fkey",
+        "relation": "profiles",
+        "definition": "FOREIGN KEY (clinic_id) REFERENCES clinics(id) ON DELETE CASCADE"
+      },
+      {
+        "conname": "profiles_pkey",
+        "relation": "profiles",
+        "definition": "PRIMARY KEY (id)"
+      },
+      {
+        "conname": "staff_clinic_id_fkey",
+        "relation": "staff",
+        "definition": "FOREIGN KEY (clinic_id) REFERENCES clinics(id) ON DELETE CASCADE"
+      },
+      {
+        "conname": "staff_pkey",
+        "relation": "staff",
+        "definition": "PRIMARY KEY (id)"
+      },
+      {
+        "conname": "appointments_client_id_fkey",
+        "relation": "appointments",
+        "definition": "FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE SET NULL"
+      },
+      {
+        "conname": "appointments_clinic_id_fkey",
+        "relation": "appointments",
+        "definition": "FOREIGN KEY (clinic_id) REFERENCES clinics(id) ON DELETE CASCADE"
+      },
+      {
+        "conname": "appointments_no_staff_overlap",
+        "relation": "appointments",
+        "definition": "EXCLUDE USING gist (staff_id WITH =, tstzrange(start_time, end_time, '[)'::text) WITH &&) WHERE ((status <> 'Cancelled'::text))"
+      },
+      {
+        "conname": "appointments_pkey",
+        "relation": "appointments",
+        "definition": "PRIMARY KEY (id)"
+      },
+      {
+        "conname": "appointments_shared_no_overlap",
+        "relation": "appointments",
+        "definition": "EXCLUDE USING gist (clinic_id WITH =, staff_id WITH =, tstzrange(start_time, end_time, '[)'::text) WITH &&) WHERE ((status <> 'Cancelled'::text))"
+      },
+      {
+        "conname": "appointments_staff_id_fkey",
+        "relation": "appointments",
+        "definition": "FOREIGN KEY (staff_id) REFERENCES staff(id) ON DELETE SET NULL"
+      },
+      {
+        "conname": "conversations_appointment_id_fkey",
+        "relation": "conversations",
+        "definition": "FOREIGN KEY (appointment_id) REFERENCES appointments(id) ON DELETE SET NULL"
+      },
+      {
+        "conname": "conversations_client_id_fkey",
+        "relation": "conversations",
+        "definition": "FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE SET NULL"
+      },
+      {
+        "conname": "conversations_clinic_id_fkey",
+        "relation": "conversations",
+        "definition": "FOREIGN KEY (clinic_id) REFERENCES clinics(id) ON DELETE CASCADE"
+      },
+      {
+        "conname": "conversations_pkey",
+        "relation": "conversations",
+        "definition": "PRIMARY KEY (id)"
+      },
+      {
+        "conname": "conversations_retell_call_id_unique",
+        "relation": "conversations",
+        "definition": "UNIQUE (retell_call_id)"
+      }
+    ],
+    "schema_create": false
+  },
+  "reconciliation": {
+    "raw": {
+      "trend": [
+        {
+          "date": "2026-09-05",
+          "calls": 0,
+          "appointments": 0
+        },
+        {
+          "date": "2026-09-06",
+          "calls": 0,
+          "appointments": 0
+        },
+        {
+          "date": "2026-09-07",
+          "calls": 0,
+          "appointments": 1
+        },
+        {
+          "date": "2026-09-08",
+          "calls": 0,
+          "appointments": 1
+        },
+        {
+          "date": "2026-09-09",
+          "calls": 0,
+          "appointments": 1
+        },
+        {
+          "date": "2026-09-10",
+          "calls": 0,
+          "appointments": 1
+        },
+        {
+          "date": "2026-09-11",
+          "calls": 1,
+          "appointments": 0
+        },
+        {
+          "date": "2026-09-12",
+          "calls": 2,
+          "appointments": 0
+        },
+        {
+          "date": "2026-09-13",
+          "calls": 2,
+          "appointments": 0
+        },
+        {
+          "date": "2026-09-14",
+          "calls": 0,
+          "appointments": 0
+        },
+        {
+          "date": "2026-09-15",
+          "calls": 13,
+          "appointments": 0
+        },
+        {
+          "date": "2026-09-16",
+          "calls": 4,
+          "appointments": 2
+        },
+        {
+          "date": "2026-09-17",
+          "calls": 0,
+          "appointments": 1
+        },
+        {
+          "date": "2026-09-18",
+          "calls": 0,
+          "appointments": 0
+        },
+        {
+          "date": "2026-09-19",
+          "calls": 0,
+          "appointments": 0
+        },
+        {
+          "date": "2026-09-20",
+          "calls": 0,
+          "appointments": 0
+        },
+        {
+          "date": "2026-09-21",
+          "calls": 0,
+          "appointments": 1
+        },
+        {
+          "date": "2026-09-22",
+          "calls": 0,
+          "appointments": 0
+        },
+        {
+          "date": "2026-09-23",
+          "calls": 0,
+          "appointments": 0
+        },
+        {
+          "date": "2026-09-24",
+          "calls": 0,
+          "appointments": 0
+        },
+        {
+          "date": "2026-09-25",
+          "calls": 0,
+          "appointments": 0
+        },
+        {
+          "date": "2026-09-26",
+          "calls": 0,
+          "appointments": 0
+        },
+        {
+          "date": "2026-09-27",
+          "calls": 0,
+          "appointments": 0
+        },
+        {
+          "date": "2026-09-28",
+          "calls": 0,
+          "appointments": 0
+        },
+        {
+          "date": "2026-09-29",
+          "calls": 2,
+          "appointments": 1
+        },
+        {
+          "date": "2026-09-30",
+          "calls": 4,
+          "appointments": 2
+        },
+        {
+          "date": "2026-10-01",
+          "calls": 1,
+          "appointments": 0
+        },
+        {
+          "date": "2026-10-02",
+          "calls": 0,
+          "appointments": 0
+        },
+        {
+          "date": "2026-10-03",
+          "calls": 0,
+          "appointments": 0
+        },
+        {
+          "date": "2026-10-04",
+          "calls": 0,
+          "appointments": 0
+        }
+      ],
+      "endDate": "2026-10-04",
+      "services": [
+        {
+          "count": 2,
+          "label": "Dental Cleaning"
+        },
+        {
+          "count": 1,
+          "label": "Cleaning"
+        },
+        {
+          "count": 1,
+          "label": "Consultation"
+        },
+        {
+          "count": 1,
+          "label": "Orthodontic Consultation"
+        },
+        {
+          "count": 1,
+          "label": "Veneers"
+        },
+        {
+          "count": 1,
+          "label": "Veneers Consultation"
+        },
+        {
+          "count": 1,
+          "label": "Whitening"
+        },
+        {
+          "count": 1,
+          "label": "استشارة تقويم"
+        },
+        {
+          "count": 1,
+          "label": "تنظيف أسنان"
+        },
+        {
+          "count": 1,
+          "label": "تنظيف الأسنان"
+        }
+      ],
+      "timezone": "Asia/Kuwait",
+      "startDate": "2026-09-05",
+      "totalCalls": 29,
+      "practitioners": [
+        {
+          "id": "21111111-1111-4111-8111-111111111111",
+          "count": 7,
+          "label": "Dr. Ahmed Qandil"
+        },
+        {
+          "id": "21111111-1111-4111-8111-111111111112",
+          "count": 2,
+          "label": "Dr. Mohammed Shuqeir"
+        },
+        {
+          "id": "21111111-1111-4111-8111-111111111113",
+          "count": 1,
+          "label": "Dr. Fatima Hassan"
+        },
+        {
+          "id": "21111111-1111-4111-8111-111111111114",
+          "count": 1,
+          "label": "Layla Salem"
+        }
+      ],
+      "otherAppointments": 0,
+      "totalAppointments": 11,
+      "bookedAppointments": 10,
+      "cancelledAppointments": 1,
+      "otherServiceAppointments": 0,
+      "otherPractitionerAppointments": 0
+    },
+    "equal": true,
+    "proposed": {
+      "trend": [
+        {
+          "date": "2026-09-05",
+          "calls": 0,
+          "appointments": 0
+        },
+        {
+          "date": "2026-09-06",
+          "calls": 0,
+          "appointments": 0
+        },
+        {
+          "date": "2026-09-07",
+          "calls": 0,
+          "appointments": 1
+        },
+        {
+          "date": "2026-09-08",
+          "calls": 0,
+          "appointments": 1
+        },
+        {
+          "date": "2026-09-09",
+          "calls": 0,
+          "appointments": 1
+        },
+        {
+          "date": "2026-09-10",
+          "calls": 0,
+          "appointments": 1
+        },
+        {
+          "date": "2026-09-11",
+          "calls": 1,
+          "appointments": 0
+        },
+        {
+          "date": "2026-09-12",
+          "calls": 2,
+          "appointments": 0
+        },
+        {
+          "date": "2026-09-13",
+          "calls": 2,
+          "appointments": 0
+        },
+        {
+          "date": "2026-09-14",
+          "calls": 0,
+          "appointments": 0
+        },
+        {
+          "date": "2026-09-15",
+          "calls": 13,
+          "appointments": 0
+        },
+        {
+          "date": "2026-09-16",
+          "calls": 4,
+          "appointments": 2
+        },
+        {
+          "date": "2026-09-17",
+          "calls": 0,
+          "appointments": 1
+        },
+        {
+          "date": "2026-09-18",
+          "calls": 0,
+          "appointments": 0
+        },
+        {
+          "date": "2026-09-19",
+          "calls": 0,
+          "appointments": 0
+        },
+        {
+          "date": "2026-09-20",
+          "calls": 0,
+          "appointments": 0
+        },
+        {
+          "date": "2026-09-21",
+          "calls": 0,
+          "appointments": 1
+        },
+        {
+          "date": "2026-09-22",
+          "calls": 0,
+          "appointments": 0
+        },
+        {
+          "date": "2026-09-23",
+          "calls": 0,
+          "appointments": 0
+        },
+        {
+          "date": "2026-09-24",
+          "calls": 0,
+          "appointments": 0
+        },
+        {
+          "date": "2026-09-25",
+          "calls": 0,
+          "appointments": 0
+        },
+        {
+          "date": "2026-09-26",
+          "calls": 0,
+          "appointments": 0
+        },
+        {
+          "date": "2026-09-27",
+          "calls": 0,
+          "appointments": 0
+        },
+        {
+          "date": "2026-09-28",
+          "calls": 0,
+          "appointments": 0
+        },
+        {
+          "date": "2026-09-29",
+          "calls": 2,
+          "appointments": 1
+        },
+        {
+          "date": "2026-09-30",
+          "calls": 4,
+          "appointments": 2
+        },
+        {
+          "date": "2026-10-01",
+          "calls": 1,
+          "appointments": 0
+        },
+        {
+          "date": "2026-10-02",
+          "calls": 0,
+          "appointments": 0
+        },
+        {
+          "date": "2026-10-03",
+          "calls": 0,
+          "appointments": 0
+        },
+        {
+          "date": "2026-10-04",
+          "calls": 0,
+          "appointments": 0
+        }
+      ],
+      "endDate": "2026-10-04",
+      "services": [
+        {
+          "count": 2,
+          "label": "Dental Cleaning"
+        },
+        {
+          "count": 1,
+          "label": "Cleaning"
+        },
+        {
+          "count": 1,
+          "label": "Consultation"
+        },
+        {
+          "count": 1,
+          "label": "Orthodontic Consultation"
+        },
+        {
+          "count": 1,
+          "label": "Veneers"
+        },
+        {
+          "count": 1,
+          "label": "Veneers Consultation"
+        },
+        {
+          "count": 1,
+          "label": "Whitening"
+        },
+        {
+          "count": 1,
+          "label": "استشارة تقويم"
+        },
+        {
+          "count": 1,
+          "label": "تنظيف أسنان"
+        },
+        {
+          "count": 1,
+          "label": "تنظيف الأسنان"
+        }
+      ],
+      "timezone": "Asia/Kuwait",
+      "startDate": "2026-09-05",
+      "totalCalls": 29,
+      "practitioners": [
+        {
+          "id": "21111111-1111-4111-8111-111111111111",
+          "count": 7,
+          "label": "Dr. Ahmed Qandil"
+        },
+        {
+          "id": "21111111-1111-4111-8111-111111111112",
+          "count": 2,
+          "label": "Dr. Mohammed Shuqeir"
+        },
+        {
+          "id": "21111111-1111-4111-8111-111111111113",
+          "count": 1,
+          "label": "Dr. Fatima Hassan"
+        },
+        {
+          "id": "21111111-1111-4111-8111-111111111114",
+          "count": 1,
+          "label": "Layla Salem"
+        }
+      ],
+      "otherAppointments": 0,
+      "totalAppointments": 11,
+      "bookedAppointments": 10,
+      "cancelledAppointments": 1,
+      "otherServiceAppointments": 0,
+      "otherPractitionerAppointments": 0
+    },
+    "read_only": "on",
+    "audited_at": "2026-10-04T07:11:06.643919+00:00"
+  },
+  "plans": {
+    "7": {
+      "planningMs": 13.46,
+      "executionMs": 13.514,
+      "sharedHitBlocks": 20,
+      "tempReadBlocks": 0,
+      "tempWrittenBlocks": 0,
+      "baseRelationNodes": [
+        {
+          "type": "Index Only Scan",
+          "relation": "conversations",
+          "index": "conversations_clinic_idx",
+          "actualRows": 7,
+          "loops": 1,
+          "filter": null
+        },
+        {
+          "type": "Seq Scan",
+          "relation": "appointments",
+          "index": null,
+          "actualRows": 3,
+          "loops": 1,
+          "filter": "((start_time >= '2026-09-27 21:00:00+00'::timestamp with time zone) AND (start_time < '2026-10-04 21:00:00+00'::timestamp with time zone) AND (clinic_id = '11111111-1111-4111-8111-111111111111'::uuid))"
+        },
+        {
+          "type": "Seq Scan",
+          "relation": "staff",
+          "index": null,
+          "actualRows": 1,
+          "loops": 3,
+          "filter": "(clinic_id = '11111111-1111-4111-8111-111111111111'::uuid)"
+        }
+      ]
+    },
+    "30": {
+      "planningMs": 1.94,
+      "executionMs": 1.49,
+      "sharedHitBlocks": 30,
+      "tempReadBlocks": 0,
+      "tempWrittenBlocks": 0,
+      "baseRelationNodes": [
+        {
+          "type": "Seq Scan",
+          "relation": "conversations",
+          "index": null,
+          "actualRows": 29,
+          "loops": 1,
+          "filter": "((started_at >= '2026-09-04 21:00:00+00'::timestamp with time zone) AND (started_at < '2026-10-04 21:00:00+00'::timestamp with time zone) AND (clinic_id = '11111111-1111-4111-8111-111111111111'::uuid))"
+        },
+        {
+          "type": "Seq Scan",
+          "relation": "appointments",
+          "index": null,
+          "actualRows": 11,
+          "loops": 1,
+          "filter": "((start_time >= '2026-09-04 21:00:00+00'::timestamp with time zone) AND (start_time < '2026-10-04 21:00:00+00'::timestamp with time zone) AND (clinic_id = '11111111-1111-4111-8111-111111111111'::uuid))"
+        },
+        {
+          "type": "Seq Scan",
+          "relation": "staff",
+          "index": null,
+          "actualRows": 2,
+          "loops": 11,
+          "filter": "(clinic_id = '11111111-1111-4111-8111-111111111111'::uuid)"
+        }
+      ]
+    },
+    "90": {
+      "planningMs": 1.965,
+      "executionMs": 3.417,
+      "sharedHitBlocks": 30,
+      "tempReadBlocks": 0,
+      "tempWrittenBlocks": 0,
+      "baseRelationNodes": [
+        {
+          "type": "Seq Scan",
+          "relation": "conversations",
+          "index": null,
+          "actualRows": 29,
+          "loops": 1,
+          "filter": "((started_at >= '2026-07-06 21:00:00+00'::timestamp with time zone) AND (started_at < '2026-10-04 21:00:00+00'::timestamp with time zone) AND (clinic_id = '11111111-1111-4111-8111-111111111111'::uuid))"
+        },
+        {
+          "type": "Seq Scan",
+          "relation": "appointments",
+          "index": null,
+          "actualRows": 11,
+          "loops": 1,
+          "filter": "((start_time >= '2026-07-06 21:00:00+00'::timestamp with time zone) AND (start_time < '2026-10-04 21:00:00+00'::timestamp with time zone) AND (clinic_id = '11111111-1111-4111-8111-111111111111'::uuid))"
+        },
+        {
+          "type": "Seq Scan",
+          "relation": "staff",
+          "index": null,
+          "actualRows": 2,
+          "loops": 11,
+          "filter": "(clinic_id = '11111111-1111-4111-8111-111111111111'::uuid)"
+        }
+      ]
+    }
+  }
+}

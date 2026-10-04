@@ -91,6 +91,7 @@ export type AperoDatabase = {
     };
     Views: Record<string, never>;
     Functions: {
+      clinic_analytics: { Args: { p_clinic_id: string; p_start_date: string; p_end_date: string }; Returns: Json };
       update_clinic_settings: { Args: { p_patch: Json; p_expected: Json }; Returns: ClinicRow[] };
       clinic_team_members: { Args: Record<string, never>; Returns: TeamMemberRow[] };
       revoke_clinic_member: { Args: { p_profile_id: string }; Returns: string };

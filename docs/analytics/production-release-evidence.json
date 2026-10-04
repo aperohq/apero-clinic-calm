@@ -1,0 +1,435 @@
+{
+  "scope": "Installed migration verification and live Owner PostgREST read-only RPC acceptance. No migration reapplication, product DML or membership changes. Standard Owner sign-in was authorized; credentials/JWTs excluded.",
+  "installedFunction": {
+    "signature": "clinic_analytics(uuid,date,date)",
+    "bodyMatchesAuditedLocal": true,
+    "securityInvoker": true,
+    "stable": true,
+    "searchPath": [
+      "search_path=pg_catalog, public"
+    ],
+    "acl": [
+      "postgres=X/postgres",
+      "authenticated=X/postgres"
+    ],
+    "grants": {
+      "anon": false,
+      "service_role": false,
+      "authenticated": true
+    },
+    "timezoneGuard": true
+  },
+  "catalogVerifiedAt": "2026-10-04T07:28:25.214975+00:00",
+  "policiesMatchPriorAudit": true,
+  "productionRoles": [
+    {
+      "role": "owner",
+      "count": 1,
+      "revoked": false
+    },
+    {
+      "role": "staff",
+      "count": 1,
+      "revoked": false
+    }
+  ],
+  "productSnapshots": {
+    "before": {
+      "rls": [
+        {
+          "relname": "clinics",
+          "relrowsecurity": true
+        },
+        {
+          "relname": "profiles",
+          "relrowsecurity": true
+        },
+        {
+          "relname": "clients",
+          "relrowsecurity": true
+        },
+        {
+          "relname": "staff",
+          "relrowsecurity": true
+        },
+        {
+          "relname": "appointments",
+          "relrowsecurity": true
+        },
+        {
+          "relname": "conversations",
+          "relrowsecurity": true
+        }
+      ],
+      "read_only": "on",
+      "audited_at": "2026-10-04T07:33:02.151035+00:00",
+      "fingerprints": {
+        "staff": "8155423c544d402da3a9703a55d30d12",
+        "clients": "0c705aef87c4d86452ad58ef22d89c0a",
+        "clinics": "b07b3beb049613ffdbca042e5c0218a6",
+        "profiles": "cdc24da2c5b582bc82f28d229899fcd9",
+        "appointments": "1a8c4d13325f1df5504a511b0d93ab3d",
+        "conversations": "77daed6af1b815f16a56dd6a4e7948a0"
+      }
+    },
+    "after": {
+      "read_only": "on",
+      "audited_at": "2026-10-04T07:40:20.317666+00:00",
+      "fingerprints": {
+        "staff": "8155423c544d402da3a9703a55d30d12",
+        "clients": "0c705aef87c4d86452ad58ef22d89c0a",
+        "clinics": "b07b3beb049613ffdbca042e5c0218a6",
+        "profiles": "cdc24da2c5b582bc82f28d229899fcd9",
+        "appointments": "1a8c4d13325f1df5504a511b0d93ab3d",
+        "conversations": "77daed6af1b815f16a56dd6a4e7948a0"
+      },
+      "shared_functions": [
+        "appointment_available_slots(uuid,uuid,text,date,uuid)",
+        "clinic_team_members()",
+        "current_clinic_id()",
+        "current_profile_role()",
+        "update_clinic_settings(jsonb,jsonb)"
+      ]
+    },
+    "unchanged": true
+  },
+  "owner": {
+    "authenticated": true,
+    "role": "owner",
+    "ranges": [
+      {
+        "days": 30,
+        "httpStatus": 200,
+        "elapsedMs": 997,
+        "startDate": "2026-09-05",
+        "endDate": "2026-10-04",
+        "timezone": "Asia/Kuwait",
+        "totalCalls": 29,
+        "totalAppointments": 11,
+        "booked": 10,
+        "cancelled": 1,
+        "callTrendSum": 29,
+        "appointmentTrendSum": 11,
+        "practitioners": [
+          {
+            "id": "21111111-1111-4111-8111-111111111111",
+            "count": 7,
+            "label": "Dr. Ahmed Qandil"
+          },
+          {
+            "id": "21111111-1111-4111-8111-111111111112",
+            "count": 2,
+            "label": "Dr. Mohammed Shuqeir"
+          },
+          {
+            "id": "21111111-1111-4111-8111-111111111113",
+            "count": 1,
+            "label": "Dr. Fatima Hassan"
+          },
+          {
+            "id": "21111111-1111-4111-8111-111111111114",
+            "count": 1,
+            "label": "Layla Salem"
+          }
+        ],
+        "services": [
+          {
+            "count": 2,
+            "label": "Dental Cleaning"
+          },
+          {
+            "count": 1,
+            "label": "Cleaning"
+          },
+          {
+            "count": 1,
+            "label": "Consultation"
+          },
+          {
+            "count": 1,
+            "label": "Orthodontic Consultation"
+          },
+          {
+            "count": 1,
+            "label": "Veneers"
+          },
+          {
+            "count": 1,
+            "label": "Veneers Consultation"
+          },
+          {
+            "count": 1,
+            "label": "Whitening"
+          },
+          {
+            "count": 1,
+            "label": "استشارة تقويم"
+          },
+          {
+            "count": 1,
+            "label": "تنظيف أسنان"
+          },
+          {
+            "count": 1,
+            "label": "تنظيف الأسنان"
+          }
+        ],
+        "entirePayloadEqualsIndependentRawProductionCalculation": true
+      },
+      {
+        "days": 7,
+        "httpStatus": 200,
+        "elapsedMs": 404,
+        "startDate": "2026-09-28",
+        "endDate": "2026-10-04",
+        "timezone": "Asia/Kuwait",
+        "totalCalls": 7,
+        "totalAppointments": 3,
+        "booked": 3,
+        "cancelled": 0,
+        "callTrendSum": 7,
+        "appointmentTrendSum": 3,
+        "practitioners": [
+          {
+            "id": "21111111-1111-4111-8111-111111111111",
+            "count": 2,
+            "label": "Dr. Ahmed Qandil"
+          },
+          {
+            "id": "21111111-1111-4111-8111-111111111112",
+            "count": 1,
+            "label": "Dr. Mohammed Shuqeir"
+          }
+        ],
+        "services": [
+          {
+            "count": 1,
+            "label": "Consultation"
+          },
+          {
+            "count": 1,
+            "label": "Veneers"
+          },
+          {
+            "count": 1,
+            "label": "Whitening"
+          }
+        ],
+        "entirePayloadEqualsIndependentRawProductionCalculation": true
+      },
+      {
+        "days": 90,
+        "httpStatus": 200,
+        "elapsedMs": 409,
+        "startDate": "2026-07-07",
+        "endDate": "2026-10-04",
+        "timezone": "Asia/Kuwait",
+        "totalCalls": 29,
+        "totalAppointments": 11,
+        "booked": 10,
+        "cancelled": 1,
+        "callTrendSum": 29,
+        "appointmentTrendSum": 11,
+        "practitioners": [
+          {
+            "id": "21111111-1111-4111-8111-111111111111",
+            "count": 7,
+            "label": "Dr. Ahmed Qandil"
+          },
+          {
+            "id": "21111111-1111-4111-8111-111111111112",
+            "count": 2,
+            "label": "Dr. Mohammed Shuqeir"
+          },
+          {
+            "id": "21111111-1111-4111-8111-111111111113",
+            "count": 1,
+            "label": "Dr. Fatima Hassan"
+          },
+          {
+            "id": "21111111-1111-4111-8111-111111111114",
+            "count": 1,
+            "label": "Layla Salem"
+          }
+        ],
+        "services": [
+          {
+            "count": 2,
+            "label": "Dental Cleaning"
+          },
+          {
+            "count": 1,
+            "label": "Cleaning"
+          },
+          {
+            "count": 1,
+            "label": "Consultation"
+          },
+          {
+            "count": 1,
+            "label": "Orthodontic Consultation"
+          },
+          {
+            "count": 1,
+            "label": "Veneers"
+          },
+          {
+            "count": 1,
+            "label": "Veneers Consultation"
+          },
+          {
+            "count": 1,
+            "label": "Whitening"
+          },
+          {
+            "count": 1,
+            "label": "استشارة تقويم"
+          },
+          {
+            "count": 1,
+            "label": "تنظيف أسنان"
+          },
+          {
+            "count": 1,
+            "label": "تنظيف الأسنان"
+          }
+        ],
+        "entirePayloadEqualsIndependentRawProductionCalculation": true
+      }
+    ],
+    "denials": [
+      {
+        "name": "forgedClinic",
+        "status": 403,
+        "code": "42501"
+      },
+      {
+        "name": "nullClinic",
+        "status": 403,
+        "code": "42501"
+      },
+      {
+        "name": "inverted",
+        "status": 400,
+        "code": "22023"
+      },
+      {
+        "name": "overlong",
+        "status": 400,
+        "code": "22023"
+      },
+      {
+        "name": "malformed",
+        "status": 400,
+        "code": "22007"
+      },
+      {
+        "name": "missingDate",
+        "status": 400,
+        "code": "22023"
+      }
+    ]
+  },
+  "anonymous": {
+    "httpStatus": 401,
+    "code": "42501",
+    "denied": true
+  },
+  "manager": {
+    "localDatabaseTest": "PASS",
+    "live": "not exercised: no production Manager membership"
+  },
+  "staff": {
+    "localDatabaseTest": "PASS",
+    "live": "not exercised: no session/credentials; user explicitly accepted local verification"
+  },
+  "revoked": {
+    "localDatabaseTest": "PASS",
+    "live": "not exercised: no revoked production membership"
+  },
+  "timezoneEdges": {
+    "local": "PASS: missing,invalid,DST,UTC boundaries",
+    "live": "valid canonical Asia/Kuwait verified; production configuration left unchanged"
+  },
+  "existingModules": [
+    {
+      "label": "Auth",
+      "status": 200
+    },
+    {
+      "label": "Calls",
+      "status": 200
+    },
+    {
+      "label": "Appointments",
+      "status": 200
+    },
+    {
+      "label": "Settings",
+      "status": 200
+    },
+    {
+      "label": "Practitioners",
+      "status": 200
+    },
+    {
+      "label": "Team",
+      "status": 200
+    }
+  ],
+  "liveTimingSamples": [
+    {
+      "status": 200,
+      "elapsedMs": 920
+    },
+    {
+      "status": 200,
+      "elapsedMs": 410
+    },
+    {
+      "status": 200,
+      "elapsedMs": 410
+    }
+  ],
+  "publishedFrontend": {
+    "httpStatus": 404,
+    "scripts": 8,
+    "hasAnalyticsRpc": false,
+    "hasAnalyticsRoute": false,
+    "hasCallsRoute": true,
+    "hasCalendarRoute": true,
+    "hasTeamRoute": true,
+    "hasSettingsRpc": false
+  },
+  "publishedRoutes": [
+    {
+      "path": "/login",
+      "status": 200
+    },
+    {
+      "path": "/home",
+      "status": 200
+    },
+    {
+      "path": "/calendar",
+      "status": 200
+    },
+    {
+      "path": "/conversations",
+      "status": 200
+    },
+    {
+      "path": "/account/team",
+      "status": 200
+    },
+    {
+      "path": "/account/settings",
+      "status": 200
+    },
+    {
+      "path": "/analytics",
+      "status": 404
+    }
+  ],
+  "lovable": "LOVABLE MANUAL PUBLISH REQUIRED"
+}
