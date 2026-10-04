@@ -451,7 +451,15 @@ globalThis.__cleanupAuthTests = async () => {
 try {
   await build({
     entryPoints: [
-      fixture.calendar ? "tests/calendar-ui.test.tsx" : process.argv.includes("--settings") ? "tests/clinic-settings-ui.test.tsx" : process.argv.includes("--team") ? "tests/team-management-ui.test.tsx" : "tests/clinic-permission-ui.test.tsx",
+      process.argv.includes("--navigation")
+        ? "tests/navigation-ui.test.tsx"
+        : fixture.calendar
+          ? "tests/calendar-ui.test.tsx"
+          : process.argv.includes("--settings")
+            ? "tests/clinic-settings-ui.test.tsx"
+            : process.argv.includes("--team")
+              ? "tests/team-management-ui.test.tsx"
+              : "tests/clinic-permission-ui.test.tsx",
     ],
     outfile: join(directory, "tests.cjs"),
     bundle: true,

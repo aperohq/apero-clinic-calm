@@ -127,7 +127,7 @@ test("Settings UI uses canonical clinic values, real Auth/SDK, partial RPC saves
       if (key === "opening_hours") continue;
       assert.equal((document.getElementById("settings-" + key) as HTMLInputElement).value, val);
     }
-    assert.ok(document.querySelector('a[href="/account/settings"]'));
+    assert.equal(document.querySelector('nav a[href="/account/settings"]'), null);
     assert.ok(
       !Array.from(document.querySelectorAll("button")).some((b) => b.textContent === "Invite user"),
     );
