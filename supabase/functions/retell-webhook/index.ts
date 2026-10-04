@@ -212,9 +212,9 @@ export default {
       row.transcript = normalizeTranscript(call.transcript_object);
     }
 
-    if (call.recording_url) {
-      row.recording_url = call.recording_url;
-    }
+    // Provider URLs are temporary credentials. Playback retrieves a fresh signed
+    // URL by the verified call ID after dashboard user/clinic authorization.
+    row.recording_url = null;
 
     if (summary) {
       row.summary = summary;

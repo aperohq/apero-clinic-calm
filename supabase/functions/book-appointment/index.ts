@@ -3,6 +3,7 @@ import { withSupabase } from "jsr:@supabase/server@^1";
 import { resolveVoiceIntegration } from "../_shared/voice-integration.ts";
 import { logDatabaseFailure, readLimitedBody, RequestBodyTooLargeError } from "../_shared/request-security.ts";
 import { DateTime } from "npm:luxon@3";
+import { bookingWithFallback } from "../_shared/booking-fallback.ts";
 
 const SLOT_MINUTES = 30;
 
@@ -478,90 +479,40 @@ export default {
         client = newClient;
       }
 
-      // Final insert
-      const {
-        data: appointment,
-        error: appointmentError,
-      } = await ctx.supabaseAdmin
-        .from("appointments")
-        .insert({
-          clinic_id: clinicId,
-          client_id: client.id,
-          staff_id:
-            practitioner.id,
-          service: serviceName,
-          start_time:
-            start.toUTC().toISO(),
-          end_time:
-            end.toUTC().toISO(),
-          status: "Booked",
-          source: "Booked by Apero",
-        })
-        .select("id")
-        .single();
-
-      if (appointmentError) {
-        logDatabaseFailure("Booking appointment insert", appointmentError);
-
-        // Exclusion constraint:
-        // another booking took the slot
-        if (
-          appointmentError.code ===
-          "23P01"
-        ) {
-          return Response.json({
-            success: false,
-            appointment_booked: false,
-            available: false,
-            practitioner_found: true,
-            error:
-              "That time was just booked by someone else. Check availability again.",
-          });
-        }
-
-        return Response.json(
-          {
-            success: false,
-            appointment_booked: false,
-            error:
-              "Appointment could not be created",
-          },
-          { status: 500 },
-        );
-      }
-
-      return Response.json({
-        success: true,
-        appointment_booked: true,
-        available: true,
-        practitioner_found: true,
-
-        appointment_id:
-          appointment.id,
-
-        client_name:
-          clientName,
-
-        client_phone:
-          clientPhone,
-
-        practitioner_name:
-          practitioner.full_name,
-
-        service_name:
-          serviceName,
-
-        appointment_date:
-          appointmentDate,
-
-        appointment_time:
-          start.toFormat("h:mm a"),
-
-        timezone,
-
-        message:
-          `Appointment successfully booked for ${clientName} with ${practitioner.full_name} on ${appointmentDate} at ${start.toFormat("h:mm a")}.`,
+      // Keep the legacy insertion path, but bound creation and retain failure
+      // in the same clinic Requests queue used by the current master endpoint.
+      const callId = payload.call?.call_id;
+      if (typeof callId !== "string" || !callId.trim()) return Response.json({
+        success: false, appointment_booked: false, appointment_confirmed: false,
+        error_type: "missing_call_id", message: "Your appointment is NOT confirmed.",
       });
+      const keyBytes = new Uint8Array(await crypto.subtle.digest("SHA-256",
+        new TextEncoder().encode(JSON.stringify([clinicId, callId, normalizedPhone, clientName,
+          practitioner.id, serviceName, appointmentDate, appointmentTime]))));
+      const key = Array.from(keyBytes, byte => byte.toString(16).padStart(2, "0")).join("");
+      const result = await bookingWithFallback(ctx.supabaseAdmin, key, {
+        clinicId, callId, patientName: clientName, patientPhone: clientPhone,
+        service: serviceName, practitioner: practitioner.full_name,
+        date: appointmentDate, time: appointmentTime,
+      }, async signal => {
+        const { data: appointment, error: appointmentError } = await ctx.supabaseAdmin
+          .from("appointments").insert({
+            clinic_id: clinicId, client_id: client.id, staff_id: practitioner.id,
+            service: serviceName, start_time: start.toUTC().toISO(),
+            end_time: end.toUTC().toISO(), status: "Booked", source: "Booked by Apero",
+          }).select("id").single().abortSignal(signal);
+        if (appointmentError) return {
+          success: false, appointment_booked: false,
+          error_type: appointmentError.code === "23P01" ? "slot_conflict"
+            : appointmentError.code === "57014" ? "booking_timeout" : "database_error",
+        };
+        return {
+          success: true, appointment_booked: true, available: true, practitioner_found: true,
+          appointment_id: appointment?.id, client_name: clientName, client_phone: clientPhone,
+          practitioner_name: practitioner.full_name, service_name: serviceName,
+        };
+      });
+      return Response.json(result);
     },
   ),
 };

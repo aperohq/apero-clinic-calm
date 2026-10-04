@@ -7,7 +7,9 @@ import test from "node:test";
 import { transpileModule } from "typescript";
 import * as routing from "../../../supabase/functions/_shared/voice-routing.ts";
 import * as security from "../../../supabase/functions/_shared/request-security.ts";
+import { bookingWithFallback } from "../../../supabase/functions/_shared/booking-fallback.ts";
 import * as logic from "../../../supabase/functions/clinic-operations/logic.ts";
+
 
 const A = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const B = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
@@ -59,6 +61,10 @@ function compile(path, bindings, extra = "") {
     .outputText.replace(/export\s+(?=(async )?function)/g, "")
     .replace(/export \{[^}]*\};/g, "");
   return new Function(...Object.keys(bindings), js)(...Object.values(bindings));
+}
+
+function abortable(value) {
+  return Object.assign(Promise.resolve(value), { abortSignal() { return this; } });
 }
 
 class Database {
@@ -148,6 +154,7 @@ class Database {
         filters.push((r) => v.includes(r[k]));
         return q;
       },
+      abortSignal: () => q,
       order: () => q,
       limit: (n) => {
         limit = n;
@@ -180,7 +187,10 @@ class Database {
                   mutation.field &&
                   db.tables[table].find((r) => r[mutation.field] === row[mutation.field]);
                 if (old) Object.assign(old, row);
-                else db.tables[table].push(row);
+                else {
+                  if (table === "voice_requests") row.id ??= crypto.randomUUID();
+                  db.tables[table].push(row);
+                }
               }
             }
             const rows = db.tables[table].filter((r) => filters.every((f) => f(r))).slice(0, limit);
@@ -190,10 +200,10 @@ class Database {
     };
     return q;
   }
-  async rpc(name, args) {
+  rpc(name, args) {
     this.rpcCalls.push({ name, args });
     if (name === "appointment_available_slots")
-      return {
+      return abortable({
         data: [
           {
             start_time: `${args.p_date}T10:00:00Z`,
@@ -202,9 +212,9 @@ class Database {
           },
         ],
         error: null,
-      };
+      });
     // Deliberately never implement appointment mutation in this adapter.
-    return { data: { success: false, error_type: "local_rpc_not_executed" }, error: null };
+    return abortable({ data: { success: false, error_type: "local_rpc_not_executed" }, error: null });
   }
 }
 
@@ -242,6 +252,7 @@ function environment() {
   const common = {
     ...security,
     ...logic,
+    bookingWithFallback,
     // Only a UTC formatting shim for the RPC/checked-slot contract test.
     // Actual clinic timezone and duration math are covered in PostgreSQL tests.
     DateTime: {
@@ -490,6 +501,8 @@ test("AI reschedule availability preserves the existing practitioner even with a
 });
 
 for (const [label, rpcResult, expected] of [
+  ["missing RPC response", { data: null, error: null }, "booking_invalid_response"],
+  ["unconfirmed RPC response", { data: { success: true }, error: null }, "booking_invalid_response"],
   [
     "canonical protected-write conflict",
     { data: { success: false, error_type: "slot_conflict" }, error: null },
@@ -520,8 +533,8 @@ for (const [label, rpcResult, expected] of [
     const slot = available.slots[0];
     assert.ok(slot);
     const originalRpc = db.rpc.bind(db);
-    db.rpc = async (name, args) =>
-      name === "voice_apply_appointment" ? rpcResult : originalRpc(name, args);
+    db.rpc = (name, args) =>
+      name === "voice_apply_appointment" ? abortable(rpcResult) : originalRpc(name, args);
     const booked = await send(operations.handler, "agent-b", {
       action: "book",
       slot_id: slot.slot_id,
@@ -534,8 +547,34 @@ for (const [label, rpcResult, expected] of [
     });
     const result = await booked.json();
     assert.equal(result.success, false);
+    assert.equal(result.appointment_booked, false);
+    assert.equal(result.appointment_id, null);
+    assert.equal(result.follow_up_saved, true);
+    assert.equal(db.tables.voice_requests.at(-1).clinic_id, B);
     assert.equal(result.error_type, expected, JSON.stringify(result));
     assert.ok(!JSON.stringify(result).includes("private"));
     assert.ok(!JSON.stringify(result).includes("40P01"));
   });
 }
+
+
+test("real Edge booking accepts confirmed RPC success unchanged and creates no failed request", async () => {
+  const { operations, send, db } = environment();
+  const available = await (await send(operations.handler, "agent-b", {
+    action: "availability", service_name: "Consultation", practitioner_id: SB,
+    practitioner_mode: "specific", requested_date: "2099-01-01",
+  })).json();
+  const slot = available.slots[0];
+  const confirmed = { success: true, appointment_booked: true, appointment_id: APPB,
+    staff_id: SB, service_name: "Consultation", start_time: "2099-01-01T10:00:00Z" };
+  const original = db.rpc.bind(db);
+  db.rpc = (name, args) => name === "voice_apply_appointment"
+    ? abortable({ data: confirmed, error: null }) : original(name, args);
+  const result = await (await send(operations.handler, "agent-b", {
+    action: "book", slot_id: slot.slot_id, client_name: "Alex Test",
+    client_phone: "+12025550101", practitioner_id: SB, service_name: "Consultation",
+    appointment_date: slot.date, appointment_time: slot.time,
+  })).json();
+  assert.deepEqual(result, confirmed);
+  assert.equal(db.tables.voice_requests.length, 0);
+});

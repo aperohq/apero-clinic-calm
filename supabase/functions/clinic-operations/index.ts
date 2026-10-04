@@ -9,9 +9,10 @@ import { DateTime } from "npm:luxon@3";
 const encoder = new TextEncoder();
 type Slot = { slot_id: string; checked_slot_id: string; start_time: string; end_time: string; practitioner_id: string; practitioner_name: string; service_name: string; date: string; time: string; duration_minutes: number; timezone: string };
 
+import { bookingWithFallback } from "../_shared/booking-fallback.ts";
 import { resolveStaff, resolveService, phone as normalizePhone, value, type Staff } from "./logic.ts";
 
-function failure(error_type: string, message = error_type) { return { success: false, available: false, appointment_booked: false, error_type, message }; }
+function failure(error_type: string, message = error_type) { return { success: false, available: false, appointment_booked: false, appointment_id: null, error_type, message }; }
 function bytesToBase64(bytes: Uint8Array): string { return btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, ""); }
 function base64ToBytes(text: string): Uint8Array { return Uint8Array.from(atob(text.replace(/-/g, "+").replace(/_/g, "/")), c => c.charCodeAt(0)); }
 async function sign(text: string, secret: string): Promise<string> {
@@ -212,25 +213,43 @@ export default {
           value(args, "appointment_time") !== localStart.toFormat("HH:mm"))
           return Response.json(failure("slot_mismatch"));
         const key = await operationKey(action, `${slotId}:${patientName}:${patientPhone}`, appointmentId);
-        const { data: prior, error: priorError } = await db.from("voice_operations")
-          .select("result").eq("operation_key", key).eq("clinic_id", clinicId).maybeSingle();
-        if (priorError) throw priorError;
-        if (prior?.result?.success === true) return Response.json(prior.result);
-        const { data: state, error: stateError } = await db.from("voice_call_state")
-          .select("current_check_id").eq("call_id", callId).eq("clinic_id", clinicId).maybeSingle();
-        if (stateError) throw stateError;
-        if (state?.current_check_id !== slot.i) return Response.json(failure("stale_or_invalid_slot"));
-        if (!start.isValid || start <= DateTime.now()) return Response.json(failure("past_or_invalid_slot"));
-        const { data, error } = await db.rpc("voice_apply_appointment", {
-          p_action: action, p_clinic_id: clinicId, p_operation_key: key, p_call_id: callId, p_appointment_id: appointmentId || null,
-          p_client_name: patientName, p_client_phone: patientPhone,
-          p_caller_name: value(args, "caller_name") || null, p_caller_phone: phone(args.caller_phone),
-          p_staff_id: slot.s, p_service: slot.v,
-          p_start: start.toUTC().toISO(), p_end: start.plus({ minutes: slot.m ?? identity.integration.slot_minutes ?? 45 }).toUTC().toISO(),
-          p_check_id: slot.i, p_slot_id: slot.q,
-        });
-        if (error) { logDatabaseFailure("Voice operation", error); return Response.json(failure("database_error")); }
-        return Response.json(data);
+        const complete = async (signal?: AbortSignal) => {
+          const priorQuery = db.from("voice_operations")
+            .select("result").eq("operation_key", key).eq("clinic_id", clinicId).maybeSingle();
+          if (signal) priorQuery.abortSignal(signal);
+          const { data: prior, error: priorError } = await priorQuery;
+          if (priorError) throw priorError;
+          if (prior?.result?.success === true) return prior.result;
+          const stateQuery = db.from("voice_call_state")
+            .select("current_check_id").eq("call_id", callId).eq("clinic_id", clinicId).maybeSingle();
+          if (signal) stateQuery.abortSignal(signal);
+          const { data: state, error: stateError } = await stateQuery;
+          if (stateError) throw stateError;
+          if (state?.current_check_id !== slot.i) return failure("stale_or_invalid_slot");
+          if (!start.isValid || start <= DateTime.now()) return failure("past_or_invalid_slot");
+          const query = db.rpc("voice_apply_appointment", {
+            p_action: action, p_clinic_id: clinicId, p_operation_key: key, p_call_id: callId, p_appointment_id: appointmentId || null,
+            p_client_name: patientName, p_client_phone: patientPhone,
+            p_caller_name: value(args, "caller_name") || null, p_caller_phone: phone(args.caller_phone),
+            p_staff_id: slot.s, p_service: slot.v,
+            p_start: start.toUTC().toISO(), p_end: start.plus({ minutes: slot.m ?? identity.integration.slot_minutes ?? 45 }).toUTC().toISO(),
+            p_check_id: slot.i, p_slot_id: slot.q,
+          }); if (signal) query.abortSignal(signal);
+          const { data, error } = await query;
+          if (error) {
+            if (action !== "book") logDatabaseFailure("Voice operation", error);
+            return failure(action === "book" && typeof error === "object" && error !== null &&
+              "code" in error && error.code === "57014" ? "booking_timeout" : "database_error");
+          }
+          return data;
+        };
+        if (action === "book") return Response.json(await bookingWithFallback(db, key, {
+          clinicId, callId, patientName, patientPhone,
+          service: slot.v,
+          practitioner: value(args, "practitioner_name") || slot.s,
+          date: localStart.toFormat("yyyy-MM-dd"), time: localStart.toFormat("HH:mm"),
+        }, signal => complete(signal)));
+        return Response.json(await complete());
       }
       if (action === "lookup") {
         const patientName = value(args, "client_name");

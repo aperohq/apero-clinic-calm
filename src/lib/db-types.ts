@@ -50,7 +50,7 @@ export type ConversationRow = {
   id: string; clinic_id: string; client_id: string | null; appointment_id: string | null;
   retell_call_id: string | null; retell_agent_id: string | null; title: string; status: string;
   outcome: string | null; caller_phone: string | null; started_at: string; duration_seconds: number;
-  summary: string | null; transcript: Json | null; recording_url: string | null; created_at: string;
+  summary: string | null; transcript: Json | null; created_at: string;
 };
 export type ClientNoteRow = {
   id: string; clinic_id: string; client_id: string; author_profile_id: string | null;

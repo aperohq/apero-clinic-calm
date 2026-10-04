@@ -1,7 +1,7 @@
 """Compile the golden receptionist into a separate, clinic-configured Retell draft.
 
 Pure local generation. Never updates an agent, publishes, or writes to the database.
-The reference export is immutable; only the explicit clinic-specific text below changes.
+The reference is pinned; recording security and failed-booking fallback were reviewed on 2026-10-04.
 """
 import argparse
 import copy
@@ -12,7 +12,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 ROOT = Path(__file__).resolve().parent
-GOLDEN_SHA256 = "3315a9a91ff495bc6f2d15b30f044a0f2e48c3e9edeead054a8334c19ec1f771"
+GOLDEN_SHA256 = "fa6885849dbdf9937d3189f7e57d38c44b08e2dbede4a2593a0b039835e7e97a"
 FLOW_FIELDS = (
     "global_prompt", "nodes", "components", "start_node_id", "start_speaker",
     "tools", "model_choice", "model_temperature", "tool_call_strict_mode",
@@ -20,7 +20,7 @@ FLOW_FIELDS = (
     "begin_tag_display_position", "is_transfer_cf",
 )
 AGENT_FIELDS = (
-    "language", "data_storage_setting", "opt_in_signed_url", "end_call_after_silence_ms",
+    "language", "data_storage_setting", "opt_in_signed_url", "signed_url_expiration_ms", "end_call_after_silence_ms",
     "post_call_analysis_model", "pii_config", "handbook_config", "post_call_analysis_data",
     "voice_id", "voice_temperature", "voice_speed", "volume", "max_call_duration_ms",
     "responsiveness", "stt_mode", "allow_user_dtmf", "user_dtmf_options",

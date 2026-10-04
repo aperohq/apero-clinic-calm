@@ -24,7 +24,9 @@
     "test:permissions:ui": "node tests/run-clinic-permission-tests.mjs",
     "typecheck:clinic-users-edge": "tsc --noEmit -p tests/tsconfig.clinic-users-edge.json",
     "test:team": "node --max-old-space-size=384 tests/team-management.test.mjs && node --max-old-space-size=384 tests/team-invitations.test.mjs && node --max-old-space-size=384 tests/team-invitation-hardening.test.mjs && node tests/run-clinic-permission-tests.mjs --team",
-    "test:settings": "node --max-old-space-size=384 tests/clinic-settings.test.mjs && node tests/run-clinic-permission-tests.mjs --settings"
+    "test:settings": "node --max-old-space-size=384 tests/clinic-settings.test.mjs && node tests/run-clinic-permission-tests.mjs --settings",
+    "test:recordings": "node --max-old-space-size=384 tests/recording-access.test.mjs && node tests/recording-player.test.mjs",
+    "test:booking-fallback": "node --max-old-space-size=384 tests/booking-fallback.test.mjs && node retell/master/tests/edge-isolation.test.mjs && python3 -m unittest discover -s retell/master/tests -p test_master.py"
   },
   "overrides": {
     "rolldown": "1.2.1"

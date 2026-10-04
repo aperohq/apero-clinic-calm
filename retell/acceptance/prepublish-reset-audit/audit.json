@@ -1,0 +1,831 @@
+{
+  "version": 3,
+  "published": false,
+  "variables_checked": 76,
+  "categories": {
+    "reset_only_no_external_use": 27,
+    "tool_argument_only": 15,
+    "state_or_request_producer": 31,
+    "reset_control": 3
+  },
+  "missing_or_wrong_mapping_count": 0,
+  "null_value_count": 0,
+  "stale_fields_rejected": 72,
+  "preservation": {
+    "call_identity": true,
+    "caller_contact": true,
+    "valid_history": true,
+    "established_language_auxiliary_key": true,
+    "actual_speaking_language_continuously_preserved": false,
+    "new_request": "cleared then LLM-extracted; successful reconstruction verified in remote probe",
+    "malformed_history_preserved": false
+  },
+  "findings": [
+    "27 keys have no non-reset producer, argument or consumer; 15 more are tool arguments only, not independently stored dynamic state.",
+    "fresh_request_language is reset to empty string despite being the speaking-language field; it is an enum extracted as English/Arabic afterward.",
+    "Malformed/non-array history is replaced by [] without blocking the booking path.",
+    "Tool arguments and prior LLM conversation memory are not erased by creating/resetting same-named dynamic variables."
+  ],
+  "rows": [
+    {
+      "name": "current_check_id",
+      "category": "reset_only_no_external_use",
+      "producers": [],
+      "tool_arguments": [],
+      "reset_value": "",
+      "mapping_path": "current_check_id",
+      "compatible_storage": ""
+    },
+    {
+      "name": "check_id",
+      "category": "reset_only_no_external_use",
+      "producers": [],
+      "tool_arguments": [],
+      "reset_value": "",
+      "mapping_path": "check_id",
+      "compatible_storage": ""
+    },
+    {
+      "name": "selected_slot_id",
+      "category": "reset_only_no_external_use",
+      "producers": [],
+      "tool_arguments": [],
+      "reset_value": "",
+      "mapping_path": "selected_slot_id",
+      "compatible_storage": ""
+    },
+    {
+      "name": "slot_id",
+      "category": "tool_argument_only",
+      "producers": [],
+      "tool_arguments": [
+        "argument:book_appointment",
+        "argument:reschedule_appointment"
+      ],
+      "reset_value": "",
+      "mapping_path": "slot_id",
+      "compatible_storage": ""
+    },
+    {
+      "name": "checked_slot_id",
+      "category": "reset_only_no_external_use",
+      "producers": [],
+      "tool_arguments": [],
+      "reset_value": "",
+      "mapping_path": "checked_slot_id",
+      "compatible_storage": ""
+    },
+    {
+      "name": "slot_token",
+      "category": "reset_only_no_external_use",
+      "producers": [],
+      "tool_arguments": [],
+      "reset_value": "",
+      "mapping_path": "slot_token",
+      "compatible_storage": ""
+    },
+    {
+      "name": "selected_slot",
+      "category": "reset_only_no_external_use",
+      "producers": [],
+      "tool_arguments": [],
+      "reset_value": "",
+      "mapping_path": "selected_slot",
+      "compatible_storage": ""
+    },
+    {
+      "name": "selected_date",
+      "category": "reset_only_no_external_use",
+      "producers": [],
+      "tool_arguments": [],
+      "reset_value": "",
+      "mapping_path": "selected_date",
+      "compatible_storage": ""
+    },
+    {
+      "name": "selected_time",
+      "category": "reset_only_no_external_use",
+      "producers": [],
+      "tool_arguments": [],
+      "reset_value": "",
+      "mapping_path": "selected_time",
+      "compatible_storage": ""
+    },
+    {
+      "name": "service_name",
+      "category": "state_or_request_producer",
+      "producers": [
+        "response:resolve_service",
+        "response:check_availability"
+      ],
+      "tool_arguments": [
+        "argument:resolve_service",
+        "argument:check_availability",
+        "argument:book_appointment",
+        "argument:reschedule_appointment"
+      ],
+      "reset_value": "",
+      "mapping_path": "service_name",
+      "compatible_storage": ""
+    },
+    {
+      "name": "resolve_error_type",
+      "category": "state_or_request_producer",
+      "producers": [
+        "response:resolve_service"
+      ],
+      "tool_arguments": [],
+      "reset_value": "",
+      "mapping_path": "resolve_error_type",
+      "compatible_storage": ""
+    },
+    {
+      "name": "selected_practitioner_id",
+      "category": "state_or_request_producer",
+      "producers": [
+        "response:check_availability"
+      ],
+      "tool_arguments": [],
+      "reset_value": "",
+      "mapping_path": "selected_practitioner_id",
+      "compatible_storage": ""
+    },
+    {
+      "name": "selected_practitioner_name",
+      "category": "state_or_request_producer",
+      "producers": [
+        "response:check_availability"
+      ],
+      "tool_arguments": [],
+      "reset_value": "",
+      "mapping_path": "selected_practitioner_name",
+      "compatible_storage": ""
+    },
+    {
+      "name": "practitioner_id",
+      "category": "tool_argument_only",
+      "producers": [],
+      "tool_arguments": [
+        "argument:check_availability",
+        "argument:book_appointment",
+        "argument:reschedule_appointment"
+      ],
+      "reset_value": "",
+      "mapping_path": "practitioner_id",
+      "compatible_storage": ""
+    },
+    {
+      "name": "practitioner_name",
+      "category": "tool_argument_only",
+      "producers": [],
+      "tool_arguments": [
+        "argument:check_availability"
+      ],
+      "reset_value": "",
+      "mapping_path": "practitioner_name",
+      "compatible_storage": ""
+    },
+    {
+      "name": "practitioner_mode",
+      "category": "tool_argument_only",
+      "producers": [],
+      "tool_arguments": [
+        "argument:check_availability"
+      ],
+      "reset_value": "",
+      "mapping_path": "practitioner_mode",
+      "compatible_storage": ""
+    },
+    {
+      "name": "doctor_preference",
+      "category": "reset_only_no_external_use",
+      "producers": [],
+      "tool_arguments": [],
+      "reset_value": "",
+      "mapping_path": "doctor_preference",
+      "compatible_storage": ""
+    },
+    {
+      "name": "requested_date",
+      "category": "tool_argument_only",
+      "producers": [],
+      "tool_arguments": [
+        "argument:check_availability"
+      ],
+      "reset_value": "",
+      "mapping_path": "requested_date",
+      "compatible_storage": ""
+    },
+    {
+      "name": "requested_time",
+      "category": "tool_argument_only",
+      "producers": [],
+      "tool_arguments": [
+        "argument:check_availability"
+      ],
+      "reset_value": "",
+      "mapping_path": "requested_time",
+      "compatible_storage": ""
+    },
+    {
+      "name": "window_start",
+      "category": "tool_argument_only",
+      "producers": [],
+      "tool_arguments": [
+        "argument:check_availability"
+      ],
+      "reset_value": "",
+      "mapping_path": "window_start",
+      "compatible_storage": ""
+    },
+    {
+      "name": "window_end",
+      "category": "tool_argument_only",
+      "producers": [],
+      "tool_arguments": [
+        "argument:check_availability"
+      ],
+      "reset_value": "",
+      "mapping_path": "window_end",
+      "compatible_storage": ""
+    },
+    {
+      "name": "search_mode",
+      "category": "tool_argument_only",
+      "producers": [],
+      "tool_arguments": [
+        "argument:check_availability"
+      ],
+      "reset_value": "",
+      "mapping_path": "search_mode",
+      "compatible_storage": ""
+    },
+    {
+      "name": "location",
+      "category": "reset_only_no_external_use",
+      "producers": [],
+      "tool_arguments": [],
+      "reset_value": "",
+      "mapping_path": "location",
+      "compatible_storage": ""
+    },
+    {
+      "name": "appointment_date",
+      "category": "tool_argument_only",
+      "producers": [],
+      "tool_arguments": [
+        "argument:book_appointment",
+        "argument:reschedule_appointment"
+      ],
+      "reset_value": "",
+      "mapping_path": "appointment_date",
+      "compatible_storage": ""
+    },
+    {
+      "name": "appointment_time",
+      "category": "tool_argument_only",
+      "producers": [],
+      "tool_arguments": [
+        "argument:book_appointment",
+        "argument:reschedule_appointment"
+      ],
+      "reset_value": "",
+      "mapping_path": "appointment_time",
+      "compatible_storage": ""
+    },
+    {
+      "name": "appointment_id",
+      "category": "tool_argument_only",
+      "producers": [],
+      "tool_arguments": [
+        "argument:check_availability",
+        "argument:reschedule_appointment",
+        "argument:cancel_appointment"
+      ],
+      "reset_value": "",
+      "mapping_path": "appointment_id",
+      "compatible_storage": ""
+    },
+    {
+      "name": "selected_appointment_id",
+      "category": "reset_only_no_external_use",
+      "producers": [],
+      "tool_arguments": [],
+      "reset_value": "",
+      "mapping_path": "selected_appointment_id",
+      "compatible_storage": ""
+    },
+    {
+      "name": "existing_appointment_id",
+      "category": "reset_only_no_external_use",
+      "producers": [],
+      "tool_arguments": [],
+      "reset_value": "",
+      "mapping_path": "existing_appointment_id",
+      "compatible_storage": ""
+    },
+    {
+      "name": "booking_id",
+      "category": "state_or_request_producer",
+      "producers": [
+        "response:book_appointment"
+      ],
+      "tool_arguments": [],
+      "reset_value": "",
+      "mapping_path": "booking_id",
+      "compatible_storage": ""
+    },
+    {
+      "name": "booking_error_type",
+      "category": "state_or_request_producer",
+      "producers": [
+        "response:book_appointment"
+      ],
+      "tool_arguments": [],
+      "reset_value": "",
+      "mapping_path": "booking_error_type",
+      "compatible_storage": ""
+    },
+    {
+      "name": "availability_error_type",
+      "category": "state_or_request_producer",
+      "producers": [
+        "response:check_availability"
+      ],
+      "tool_arguments": [],
+      "reset_value": "",
+      "mapping_path": "availability_error_type",
+      "compatible_storage": ""
+    },
+    {
+      "name": "patient_name",
+      "category": "tool_argument_only",
+      "producers": [],
+      "tool_arguments": [
+        "argument:persist_message",
+        "argument:persist_callback",
+        "argument:persist_urgent"
+      ],
+      "reset_value": "",
+      "mapping_path": "patient_name",
+      "compatible_storage": ""
+    },
+    {
+      "name": "patient_phone",
+      "category": "reset_only_no_external_use",
+      "producers": [],
+      "tool_arguments": [],
+      "reset_value": "",
+      "mapping_path": "patient_phone",
+      "compatible_storage": ""
+    },
+    {
+      "name": "client_name",
+      "category": "tool_argument_only",
+      "producers": [],
+      "tool_arguments": [
+        "argument:check_availability",
+        "argument:book_appointment",
+        "argument:lookup_appointments",
+        "argument:reschedule_appointment",
+        "argument:cancel_appointment"
+      ],
+      "reset_value": "",
+      "mapping_path": "client_name",
+      "compatible_storage": ""
+    },
+    {
+      "name": "client_phone",
+      "category": "tool_argument_only",
+      "producers": [],
+      "tool_arguments": [
+        "argument:check_availability",
+        "argument:book_appointment",
+        "argument:lookup_appointments",
+        "argument:reschedule_appointment",
+        "argument:cancel_appointment"
+      ],
+      "reset_value": "",
+      "mapping_path": "client_phone",
+      "compatible_storage": ""
+    },
+    {
+      "name": "patient_identity_source",
+      "category": "reset_only_no_external_use",
+      "producers": [],
+      "tool_arguments": [],
+      "reset_value": "",
+      "mapping_path": "patient_identity_source",
+      "compatible_storage": ""
+    },
+    {
+      "name": "booking_readback",
+      "category": "reset_only_no_external_use",
+      "producers": [],
+      "tool_arguments": [],
+      "reset_value": "",
+      "mapping_path": "booking_readback",
+      "compatible_storage": ""
+    },
+    {
+      "name": "consent_tuple",
+      "category": "reset_only_no_external_use",
+      "producers": [],
+      "tool_arguments": [],
+      "reset_value": "",
+      "mapping_path": "consent_tuple",
+      "compatible_storage": ""
+    },
+    {
+      "name": "booking_consent_tuple",
+      "category": "reset_only_no_external_use",
+      "producers": [],
+      "tool_arguments": [],
+      "reset_value": "",
+      "mapping_path": "booking_consent_tuple",
+      "compatible_storage": ""
+    },
+    {
+      "name": "rescheduled_id",
+      "category": "state_or_request_producer",
+      "producers": [
+        "response:reschedule_appointment"
+      ],
+      "tool_arguments": [],
+      "reset_value": "",
+      "mapping_path": "rescheduled_id",
+      "compatible_storage": ""
+    },
+    {
+      "name": "reschedule_error_type",
+      "category": "state_or_request_producer",
+      "producers": [
+        "response:reschedule_appointment"
+      ],
+      "tool_arguments": [],
+      "reset_value": "",
+      "mapping_path": "reschedule_error_type",
+      "compatible_storage": ""
+    },
+    {
+      "name": "cancelled_id",
+      "category": "state_or_request_producer",
+      "producers": [
+        "response:cancel_appointment"
+      ],
+      "tool_arguments": [],
+      "reset_value": "",
+      "mapping_path": "cancelled_id",
+      "compatible_storage": ""
+    },
+    {
+      "name": "cancel_error_type",
+      "category": "state_or_request_producer",
+      "producers": [
+        "response:cancel_appointment"
+      ],
+      "tool_arguments": [],
+      "reset_value": "",
+      "mapping_path": "cancel_error_type",
+      "compatible_storage": ""
+    },
+    {
+      "name": "lookup_error_type",
+      "category": "state_or_request_producer",
+      "producers": [
+        "response:lookup_appointments"
+      ],
+      "tool_arguments": [],
+      "reset_value": "",
+      "mapping_path": "lookup_error_type",
+      "compatible_storage": ""
+    },
+    {
+      "name": "reschedule_context",
+      "category": "reset_only_no_external_use",
+      "producers": [],
+      "tool_arguments": [],
+      "reset_value": "",
+      "mapping_path": "reschedule_context",
+      "compatible_storage": ""
+    },
+    {
+      "name": "cancellation_context",
+      "category": "reset_only_no_external_use",
+      "producers": [],
+      "tool_arguments": [],
+      "reset_value": "",
+      "mapping_path": "cancellation_context",
+      "compatible_storage": ""
+    },
+    {
+      "name": "fresh_request_summary",
+      "category": "state_or_request_producer",
+      "producers": [
+        "extract:node_fresh_request"
+      ],
+      "tool_arguments": [],
+      "reset_value": "",
+      "mapping_path": "fresh_request_summary",
+      "compatible_storage": ""
+    },
+    {
+      "name": "fresh_request_language",
+      "category": "state_or_request_producer",
+      "producers": [
+        "extract:node_fresh_request"
+      ],
+      "tool_arguments": [],
+      "reset_value": "",
+      "mapping_path": "fresh_request_language",
+      "compatible_storage": ""
+    },
+    {
+      "name": "reset_verified_attempt",
+      "category": "reset_control",
+      "producers": [],
+      "tool_arguments": [],
+      "reset_value": "",
+      "mapping_path": "reset_verified_attempt",
+      "compatible_storage": ""
+    },
+    {
+      "name": "reset_error",
+      "category": "reset_control",
+      "producers": [],
+      "tool_arguments": [],
+      "reset_value": "",
+      "mapping_path": "reset_error",
+      "compatible_storage": ""
+    },
+    {
+      "name": "slots",
+      "category": "state_or_request_producer",
+      "producers": [
+        "response:check_availability"
+      ],
+      "tool_arguments": [],
+      "reset_value": [],
+      "mapping_path": "slots",
+      "compatible_storage": "[]"
+    },
+    {
+      "name": "offered_slots",
+      "category": "reset_only_no_external_use",
+      "producers": [],
+      "tool_arguments": [],
+      "reset_value": [],
+      "mapping_path": "offered_slots",
+      "compatible_storage": "[]"
+    },
+    {
+      "name": "checked_slots",
+      "category": "reset_only_no_external_use",
+      "producers": [],
+      "tool_arguments": [],
+      "reset_value": [],
+      "mapping_path": "checked_slots",
+      "compatible_storage": "[]"
+    },
+    {
+      "name": "service_candidates",
+      "category": "state_or_request_producer",
+      "producers": [
+        "response:resolve_service"
+      ],
+      "tool_arguments": [],
+      "reset_value": [],
+      "mapping_path": "service_candidates",
+      "compatible_storage": "[]"
+    },
+    {
+      "name": "practitioner_candidates",
+      "category": "reset_only_no_external_use",
+      "producers": [],
+      "tool_arguments": [],
+      "reset_value": [],
+      "mapping_path": "practitioner_candidates",
+      "compatible_storage": "[]"
+    },
+    {
+      "name": "qualified_practitioners",
+      "category": "state_or_request_producer",
+      "producers": [
+        "response:resolve_service",
+        "response:check_availability"
+      ],
+      "tool_arguments": [],
+      "reset_value": [],
+      "mapping_path": "qualified_practitioners",
+      "compatible_storage": "[]"
+    },
+    {
+      "name": "appointments",
+      "category": "state_or_request_producer",
+      "producers": [
+        "response:lookup_appointments"
+      ],
+      "tool_arguments": [],
+      "reset_value": [],
+      "mapping_path": "appointments",
+      "compatible_storage": "[]"
+    },
+    {
+      "name": "resolve_success",
+      "category": "state_or_request_producer",
+      "producers": [
+        "response:resolve_service"
+      ],
+      "tool_arguments": [],
+      "reset_value": false,
+      "mapping_path": "resolve_success",
+      "compatible_storage": "false"
+    },
+    {
+      "name": "availability_success",
+      "category": "state_or_request_producer",
+      "producers": [
+        "response:check_availability"
+      ],
+      "tool_arguments": [],
+      "reset_value": false,
+      "mapping_path": "availability_success",
+      "compatible_storage": "false"
+    },
+    {
+      "name": "available",
+      "category": "state_or_request_producer",
+      "producers": [
+        "response:check_availability"
+      ],
+      "tool_arguments": [],
+      "reset_value": false,
+      "mapping_path": "available",
+      "compatible_storage": "false"
+    },
+    {
+      "name": "requested_time_available",
+      "category": "state_or_request_producer",
+      "producers": [
+        "response:check_availability"
+      ],
+      "tool_arguments": [],
+      "reset_value": false,
+      "mapping_path": "requested_time_available",
+      "compatible_storage": "false"
+    },
+    {
+      "name": "practitioner_found",
+      "category": "state_or_request_producer",
+      "producers": [
+        "response:check_availability"
+      ],
+      "tool_arguments": [],
+      "reset_value": false,
+      "mapping_path": "practitioner_found",
+      "compatible_storage": "false"
+    },
+    {
+      "name": "availability_invalidated",
+      "category": "state_or_request_producer",
+      "producers": [
+        "response:invalidate_availability"
+      ],
+      "tool_arguments": [],
+      "reset_value": false,
+      "mapping_path": "availability_invalidated",
+      "compatible_storage": "false"
+    },
+    {
+      "name": "booking_success",
+      "category": "state_or_request_producer",
+      "producers": [
+        "response:book_appointment"
+      ],
+      "tool_arguments": [],
+      "reset_value": false,
+      "mapping_path": "booking_success",
+      "compatible_storage": "false"
+    },
+    {
+      "name": "appointment_booked",
+      "category": "state_or_request_producer",
+      "producers": [
+        "response:book_appointment"
+      ],
+      "tool_arguments": [],
+      "reset_value": false,
+      "mapping_path": "appointment_booked",
+      "compatible_storage": "false"
+    },
+    {
+      "name": "booking_consent",
+      "category": "reset_only_no_external_use",
+      "producers": [],
+      "tool_arguments": [],
+      "reset_value": false,
+      "mapping_path": "booking_consent",
+      "compatible_storage": "false"
+    },
+    {
+      "name": "consent_confirmed",
+      "category": "reset_only_no_external_use",
+      "producers": [],
+      "tool_arguments": [],
+      "reset_value": false,
+      "mapping_path": "consent_confirmed",
+      "compatible_storage": "false"
+    },
+    {
+      "name": "patient_confirmed",
+      "category": "reset_only_no_external_use",
+      "producers": [],
+      "tool_arguments": [],
+      "reset_value": false,
+      "mapping_path": "patient_confirmed",
+      "compatible_storage": "false"
+    },
+    {
+      "name": "client_name_confirmed",
+      "category": "reset_only_no_external_use",
+      "producers": [],
+      "tool_arguments": [],
+      "reset_value": false,
+      "mapping_path": "client_name_confirmed",
+      "compatible_storage": "false"
+    },
+    {
+      "name": "client_phone_confirmed",
+      "category": "reset_only_no_external_use",
+      "producers": [],
+      "tool_arguments": [],
+      "reset_value": false,
+      "mapping_path": "client_phone_confirmed",
+      "compatible_storage": "false"
+    },
+    {
+      "name": "lookup_success",
+      "category": "state_or_request_producer",
+      "producers": [
+        "response:lookup_appointments"
+      ],
+      "tool_arguments": [],
+      "reset_value": false,
+      "mapping_path": "lookup_success",
+      "compatible_storage": "false"
+    },
+    {
+      "name": "reschedule_success",
+      "category": "state_or_request_producer",
+      "producers": [
+        "response:reschedule_appointment"
+      ],
+      "tool_arguments": [],
+      "reset_value": false,
+      "mapping_path": "reschedule_success",
+      "compatible_storage": "false"
+    },
+    {
+      "name": "cancel_success",
+      "category": "state_or_request_producer",
+      "producers": [
+        "response:cancel_appointment"
+      ],
+      "tool_arguments": [],
+      "reset_value": false,
+      "mapping_path": "cancel_success",
+      "compatible_storage": "false"
+    },
+    {
+      "name": "reset_ready",
+      "category": "reset_control",
+      "producers": [],
+      "tool_arguments": [],
+      "reset_value": false,
+      "mapping_path": "reset_ready",
+      "compatible_storage": "false"
+    },
+    {
+      "name": "fresh_request_present",
+      "category": "state_or_request_producer",
+      "producers": [
+        "extract:node_fresh_request"
+      ],
+      "tool_arguments": [],
+      "reset_value": false,
+      "mapping_path": "fresh_request_present",
+      "compatible_storage": "false"
+    },
+    {
+      "name": "appointment_count",
+      "category": "state_or_request_producer",
+      "producers": [
+        "response:lookup_appointments"
+      ],
+      "tool_arguments": [],
+      "reset_value": 0,
+      "mapping_path": "appointment_count",
+      "compatible_storage": "0"
+    }
+  ]
+}

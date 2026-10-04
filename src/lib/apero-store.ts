@@ -82,7 +82,9 @@ export function useConversations() {
     queryKey: ["conversations", clinicId],
     enabled: !!clinicId,
     queryFn: async () => {
-      const { data, error } = await db.from("conversations").select("*").eq("clinic_id", clinicId!).order("started_at", { ascending: false });
+      const { data, error } = await db.from("conversations")
+        .select("id,clinic_id,client_id,appointment_id,retell_call_id,retell_agent_id,title,status,outcome,caller_phone,started_at,duration_seconds,summary,transcript,created_at")
+        .eq("clinic_id", clinicId!).order("started_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as ConversationRow[];
     },

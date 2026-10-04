@@ -36,7 +36,11 @@ function RequestCard({ row, timeZone }: { row: VoiceRequestDisplay; timeZone: st
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           {isUrgent && <AlertCircle className="size-4 text-warning-strong" aria-hidden="true" />}
-          <h3 className="font-semibold">{kindLabel[row.kind]}</h3>
+          <h3 className="font-semibold">
+            {row.kind === "message" && row.reason.startsWith("Booking not confirmed —")
+              ? "Failed booking — follow-up"
+              : kindLabel[row.kind]}
+          </h3>
           <span className="rounded-full border border-border bg-background px-2 py-0.5 text-xs text-muted-foreground">
             {row.status}
           </span>

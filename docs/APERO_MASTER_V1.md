@@ -1,14 +1,17 @@
 # Apero Master Clinic Template v1
 
-The separate Retell draft is compiled from the exact owner-supplied export,
-`Retell Dental Clinic Arabic (Dr.Kandil) v2.json`. Its immutable copy is
-`retell/master/reference/golden.json` (SHA-256
-`3315a9a91ff495bc6f2d15b30f044a0f2e48c3e9edeead054a8334c19ec1f771`).
+The separate Retell draft is compiled from the owner-supplied export,
+`Retell Dental Clinic Arabic (Dr.Kandil) v2.json`. On 2026-10-04, recording
+security and failed-booking fallback in `retell/master/reference/golden.json`
+were reviewed: signed URLs expire after five minutes, failed bookings cannot
+confirm, and a result-clearing node prevents an earlier success from surviving
+a later tool timeout. Its reviewed SHA-256 is
+`fa6885849dbdf9937d3189f7e57d38c44b08e2dbede4a2593a0b039835e7e97a`. The original export hash in `DEPLOYMENT.json` remains historical evidence.
 That reference is a test/source artifact, **not the master to import**.
 
 ## What is reusable
 
-`retell/master/build.py` compiles the existing 53-node, ten-tool receptionist.
+`retell/master/build.py` compiles the existing 53-node, ten-tool receptionist plus one booking-result safety node.
 Provider/service resolution, checked slots, confirmations, correction paths,
 rescheduling, cancellation, persistence, interruptions and analysis fields come
 from the golden export. Only approved clinic text/settings and the narrowly
@@ -35,7 +38,7 @@ Real Retell text simulations exposed gaps in the inherited graph. The master:
 
 These changes do not add tools or nodes and were never applied to Dental Zone.
 `tests/test_master.py` checks all other node contents/edges and tool contracts
-against the immutable golden reference. Conversation simulations exercise behavior;
+against the pinned, reviewed golden reference. Conversation simulations exercise behavior;
 structural equality alone is not claimed as behavioral parity.
 
 ## Configuration and onboarding ownership
@@ -167,3 +170,12 @@ passed. Six non-destructive signed live probes passed. Production Dental Zone
 agent/flow snapshots are identical before/after. The generated master exactly
 matches its stored Retell flow. Build/type checking passed. Lint has the unchanged
 baseline of 1,167 errors and nine warnings, with zero new findings.
+
+### Failed-booking fallback
+
+Creation failures return an explicit unconfirmed result and save an Open message
+in the existing clinic Requests queue. The flow distinguishes saved follow-up
+from storage failure, disables tool retries, and requires a fresh caller request,
+availability check and read-back consent before another attempt. See
+[failed-booking-fallback.md](security/failed-booking-fallback.md) for limits,
+permissions, tests and rollout requirements. No notification subsystem is added.

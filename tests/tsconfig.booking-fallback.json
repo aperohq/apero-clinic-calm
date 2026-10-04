@@ -1,0 +1,4 @@
+{
+  "extends": "../tsconfig.json",
+  "include": ["../supabase/functions/_shared/booking-fallback.ts"]
+}

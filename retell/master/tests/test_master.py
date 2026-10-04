@@ -17,11 +17,11 @@ class MasterContract(unittest.TestCase):
         self.flow, self.agent = build(self.config)
         self.reference = golden()
 
-    def test_all_53_node_behaviors_except_explicit_identity_instructions_are_identical(self):
+    def test_all_original_node_behaviors_except_explicit_identity_instructions_are_identical(self):
         original = self.reference["conversationFlow"]
         allowed = {"node_greeting", "node_date_time", "node_faq", "node_global_urgent",
                    "node_global_human", "node_callback_collect", "node_request_failed"}
-        self.assertEqual(len(self.flow["nodes"]), 53)
+        self.assertEqual(len(self.flow["nodes"]), 54)
         for old, new in zip(original["nodes"], self.flow["nodes"]):
             expected = copy.deepcopy(old)
             actual = copy.deepcopy(new)
@@ -38,6 +38,50 @@ class MasterContract(unittest.TestCase):
         for i in (2, 3, 4, 5, 6, 8):
             self.assertEqual(original["global_prompt"].strip().split("\n\n")[i],
                              self.flow["global_prompt"].strip().split("\n\n")[i])
+
+    def test_failed_booking_requires_confirmation_and_never_automatically_retries(self):
+        nodes = {n["id"]: n for n in self.flow["nodes"]}
+        book = nodes["node_book"]
+        self.assertTrue(book["wait_for_result"])
+        self.assertEqual(book["else_edge"]["destination_node_id"], "node_book_failed")
+        equations = book["edges"][0]["transition_condition"]["equations"]
+        for variable in ("booking_success", "appointment_booked"):
+            self.assertIn({"left": "{{" + variable + "}}", "operator": "==", "right": "true"}, equations)
+        self.assertIn({"left": "{{booking_id}}", "operator": "exists"}, equations)
+        tool = next(t for t in self.flow["tools"] if t["name"] == "book_appointment")
+        self.assertEqual(tool["max_retry"], 0)
+        self.assertEqual(tool["response_variables"]["booking_follow_up_saved"], "follow_up_saved")
+        failure = nodes["node_book_failed"]["instruction"]["text"]
+        for text in ("NOT confirmed", "Do not automatically retry", "follow-up was not saved", "never reuse an earlier booking result", "new final read-back consent"):
+            self.assertIn(text, failure)
+
+    def test_snapshot_based_acceptance_generators_keep_the_same_failed_booking_safety(self):
+        import importlib.util
+        acceptance = Path(__file__).resolve().parents[2] / "acceptance"
+        spec = importlib.util.spec_from_file_location("acceptance_booking_build", acceptance / "build.py")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        flows = [module.build()]
+        # Execute v4 construction in memory, excluding artifact writes.
+        path = acceptance / "v4/build.py"
+        source = path.read_text().split("(R/'draft-flow.json').write_text", 1)[0]
+        prior = sys.modules.get("build")
+        sys.modules["build"] = module
+        try:
+            namespace = {"__file__": str(path)}
+            exec(compile(source, str(path), "exec"), namespace)
+            flows.append(namespace["f"])
+        finally:
+            sys.modules["build"] = prior
+        for flow in flows:
+            nodes = {n["id"]: n for n in flow["nodes"]}
+            self.assertEqual(nodes["node_book_failed"]["instruction"],
+                             self.reference["conversationFlow"]["nodes"][next(i for i,n in enumerate(self.reference["conversationFlow"]["nodes"]) if n["id"] == "node_book_failed")]["instruction"])
+            self.assertIn("node_prepare_booking_result", nodes)
+            self.assertEqual(sum(e.get("destination_node_id") == "node_book" for n in flow["nodes"] for e in n.get("edges", [])), 1)
+            tool = next(t for t in flow["tools"] if t["name"] == "book_appointment")
+            self.assertEqual(tool["max_retry"], 0)
+            self.assertEqual(tool["response_variables"]["booking_follow_up_saved"], "follow_up_saved")
 
     def test_ten_tool_contracts_unchanged_except_clinic_text_and_endpoint(self):
         self.assertEqual(len(self.flow["tools"]), 10)
@@ -60,6 +104,11 @@ class MasterContract(unittest.TestCase):
             self.assertEqual(self.flow[key], self.reference["conversationFlow"][key])
         for old, new in zip(self.reference["post_call_analysis_data"], self.agent["post_call_analysis_data"]):
             self.assertEqual({k: v for k, v in old.items() if k != "examples"}, new)
+
+    def test_recording_urls_are_signed_and_expire_after_five_minutes(self):
+        self.assertIs(self.reference["opt_in_signed_url"], True)
+        self.assertIs(self.agent["opt_in_signed_url"], True)
+        self.assertEqual(self.agent["signed_url_expiration_ms"], 300000)
 
     def test_template_is_neutral_unbound_and_has_no_inherited_knowledge(self):
         text = json.dumps([self.flow, self.agent], ensure_ascii=False).lower()

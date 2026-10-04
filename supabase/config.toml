@@ -9,3 +9,8 @@ verify_jwt = false
 # The handler validates user bearer tokens with Auth getUser and enforces the
 # live Owner membership again in the database. No browser secret-key access.
 verify_jwt = false
+
+[functions.recording-access]
+# The handler independently validates the bearer with Auth getUser and reads
+# membership/conversations using that user's JWT and existing database RLS.
+verify_jwt = false

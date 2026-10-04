@@ -14,7 +14,8 @@
     "en-US"
   ],
   "data_storage_setting": "everything",
-  "opt_in_signed_url": false,
+  "opt_in_signed_url": true,
+  "signed_url_expiration_ms": 300000,
   "end_call_after_silence_ms": 179000,
   "version": 2,
   "base_version": 1,
@@ -574,7 +575,7 @@
             "destination_node_id": "node_invalidate_booking"
           },
           {
-            "destination_node_id": "node_book",
+            "destination_node_id": "node_prepare_booking_result",
             "id": "edge_final_yes",
             "transition_condition": {
               "prompt": "Caller clearly affirms booking the exact just-read patient, service, practitioner, date and time",
@@ -623,6 +624,11 @@
                 {
                   "left": "{{booking_id}}",
                   "operator": "exists"
+                },
+                {
+                  "left": "{{appointment_booked}}",
+                  "operator": "==",
+                  "right": "true"
                 }
               ],
               "operator": "&&",
@@ -664,7 +670,7 @@
         "id": "node_book_failed",
         "type": "conversation",
         "instruction": {
-          "text": "The booking did not succeed. Say clearly it is NOT booked. For a slot conflict or stale slot, apologize briefly and offer a fresh check. For phone/validation errors, correct the information. For technical failure, offer a durable staff callback. Never use the old slot without a new check.",
+          "text": "The booking could not be completed. Tell the caller: Your appointment is NOT confirmed. Never invent a confirmation or appointment ID. A timeout, tool error, missing result, or invalid result is a failure; never reuse an earlier booking result. If booking_follow_up_saved is true, explain that the requested details were saved for clinic follow-up and staff must check before confirming anything; do not create a duplicate callback for this failed booking. Otherwise explain that follow-up was not saved and ask the caller to contact the clinic directly, or collect a callback only if they explicitly request it. Do not automatically retry appointment creation after saying it failed. Only a new explicit caller request, fresh availability check and new final read-back consent may start a new booking. Never use the old slot without a new check.",
           "type": "prompt"
         },
         "edges": [
@@ -1894,6 +1900,67 @@
         },
         "skippable": false,
         "name": "End Call"
+      },
+      {
+        "id": "node_prepare_booking_result",
+        "name": "Clear Previous Booking Result",
+        "type": "code",
+        "skippable": false,
+        "code": "return {booking_success:false,appointment_booked:false,booking_id:'',booking_error_type:'',booking_follow_up_saved:false,booking_follow_up_request_id:'',booking_failure_instruction:'',booking_retry_allowed:false,booking_result_cleared:true};",
+        "response_variables": {
+          "booking_success": "booking_success",
+          "appointment_booked": "appointment_booked",
+          "booking_id": "booking_id",
+          "booking_error_type": "booking_error_type",
+          "booking_follow_up_saved": "booking_follow_up_saved",
+          "booking_follow_up_request_id": "booking_follow_up_request_id",
+          "booking_failure_instruction": "booking_failure_instruction",
+          "booking_retry_allowed": "booking_retry_allowed",
+          "booking_result_cleared": "booking_result_cleared"
+        },
+        "timeout_ms": 1000,
+        "wait_for_result": true,
+        "speak_during_execution": false,
+        "enable_typing_sound": false,
+        "edges": [
+          {
+            "id": "edge_booking_result_cleared",
+            "destination_node_id": "node_book",
+            "transition_condition": {
+              "type": "equation",
+              "operator": "&&",
+              "equations": [
+                {
+                  "left": "{{booking_result_cleared}}",
+                  "operator": "==",
+                  "right": "true"
+                },
+                {
+                  "left": "{{booking_success}}",
+                  "operator": "==",
+                  "right": "false"
+                },
+                {
+                  "left": "{{appointment_booked}}",
+                  "operator": "==",
+                  "right": "false"
+                }
+              ]
+            }
+          }
+        ],
+        "else_edge": {
+          "id": "edge_booking_result_clear_failed",
+          "destination_node_id": "node_book_failed",
+          "transition_condition": {
+            "type": "prompt",
+            "prompt": "Else"
+          }
+        },
+        "display_position": {
+          "x": 4250,
+          "y": 0
+        }
       }
     ],
     "components": [],
@@ -2066,7 +2133,11 @@
           "booking_success": "success",
           "booking_error_type": "error_type",
           "booking_id": "appointment_id",
-          "appointment_booked": "appointment_booked"
+          "appointment_booked": "appointment_booked",
+          "booking_follow_up_saved": "follow_up_saved",
+          "booking_follow_up_request_id": "follow_up_request_id",
+          "booking_failure_instruction": "patient_instruction",
+          "booking_retry_allowed": "retry_allowed"
         },
         "parameters": {
           "properties": {
