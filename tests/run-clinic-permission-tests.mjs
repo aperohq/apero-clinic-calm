@@ -62,6 +62,8 @@ const session = (authUser = user) => {
   };
 };
 const fixture = {
+  settings: process.argv.includes("--settings"), settingsError: false, settingsDelay: 0, settingsSaveDelay: 0, settingsSaveError: false, settingsConflict: false, settingsUpdates: [],
+  clinicValues: { localized_name: "العيادة", clinic_type: "Dental", phone: "+12025550100", email: "clinic@example.test", website: "https://clinic.example.test", fallback_phone: "+12025550199", address: "Building 1", city: "City", country: "Country", directions: "Ground floor", parking_information: "Visitor parking", receptionist_name: "Apero", receptionist_localized_name: "أبيرو", opening_hours: null },
   calendar: process.argv.includes("--calendar")
     ? {
         appointments: [],
@@ -237,9 +239,23 @@ const localFetch = async (req) => {
           ],
     );
   }
+  if (url.pathname === "/rest/v1/rpc/update_clinic_settings") {
+    const body = await req.json(); fixture.settingsUpdates.push(body);
+    if (fixture.settingsSaveDelay) await new Promise(resolve => setTimeout(resolve, fixture.settingsSaveDelay));
+    if (account?.role !== "owner" || account.revokedAt) return reply(403, { code: "42501", message: "PRIVATE_SETTINGS_DIAGNOSTIC" });
+    if (fixture.settingsSaveError) return reply(500, { message: "PRIVATE_SETTINGS_DIAGNOSTIC" });
+    const current = { ...clinic, ...fixture.clinicValues };
+    if (fixture.settingsConflict || Object.keys(body.p_expected).some(key => JSON.stringify(current[key]) !== JSON.stringify(body.p_expected[key]))) return reply(409, { code: "40001", message: "PRIVATE_SETTINGS_CONFLICT" });
+    Object.assign(fixture.clinicValues, body.p_patch);
+    return reply(200, { ...clinic, ...fixture.clinicValues });
+  }
   if (url.pathname === "/rest/v1/clinics") {
+    const settingsRead = fixture.settings && url.searchParams.get("select") !== "*";
+    if (settingsRead && fixture.settingsDelay) await new Promise(resolve => setTimeout(resolve, fixture.settingsDelay));
+    if (settingsRead && fixture.settingsError) return reply(500, { message: "PRIVATE_SETTINGS_DIAGNOSTIC" });
     const nextClinic = {
       ...clinic,
+      ...(fixture.settings ? fixture.clinicValues : {}),
       id: fixture.mismatchedClinic ? "wrong-clinic" : resolvedClinicId,
     };
     const missing = fixture.missingClinic;
@@ -247,7 +263,7 @@ const localFetch = async (req) => {
     if (fixture.clinicDelay)
       await new Promise((resolve) => setTimeout(resolve, fixture.clinicDelay));
     if (fail) return reply(403, { message: "Local clinic read failure" });
-    return reply(200, missing ? [] : [nextClinic]);
+    return reply(200, missing ? [] : req.headers.get("accept")?.includes("application/vnd.pgrst.object+json") ? nextClinic : [nextClinic]);
   }
   if (fixture.calendar && url.pathname === "/rest/v1/rpc/appointment_available_slots") {
     const body = await req.json();
@@ -435,7 +451,7 @@ globalThis.__cleanupAuthTests = async () => {
 try {
   await build({
     entryPoints: [
-      fixture.calendar ? "tests/calendar-ui.test.tsx" : process.argv.includes("--team") ? "tests/team-management-ui.test.tsx" : "tests/clinic-permission-ui.test.tsx",
+      fixture.calendar ? "tests/calendar-ui.test.tsx" : process.argv.includes("--settings") ? "tests/clinic-settings-ui.test.tsx" : process.argv.includes("--team") ? "tests/team-management-ui.test.tsx" : "tests/clinic-permission-ui.test.tsx",
     ],
     outfile: join(directory, "tests.cjs"),
     bundle: true,

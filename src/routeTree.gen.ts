@@ -22,6 +22,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as StaffRouteImport } from './routes/staff'
 import { Route as SupportRouteImport } from './routes/support'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as AccountSettingsRouteImport } from './routes/account_.settings'
 import { Route as AccountSetupRouteImport } from './routes/account_.setup'
 import { Route as AccountTeamRouteImport } from './routes/account_.team'
 import { Route as ClientsIndexRouteImport } from './routes/clients.index'
@@ -96,6 +97,11 @@ const TermsRoute = TermsRouteImport.update({
   path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AccountSettingsRoute = AccountSettingsRouteImport.update({
+  id: '/account_/settings',
+  path: '/account/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AccountSetupRoute = AccountSetupRouteImport.update({
   id: '/account_/setup',
   path: '/account/setup',
@@ -151,6 +157,7 @@ export interface FileRoutesByFullPath {
   '/staff': typeof StaffRouteWithChildren
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
+  '/account/settings': typeof AccountSettingsRoute
   '/account/setup': typeof AccountSetupRoute
   '/account/team': typeof AccountTeamRoute
   '/clients/$id': typeof ClientsIdRoute
@@ -171,6 +178,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
+  '/account/settings': typeof AccountSettingsRoute
   '/account/setup': typeof AccountSetupRoute
   '/account/team': typeof AccountTeamRoute
   '/clients/$id': typeof ClientsIdRoute
@@ -195,6 +203,7 @@ export interface FileRoutesById {
   '/staff': typeof StaffRouteWithChildren
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
+  '/account_/settings': typeof AccountSettingsRoute
   '/account_/setup': typeof AccountSetupRoute
   '/account_/team': typeof AccountTeamRoute
   '/clients/$id': typeof ClientsIdRoute
@@ -220,6 +229,7 @@ export interface FileRouteTypes {
     | '/staff'
     | '/support'
     | '/terms'
+    | '/account/settings'
     | '/account/setup'
     | '/account/team'
     | '/clients/$id'
@@ -240,6 +250,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/support'
     | '/terms'
+    | '/account/settings'
     | '/account/setup'
     | '/account/team'
     | '/clients/$id'
@@ -263,6 +274,7 @@ export interface FileRouteTypes {
     | '/staff'
     | '/support'
     | '/terms'
+    | '/account_/settings'
     | '/account_/setup'
     | '/account_/team'
     | '/clients/$id'
@@ -287,6 +299,7 @@ export interface RootRouteChildren {
   StaffRoute: typeof StaffRouteWithChildren
   SupportRoute: typeof SupportRoute
   TermsRoute: typeof TermsRoute
+  AccountSettingsRoute: typeof AccountSettingsRoute
   AccountSetupRoute: typeof AccountSetupRoute
   AccountTeamRoute: typeof AccountTeamRoute
 }
@@ -382,6 +395,13 @@ declare module '@tanstack/react-router' {
       path: '/terms'
       fullPath: '/terms'
       preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account_/settings': {
+      id: '/account_/settings'
+      path: '/account/settings'
+      fullPath: '/account/settings'
+      preLoaderRoute: typeof AccountSettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/account_/setup': {
@@ -496,6 +516,7 @@ const rootRouteChildren: RootRouteChildren = {
   StaffRoute: StaffRouteWithChildren,
   SupportRoute: SupportRoute,
   TermsRoute: TermsRoute,
+  AccountSettingsRoute: AccountSettingsRoute,
   AccountSetupRoute: AccountSetupRoute,
   AccountTeamRoute: AccountTeamRoute,
 }

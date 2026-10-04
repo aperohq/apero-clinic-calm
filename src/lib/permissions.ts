@@ -35,7 +35,7 @@ const routes: Record<string, Permission> = {
   "/account": "operations",
   "/staff": "staff.manage",
   "/requests": "requests.manage",
-  // Reserved access rules; these modules are not implemented by this milestone.
+  // Clinic Settings remains Owner-only; other reserved modules are unchanged.
   "/account/billing": "billing.view",
   "/account/ownership": "ownership.manage",
   "/account/settings": "clinic.configure",

@@ -1,6 +1,6 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
-import { CalendarDays, Headphones, Home, Inbox, LogOut, Menu, MessageSquare, PanelLeftClose, PanelLeftOpen, UserRound, Users, X } from "lucide-react";
+import { CalendarDays, Headphones, Home, Inbox, LogOut, Menu, MessageSquare, PanelLeftClose, PanelLeftOpen, Settings, UserRound, Users, X } from "lucide-react";
 import { AperoMark, ClinicBadge } from "@/components/apero-brand";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
@@ -14,6 +14,7 @@ const main = [
   { to: "/clients", label: "Clients", icon: Users },
   { to: "/staff", label: "Staff", icon: UserRound },
   { to: "/account/team", label: "Team", icon: Users },
+  { to: "/account/settings", label: "Settings", icon: Settings },
   { to: "/conversations", label: "Conversations", icon: MessageSquare },
   { to: "/requests", label: "Requests", icon: Inbox },
 ] as const;

@@ -15,7 +15,7 @@ type AuthState = {
   role: ProfileRole | null;
   authError: boolean;
   recoveringPassword: boolean;
-  refreshProfile: () => Promise<void>;
+  refreshProfile: (background?: boolean) => Promise<void>;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<{ error: string | null }>;
   sendPasswordReset: (email: string) => Promise<{ error: string | null }>;
@@ -26,7 +26,12 @@ const AuthContext = createContext<AuthState | null>(null);
 type ClinicAccount = { profile: ProfileRow; clinic: ClinicRow };
 function sameRow(left: object, right: object) {
   return Object.keys(left).length === Object.keys(right).length &&
-    Object.entries(right).every(([key, value]) => Reflect.get(left, key) === value);
+    Object.entries(right).every(([key, value]) => {
+      const previous = Reflect.get(left, key);
+      return previous === value || (previous !== null && value !== null &&
+        typeof previous === "object" && typeof value === "object" &&
+        JSON.stringify(previous) === JSON.stringify(value));
+    });
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -149,7 +154,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     role: profile?.role ?? null,
     authError,
     recoveringPassword,
-    refreshProfile: () => loadProfile(session?.user?.id),
+    refreshProfile: (background = false) => loadProfile(session?.user?.id, ++requestId.current, background),
     signIn: async (email, password) => {
       const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
       return { error: error ? error.message : null };

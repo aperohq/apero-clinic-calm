@@ -22,7 +22,8 @@
     "test:permissions": "node --max-old-space-size=384 tests/clinic-permissions.test.mjs",
     "test:permissions:ui": "node tests/run-clinic-permission-tests.mjs",
     "typecheck:clinic-users-edge": "tsc --noEmit -p tests/tsconfig.clinic-users-edge.json",
-    "test:team": "node --max-old-space-size=384 tests/team-management.test.mjs && node --max-old-space-size=384 tests/team-invitations.test.mjs && node --max-old-space-size=384 tests/team-invitation-hardening.test.mjs && node tests/run-clinic-permission-tests.mjs --team"
+    "test:team": "node --max-old-space-size=384 tests/team-management.test.mjs && node --max-old-space-size=384 tests/team-invitations.test.mjs && node --max-old-space-size=384 tests/team-invitation-hardening.test.mjs && node tests/run-clinic-permission-tests.mjs --team",
+    "test:settings": "node --max-old-space-size=384 tests/clinic-settings.test.mjs && node tests/run-clinic-permission-tests.mjs --settings"
   },
   "overrides": {
     "rolldown": "1.2.1"

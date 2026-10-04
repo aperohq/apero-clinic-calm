@@ -3,9 +3,17 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 
 export type ProfileRole = "owner" | "manager" | "staff";
 
+import type { ClinicHours } from "./clinic-settings";
+
 export type ClinicRow = {
   id: string; name: string; logo_url: string | null; phone: string | null;
   email: string | null; timezone: string; created_at: string;
+  localized_name: string | null; clinic_type: string | null;
+  website: string | null; fallback_phone: string | null;
+  address: string | null; city: string | null; country: string | null;
+  directions: string | null; parking_information: string | null;
+  receptionist_name: string | null; receptionist_localized_name: string | null;
+  opening_hours: ClinicHours | null;
 };
 export type ProfileRow = {
   id: string; auth_user_id: string; clinic_id: string; full_name: string;
@@ -83,6 +91,7 @@ export type AperoDatabase = {
     };
     Views: Record<string, never>;
     Functions: {
+      update_clinic_settings: { Args: { p_patch: Json; p_expected: Json }; Returns: ClinicRow[] };
       clinic_team_members: { Args: Record<string, never>; Returns: TeamMemberRow[] };
       revoke_clinic_member: { Args: { p_profile_id: string }; Returns: string };
       appointment_available_slots: {
