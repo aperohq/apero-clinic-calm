@@ -30,3 +30,21 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Sensitive recovery artifacts (migration .sql remains tracked)
+backups/
+database-backups/
+*.dump
+*.backup
+*.sql.gz
+*.dump.age
+*.sql.age
+*.tar.age
+*.pgpass
+.pgpass
+.env.local
+.env.*.local
+*.pem
+*.key
+*.json.age
+scripts/operations/__pycache__/
