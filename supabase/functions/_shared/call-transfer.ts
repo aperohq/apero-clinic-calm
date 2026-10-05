@@ -1,3 +1,4 @@
+import { operationalLog } from "./operational-log.ts";
 import { calendarDeadline } from "./calendar-fallback.ts";
 import { humanEscalationFollowUp, isHumanCategory } from "./human-escalation.ts";
 export const TRANSFER_ATTEMPT = "I’ll try to connect you with the clinic team now.";
@@ -36,7 +37,7 @@ export function withinTransferHours(hours: unknown, timezone: unknown, now = new
   } catch { return false; }
 }
 export function transferLog(clinicId: string, callId: string, attempted: boolean, result: string, saved: boolean) {
-  console.info(JSON.stringify({clinic_id:clinicId,call_id:callId,transfer_attempted:attempted,transfer_result:result,fallback_escalation_saved:saved}));
+  operationalLog(["success", "pending"].includes(result) ? "transfer_state" : "transfer_failed", "clinic-operations", {clinic_id:clinicId,call_id:callId,state:["success", "pending"].includes(result) ? "success" : "failure",transfer_attempted:attempted,transfer_result:result,fallback_escalation_saved:saved});
 }
 export function transferBlocked(result = "provider_error", fallback = true) {
   return {success:false,transfer_allowed:false,transfer_destination:null,transfer_result:result,

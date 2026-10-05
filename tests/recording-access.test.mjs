@@ -13,6 +13,9 @@ import {
 } from "./helpers/clinic-database.mjs";
 
 test("recording access uses authenticated membership, real RLS, and fresh provider access", async (t) => {
+  const logged=[],oldError=console.error;
+  console.error=line=>logged.push(line);
+  t.after(()=>{console.error=oldError;const output=logged.join(" ");for(const secret of ["local-retell-key","local-service-key","local-publishable-key","recording_url","Authorization","PRIVATE"])assert.ok(!output.includes(secret));assert.ok(logged.some(line=>JSON.parse(line).category==="recording_access_failed"));assert.ok(logged.some(line=>JSON.parse(line).category==="authentication_failed"));});
   const db = await createClinicDatabase({ team: true });
   const [a, b] = tenants;
   const manager = uuid(701),

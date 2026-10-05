@@ -1,3 +1,4 @@
+import { operationalLog, monitorHandler, setOperationalContext } from "../_shared/operational-log.ts";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { withSupabase } from "jsr:@supabase/server@^1";
 import { resolveVoiceIntegration } from "../_shared/voice-integration.ts";
@@ -33,7 +34,7 @@ function matchesPractitioner(staff: any, requestedName: string) {
 }
 
 export default {
-  fetch: withSupabase({ auth: "none" }, async (req, ctx) => {
+  fetch: monitorHandler("check-availability", withSupabase({ auth: "none" }, async (req, ctx) => {
     try {
       if (req.method !== "POST") {
         return new Response("Method not allowed", { status: 405 });
@@ -46,8 +47,10 @@ export default {
       const identity = await resolveVoiceIntegration(ctx.supabaseAdmin, rawBody, req.headers.get("x-retell-signature"));
       if (!identity) return new Response("Unauthorized", { status: 401 });
       const clinicId = identity.integration.clinic_id;
+      setOperationalContext(req, {clinic_id: clinicId});
 
       const payload = JSON.parse(rawBody);
+        setOperationalContext(req, {call_id: payload.call?.call_id});
       const args = payload.args ?? payload;
 
       const requestedDate =
@@ -257,7 +260,7 @@ export default {
           );
 
           if (!shiftStart.isValid || !shiftEnd.isValid) {
-            console.error("Availability data contained an invalid shift");
+            operationalLog("calendar_unavailable", "check-availability", {clinic_id: clinicId, dependency_category: "invalid_response"});
             continue;
           }
 
@@ -378,7 +381,7 @@ export default {
 
       });
     } catch {
-      console.error("Availability check failed");
+      operationalLog("calendar_unavailable", "check-availability", {dependency_category: "internal_error"});
 
       return Response.json(
         {
@@ -388,5 +391,5 @@ export default {
         { status: 500 },
       );
     }
-  }),
+  })),
 };

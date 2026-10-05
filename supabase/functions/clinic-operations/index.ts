@@ -1,3 +1,4 @@
+import { operationalLog, monitorHandler, setOperationalContext } from "../_shared/operational-log.ts";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { withSupabase } from "jsr:@supabase/server@^1";
 import { resolveVoiceIntegration } from "../_shared/voice-integration.ts";
@@ -76,7 +77,7 @@ async function availableSlots(db: any, clinicId: string, staff: Staff[], service
 }
 
 export default {
-  fetch: downtimeBoundary(withSupabase({ auth: "none" }, async (req, ctx) => {
+  fetch: monitorHandler("clinic-operations", downtimeBoundary(withSupabase({ auth: "none" }, async (req, ctx) => {
     if (req.method !== "POST") return new Response("Method not allowed", { status: 405 });
     let raw: string;
     try { raw = await readLimitedBody(req, 128 * 1024); }
@@ -85,6 +86,7 @@ export default {
     if (!identity) return new Response("Unauthorized", { status: 401 });
     const { secret } = identity;
     const clinicId = identity.integration.clinic_id;
+    setOperationalContext(req, {clinic_id: clinicId});
     const phone = (input: unknown) => normalizePhone(input, identity.integration.dialing_prefix, identity.integration.local_number_length);
     let trustedCallId: string | null = null;
     try {
@@ -104,22 +106,23 @@ export default {
           return Response.json({...transferBlocked(),follow_up_saved:false,message:TRANSFER_FAILED_UNSAVED});
         }
         if (action === "human_escalation") {
-          console.info(JSON.stringify({clinic_id: clinicId, call_id: callId, category: isHumanCategory(value(args, "escalation_category")) ? value(args, "escalation_category") : "human_assistance", follow_up_saved: false}));
+          operationalLog("human_escalation_failed", "clinic-operations", {clinic_id: clinicId, dependency_category:"database_error", follow_up_saved: false});
           return Response.json(humanEscalationResult(false, null, "not_saved"));
         }
         if (action === "unknown_answer_follow_up") {
-          console.info(JSON.stringify({clinic_id: clinicId, call_id: callId, category: "unknown_answer", follow_up_saved: false}));
+          operationalLog("unknown_answer_followup_failed", "clinic-operations", {clinic_id: clinicId, dependency_category:"database_error", follow_up_saved: false});
           return Response.json(unknownAnswerResult(false, null, "not_saved"));
         }
         if (action === "availability") {
           const category = ownerError.code === "57014" ? "timeout" : "database_error";
-          console.error(JSON.stringify({clinic_id: clinicId, call_id: callId, failure_category: "calendar_unavailable", dependency_category: category, follow_up_saved: false}));
+          operationalLog("calendar_unavailable", "clinic-operations", {clinic_id: clinicId, dependency_category: category, follow_up_saved: false});
           return Response.json(calendarFailure(category));
         }
         throw ownerError;
       }
       if (owner && owner.clinic_id !== clinicId) return Response.json(failure("call_clinic_mismatch"), { status: 403 });
       trustedCallId = callId;
+      setOperationalContext(req, {call_id: callId});
       if (action === "transfer_gate" || action === "transfer_fallback") {
         try {
           const existing = await calendarDeadline(signal=>db.from("conversations").select("clinic_id").eq("retell_call_id",callId).maybeSingle().abortSignal(signal),3000) as {data:{clinic_id:string}|null;error:unknown};
@@ -369,5 +372,5 @@ export default {
       const dependency = error instanceof SystemUnavailableError ? error.dependency : error && typeof error === "object" && "code" in error ? "database_unavailable" : "internal_error";
       return downtimeResponse({clinicId, callId:trustedCallId, dependency, db:trustedCallId && dependency === "internal_error" ? ctx.supabaseAdmin : undefined});
     }
-  })),
+  }))),
 };

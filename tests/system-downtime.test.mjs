@@ -6,7 +6,7 @@ function capture(run){const logs=[];const old=console.error;console.error=(x)=>l
 test('runtime/bootstrap unavailable returns safe JSON, never empty',()=>capture(async logs=>{
  const r=await downtimeBoundary(async()=>{throw new Error('TOKEN patient transcript private payload')})(request);
  const b=await r.json();assert.equal(b.system_unavailable,true);assert.equal(b.message,DOWNTIME_MESSAGE);
- assert.deepEqual(JSON.parse(logs[0]),{clinic_id:null,call_id:null,category:'system_unavailable',dependency_category:'backend_unavailable',fallback_response_returned:true});
+ const event=JSON.parse(logs[0]);assert.equal(event.category,'system_unavailable');assert.equal(event.dependency_category,'backend_unavailable');assert.equal(event.fallback_response_returned,true);assert.equal(event.state,'failure');assert.ok(event.timestamp);assert.ok(!Object.hasOwn(event,'clinic_id'));assert.ok(!Object.hasOwn(event,'call_id'));
  assert.ok(!JSON.stringify(logs).includes('TOKEN'));
 }));
 for(const body of [null,{},[], ''])test('empty/malformed critical result cannot be success: '+JSON.stringify(body),()=>capture(async()=>{

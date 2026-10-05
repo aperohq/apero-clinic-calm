@@ -1,3 +1,4 @@
+import { operationalLog } from "./operational-log.ts";
 // Invoked only after signed integration and call ownership validation.
 export type CalendarDetails = {
   clinicId: string; callId: string; patientName: string; patientPhone: string;
@@ -91,8 +92,8 @@ async function retain(db: any, details: CalendarDetails, category: string, ms: n
     }, ms);
     if (!result.error && result.data?.id) { id = result.data.id; status = result.data.status; }
   } catch { /* No raw dependency output or patient details in logs. */ }
-  console.error(JSON.stringify({ clinic_id: details.clinicId, call_id: details.callId,
-    failure_category: "calendar_unavailable", dependency_category: category, follow_up_saved: !!id }));
+  operationalLog("calendar_unavailable", "clinic-operations", { clinic_id: details.clinicId, call_id: details.callId,
+    dependency_category: category, follow_up_saved: !!id });
   return calendarFailure(category, !!id, id, status, !enough && !id);
 }
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

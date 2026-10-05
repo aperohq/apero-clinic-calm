@@ -1,3 +1,4 @@
+import { monitorHandler, setOperationalContext } from "../_shared/operational-log.ts";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { withSupabase } from "jsr:@supabase/server@^1";
 import { resolveVoiceIntegration } from "../_shared/voice-integration.ts";
@@ -51,7 +52,7 @@ function matchesPractitioner(
 }
 
 export default {
-  fetch: withSupabase(
+  fetch: monitorHandler("book-appointment", withSupabase(
     { auth: "none" },
     async (req, ctx) => {
       if (req.method !== "POST") {
@@ -68,11 +69,13 @@ export default {
       const identity = await resolveVoiceIntegration(ctx.supabaseAdmin, rawBody, req.headers.get("x-retell-signature"));
       if (!identity) return new Response("Unauthorized", { status: 401 });
       const clinicId = identity.integration.clinic_id;
+      setOperationalContext(req, {clinic_id: clinicId});
 
       let payload: any;
 
       try {
         payload = JSON.parse(rawBody);
+        setOperationalContext(req, {call_id: payload.call?.call_id});
       } catch {
         return Response.json(
           {
@@ -514,5 +517,5 @@ export default {
       });
       return Response.json(result);
     },
-  ),
+  )),
 };

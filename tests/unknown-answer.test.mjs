@@ -56,9 +56,9 @@ function adapter({ unavailable = false } = {}) {
 let sequence=0;
 const details={clinicId:a.clinic,callId:a.call,requested:true,question:"What does this treatment cost?",name:"Private Patient",phone:"+12025550109"};
 async function run(overrides={},store=adapter(),ms=1000){
- const logs=[],old=console.info;console.info=(...args)=>logs.push(args.join(" "));
+ const logs=[],old=console.info,oldError=console.error;console.info=console.error=(...args)=>logs.push(args.join(" "));
  try{return {result:await unknownAnswerFollowUp(store,{...details,callId:`unknown-${++sequence}`,...overrides},ms),logs};}
- finally{console.info=old;}
+ finally{console.info=old;console.error=oldError;}
 }
 test("unknown information result contains no invented answer or price",()=>{
  const result=unknownAnswerResult();assert.equal(result.answer,null);assert.equal(result.answer_known,false);
@@ -77,7 +77,7 @@ test("requested question is retained in existing Requests queue and clinic RLS b
  assert.equal(row.phone,details.phone);assert.ok(row.created_at);assert.ok(row.call_id);
  assert.equal(row.reason,"AI couldn’t answer — follow-up\nCategory: unknown_answer\nQuestion: "+details.question);
  assert.equal((await asUser(db,b.user,sql=>sql.query("select * from voice_requests where id=$1",[result.follow_up_request_id]))).rows.length,0);
- assert.equal(logs.length,1);assert.deepEqual(Object.keys(JSON.parse(logs[0])).sort(),["call_id","category","clinic_id","follow_up_saved"]);
+ assert.equal(logs.length,1);assert.deepEqual(Object.keys(JSON.parse(logs[0])).sort(),["category","clinic_id","component","follow_up_saved","state","timestamp"]);
  for(const sensitive of [details.name,details.phone,details.question,"secret-token"])assert.equal(logs.join().includes(sensitive),false);
 });
 test("name and phone are optional and absent data is not fabricated",async()=>{

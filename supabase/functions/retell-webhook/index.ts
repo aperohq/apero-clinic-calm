@@ -1,3 +1,4 @@
+import { monitorHandler, setOperationalContext } from "../_shared/operational-log.ts";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { withSupabase } from "jsr:@supabase/server@^1";
 
@@ -27,7 +28,7 @@ function normalizeTranscript(items: any[] | undefined) {
 }
 
 export default {
-  fetch: withSupabase({ auth: "none" }, async (req, ctx) => {
+  fetch: monitorHandler("retell-webhook", withSupabase({ auth: "none" }, async (req, ctx) => {
     if (req.method !== "POST") {
       return new Response("Method not allowed", { status: 405 });
     }
@@ -42,6 +43,7 @@ export default {
     const identity = await resolveVoiceIntegration(ctx.supabaseAdmin, rawBody, signature);
     if (!identity) return new Response("Unauthorized", { status: 401 });
     const clinicId = identity.integration.clinic_id;
+    setOperationalContext(req, {clinic_id: clinicId});
 
     let payload: any;
 
@@ -61,9 +63,10 @@ export default {
     if (!call?.call_id) {
       return new Response("Missing call_id", { status: 400 });
     }
+    setOperationalContext(req, {call_id: call.call_id});
     const { data: existingCall, error: existingCallError } = await ctx.supabaseAdmin
       .from("conversations").select("clinic_id").eq("retell_call_id", call.call_id).maybeSingle();
-    if (existingCallError) return new Response("Database error", { status: 500 });
+    if (existingCallError) { setOperationalContext(req, {dependency_category: "database_error"}); return new Response("Database error", { status: 500 }); }
     if (existingCall && existingCall.clinic_id !== clinicId)
       return new Response("Call clinic mismatch", { status: 403 });
 
@@ -108,6 +111,7 @@ export default {
       .order("created_at", { ascending: false });
     if (operationsError) {
       logDatabaseFailure("Retell operations lookup", operationsError);
+      setOperationalContext(req, {dependency_category: "database_error"});
       return new Response("Database error", { status: 500 });
     }
     const completedOperations = (operations ?? []).filter((o: any) => o.result?.success === true);
@@ -117,6 +121,7 @@ export default {
       .eq("call_id", call.call_id).limit(1);
     if (requestsError) {
       logDatabaseFailure("Retell requests lookup", requestsError);
+      setOperationalContext(req, {dependency_category: "database_error"});
       return new Response("Database error", { status: 500 });
     }
 
@@ -129,6 +134,7 @@ export default {
       .eq("clinic_id", clinicId);
     if (clientsError) {
       logDatabaseFailure("Retell client lookup", clientsError);
+      setOperationalContext(req, {dependency_category: "database_error"});
       return new Response("Database error", { status: 500 });
     }
 
@@ -155,6 +161,7 @@ export default {
 
       if (appointmentError) {
         logDatabaseFailure("Retell appointment validation", appointmentError);
+        setOperationalContext(req, {dependency_category: "database_error"});
         return new Response("Database error", { status: 500 });
       }
       if (appointment && (lastOperation || appointment.client_id === clientId)) {
@@ -244,11 +251,12 @@ export default {
 
     if (error) {
       logDatabaseFailure("Retell conversation save", error);
+      setOperationalContext(req, {dependency_category: "database_error"});
       return new Response("Database error", { status: 500 });
     }
 
-    console.log(`Processed Retell ${event}`);
+    // Normal successful webhook processing stays quiet.
 
     return new Response(null, { status: 204 });
-  }),
+  })),
 };

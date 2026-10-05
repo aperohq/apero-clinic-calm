@@ -1,3 +1,4 @@
+import { operationalLog } from "./operational-log.ts";
 // Used only after the existing signed integration and call ownership checks.
 export const UNKNOWN_MESSAGE = "I don’t have that information available, and I don’t want to give you the wrong answer. I can take your details so the clinic can follow up with you.";
 export const UNKNOWN_SAVE_FAILED = "I couldn’t save your follow-up request. Please contact the clinic directly. I still don’t have that information available, and I don’t want to give you the wrong answer.";
@@ -44,6 +45,6 @@ export async function unknownAnswerFollowUp(db: any, details: {
     }
   } catch { /* Never log raw dependency errors, questions or contact details. */ }
   finally { clearTimeout(timer); }
-  console.info(JSON.stringify({clinic_id: details.clinicId, call_id: details.callId, category: "unknown_answer", follow_up_saved: saved}));
+  operationalLog(saved ? "unknown_answer_saved" : "unknown_answer_followup_failed", "clinic-operations", {clinic_id: details.clinicId, call_id: details.callId, state: saved ? "success" : "failure", dependency_category: saved ? undefined : "database_error", follow_up_saved: saved});
   return unknownAnswerResult(saved, id, status);
 }

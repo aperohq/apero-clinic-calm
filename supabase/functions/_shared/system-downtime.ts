@@ -1,3 +1,4 @@
+import { operationalLog } from "./operational-log.ts";
 // This boundary runs only when a wider failure escaped the existing specific fallbacks.
 export type DowntimeDependency = "backend_unavailable" | "database_unavailable" | "configuration_unavailable" | "provider_unavailable" | "internal_error";
 export class SystemUnavailableError extends Error {
@@ -42,8 +43,8 @@ export async function downtimeResponse(input: {clinicId?: string | null; callId?
     finally { clearTimeout(timer); }
   }
   const response = Response.json(downtimeResult(number));
-  console.error(JSON.stringify({clinic_id:input.clinicId ?? null,call_id:input.callId ?? null,
-    category:"system_unavailable",dependency_category:input.dependency,fallback_response_returned:true}));
+  operationalLog("system_unavailable", "clinic-operations", {clinic_id:input.clinicId,call_id:input.callId,
+    dependency_category:input.dependency,fallback_response_returned:true});
   return response;
 }
 

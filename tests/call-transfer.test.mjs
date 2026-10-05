@@ -25,7 +25,7 @@ async function configure(patch={}){await db.query('update clinics set fallback_p
  Object.hasOwn(patch,'phone')?patch.phone:destination,JSON.stringify(Object.hasOwn(patch,'hours')?patch.hours:hours),patch.timezone??'UTC',patch.enabled??true,a.clinic]);}
 let seq=0;const context=(extra={})=>({clinicId:a.clinic,callId:'transfer-test-'+(++seq),category:'explicit_human_request',explicitHuman:true,liveAppropriate:false,callType:'phone_call',inboundNumber:'',...extra});
 const details=c=>({...c,name:'',phone:''});
-async function run(fn){const logs=[],old=console.info;console.info=(v)=>logs.push(JSON.parse(v));try{return{value:await fn(),logs};}finally{console.info=old;}}
+async function run(fn){const logs=[],old=console.info,oldError=console.error;console.info=console.error=(v)=>logs.push(JSON.parse(v));try{return{value:await fn(),logs};}finally{console.info=old;console.error=oldError;}}
 test('explicit human request with configured destination during hours permits one attempt',async()=>{
  await configure();const c=context();const {value}=await run(()=>transferGate(adapter,c));
  assert.equal(value.transfer_allowed,true);assert.equal(value.transfer_destination,destination);
@@ -84,7 +84,7 @@ test('save failure wording and operational logs contain no contacts/reason/provi
  const failed={...adapter,from(table){if(table==='voice_requests')throw Error('secret-token-private-patient');return adapter.from(table);}};
  const {value,logs}=await run(()=>transferFallback(failed,{...c,name:'Private Patient',phone:'+12025550199'}));
  assert.equal(value.follow_up_saved,false);assert.equal(value.message,TRANSFER_FAILED_UNSAVED);
- const transfer=logs.find(l=>Object.hasOwn(l,'transfer_attempted'));assert.deepEqual(Object.keys(transfer).sort(),['call_id','clinic_id','fallback_escalation_saved','transfer_attempted','transfer_result']);
+ const transfer=logs.find(l=>Object.hasOwn(l,'transfer_attempted'));assert.deepEqual(Object.keys(transfer).sort(),['category','clinic_id','component','fallback_escalation_saved','state','timestamp','transfer_attempted','transfer_result']);
  for(const sensitive of ['Private Patient','+12025550199','secret-token','requested live transfer'])assert.equal(JSON.stringify(logs).includes(sensitive),false);
 });
 test('caller-supplied destination is ignored; foreign clinic cannot read destination or settings',async()=>{

@@ -1,0 +1,112 @@
+{
+  "checkedAt": "2026-10-05T19:43:21.383Z",
+  "scope": "Dental Zone minimum safe operational logging",
+  "existingStack": "Supabase native logs and existing Lovable runtime hooks",
+  "newVendors": [],
+  "newDatabaseTables": [],
+  "automatedAlertsConfigured": false,
+  "manualRunbook": "docs/operations/dental-zone-monitoring.md",
+  "inspection": {
+    "baselineSourcesMatchMain": true,
+    "legacyAvailabilityBodyReaderPreserved": true,
+    "logDrainCount": null,
+    "logDrainInspection": "permission_denied",
+    "baselineVersions": {
+      "retell-webhook": 11,
+      "book-appointment": 8,
+      "check-availability": 8,
+      "recording-access": 1,
+      "manage-clinic-users": 1,
+      "provision-clinic-user": 4,
+      "clinic-operations": 14
+    }
+  },
+  "tests": {
+    "monitor": 19,
+    "booking": 15,
+    "calendar": 17,
+    "human": 16,
+    "unknown": 10,
+    "transfer": 18,
+    "downtime": 12,
+    "edge": 32,
+    "recording": 11,
+    "team": 15,
+    "teamhard": 13,
+    "users": 23,
+    "auth": 29,
+    "conflicts": 12,
+    "master": 16,
+    "flow": 37
+  },
+  "totalTests": 295,
+  "typecheck": true,
+  "productionBuild": true,
+  "providerBundlesValidated": 7,
+  "verification": {
+    "checkedAt": "2026-10-05T19:41:26.037Z",
+    "versions": {
+      "retell-webhook": 12,
+      "book-appointment": 9,
+      "check-availability": 9,
+      "recording-access": 2,
+      "manage-clinic-users": 2,
+      "provision-clinic-user": 5,
+      "clinic-operations": 15
+    },
+    "allActive": true,
+    "authenticationPreserved": true,
+    "unsignedProbes": [
+      {
+        "slug": "retell-webhook",
+        "status": 401
+      },
+      {
+        "slug": "book-appointment",
+        "status": 401
+      },
+      {
+        "slug": "check-availability",
+        "status": 401
+      },
+      {
+        "slug": "recording-access",
+        "status": 401
+      },
+      {
+        "slug": "manage-clinic-users",
+        "status": 401
+      },
+      {
+        "slug": "clinic-operations",
+        "status": 401
+      }
+    ],
+    "paidRetellCall": false
+  },
+  "productionLogReadback": {
+    "unsignedProbeEvents": 6,
+    "category": "authentication_failed",
+    "allSixBoundaryRequestIdsPresent": true
+  },
+  "audit": {
+    "scope": "all currently retained accessible Supabase log sources and production function source; local portal source",
+    "fullTokenPatternsFound": 0,
+    "patientValuePatternsFound": 0,
+    "nativeGatewayApiKeyPrefixesPresent": true,
+    "nativeGatewayApiKeyPrefixEntries": 153,
+    "nativeGatewayFullTokenPatternsFound": 0,
+    "lovableHistoricalLogsAccessible": false,
+    "limitations": "Pattern scan cannot prove all historical logs safe. Native platform metadata is provider-controlled."
+  },
+  "frontend": {
+    "sourceReady": true,
+    "publicPublicationRequired": true
+  },
+  "sourcePublication": {
+    "targetBranch": "main",
+    "method": "normal fast-forward push",
+    "includedUnrelatedWorkspaceChanges": false
+  },
+  "paidRetellCallPerformed": false
+}

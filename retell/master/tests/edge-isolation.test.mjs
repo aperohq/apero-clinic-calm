@@ -7,6 +7,7 @@ import test from "node:test";
 import { transpileModule } from "typescript";
 import * as routing from "../../../supabase/functions/_shared/voice-routing.ts";
 import * as security from "../../../supabase/functions/_shared/request-security.ts";
+import * as monitoring from "../../../supabase/functions/_shared/operational-log.ts";
 import * as downtime from "../../../supabase/functions/_shared/system-downtime.ts";
 import * as transfer from "../../../supabase/functions/_shared/call-transfer.ts";
 import * as human from "../../../supabase/functions/_shared/human-escalation.ts";
@@ -279,6 +280,7 @@ function environment() {
     ...human,
     ...transfer,
     ...downtime,
+    ...monitoring,
     // Only a UTC formatting shim for the RPC/checked-slot contract test.
     // Actual clinic timezone and duration math are covered in PostgreSQL tests.
     DateTime: {
@@ -639,12 +641,12 @@ test("unknown-answer follow-up uses signed clinic and explicit opt-in; foreign c
 test("unknown follow-up ownership dependency error returns safe wording and safe logs",async()=>{
  const {db,operations,send}=environment(),from=db.from.bind(db);
  db.from=table=>{const q=from(table);if(table==="voice_call_state")q.then=(yes,no)=>Promise.resolve({data:null,error:{message:"private-question-phone-secret-token"}}).then(yes,no);return q;};
- const logs=[],old=console.info;console.info=(...args)=>logs.push(args.join(" "));
+ const logs=[],old=console.info,oldError=console.error;console.info=console.error=(...args)=>logs.push(args.join(" "));
  try{
  const response=await send(operations.handler,"agent-a",{action:"unknown_answer_follow_up",follow_up_requested:true,question:"private-question",caller_phone:"2025550109"});
  const body=await response.json();assert.equal(body.follow_up_saved,false);assert.equal(body.follow_up_status,"not_saved");assert.equal(body.message,unknown.UNKNOWN_SAVE_FAILED);
  assert.equal(db.tables.voice_requests.length,0);assert.equal(logs.length,1);assert.equal(logs.join().includes("private-question"),false);assert.equal(logs.join().includes("2025550109"),false);assert.equal(logs.join().includes("secret-token"),false);
- }finally{console.info=old;}
+ }finally{console.info=old;console.error=oldError;}
 });
 
 
@@ -668,14 +670,14 @@ test("supported requests and specific fallback categories cannot create general 
 test("human ownership dependency failure gives safe unsaved wording and metadata only",async()=>{
  const {db,operations,send}=environment(),from=db.from.bind(db);
  db.from=table=>{const q=from(table);if(table==="voice_call_state")q.then=(yes,no)=>Promise.resolve({data:null,error:{message:"private-secret-token"}}).then(yes,no);return q;};
- const logs=[],old=console.info;console.info=(...args)=>logs.push(args.join(" "));
+ const logs=[],old=console.info,oldError=console.error;console.info=console.error=(...args)=>logs.push(args.join(" "));
  try{
  const body=await (await send(operations.handler,"agent-a",{action:"human_escalation",escalation_required:true,escalation_category:"explicit_human_request",reason:"private-reason"})).json();
  assert.equal(body.follow_up_saved,false);assert.equal(body.message,human.HUMAN_SAVE_FAILED);
  assert.equal(db.tables.voice_requests.length,0);assert.equal(logs.length,1);
- assert.deepEqual(Object.keys(JSON.parse(logs[0])).sort(),["call_id","category","clinic_id","follow_up_saved"]);
+ assert.deepEqual(Object.keys(JSON.parse(logs[0])).sort(),["category","clinic_id","component","dependency_category","follow_up_saved","state","timestamp"]);
  assert.equal(logs.join().includes("private-"),false);
- }finally{console.info=old;}
+ }finally{console.info=old;console.error=oldError;}
 });
 
 test("human escalation requires provider call identity rather than tool-supplied call ID",async()=>{
@@ -721,7 +723,7 @@ test("signed transfer cancellation retains human escalation and foreign transfer
 test('downtime: early database outage clears success, does not repeat failing dependency',async()=>{
  const {operations,send,db}=environment();const original=db.from.bind(db);let failures=0;const logs=[];const old=console.error;console.error=x=>logs.push(x);
  db.from=table=>{if(table==='voice_call_state'){failures++;const q={select(){return q},eq(){return q},maybeSingle(){return Promise.resolve({data:null,error:{code:'08006',message:'SECRET transcript patient'}})}};return q}return original(table)};
- try{const r=await send(operations.handler,'agent-a',{action:'lookup',client_name:'Private',client_phone:'+12025550101',clinic_id:B,phone:'+12025550999'});const b=await r.json();assert.equal(b.error_type,'system_unavailable');assert.equal(b.follow_up_saved,false);assert.equal(b.appointment_id,null);assert.equal(failures,1);assert.equal(db.tables.voice_requests.length,0);assert.deepEqual(JSON.parse(logs[0]),{clinic_id:A,call_id:null,category:'system_unavailable',dependency_category:'database_unavailable',fallback_response_returned:true});assert.ok(!JSON.stringify(logs).includes('SECRET'));}finally{console.error=old}
+ try{const r=await send(operations.handler,'agent-a',{action:'lookup',client_name:'Private',client_phone:'+12025550101',clinic_id:B,phone:'+12025550999'});const b=await r.json();assert.equal(b.error_type,'system_unavailable');assert.equal(b.follow_up_saved,false);assert.equal(b.appointment_id,null);assert.equal(failures,1);assert.equal(db.tables.voice_requests.length,0);const event=JSON.parse(logs[0]);assert.equal(event.clinic_id,A);assert.equal(event.category,'system_unavailable');assert.equal(event.dependency_category,'database_unavailable');assert.equal(event.fallback_response_returned,true);assert.equal(event.call_id,undefined);assert.ok(!JSON.stringify(logs).includes('SECRET'));}finally{console.error=old}
 });
 test('downtime: configuration unavailable before booking does not imply appointment',async()=>{
  const {operations,send,db}=environment();const available=await(await send(operations.handler,'agent-a',{action:'availability',service_name:'Consultation',practitioner_id:SA,practitioner_mode:'specific',requested_date:'2099-01-01'})).json();db.tables.clinics=[];
@@ -739,4 +741,15 @@ test('downtime: failed message persistence never confirms follow-up',async()=>{
 test('downtime: cancellation dependency failure is uncertain and never confirmed',async()=>{
  const {operations,send,db}=environment();const original=db.rpc.bind(db);db.rpc=(name,args)=>name==='voice_apply_appointment'?abortable({data:null,error:{code:'08006',message:'secret-token'}}):original(name,args);
  const b=await(await send(operations.handler,'agent-a',{action:'cancel',appointment_id:APPA,client_name:'Alex Test',client_phone:'+12025550101',confirmed:true})).json();assert.equal(b.system_unavailable,true);assert.equal(b.success,false);assert.equal(b.appointment_id,null);assert.ok(b.patient_instruction.includes('do not claim it failed or succeeded'));assert.equal(db.tables.voice_requests.length,0);
+});
+
+
+test("signed webhook database failure logs a correlated safe webhook category",async()=>{
+ const {db,webhook,send}=environment(),from=db.from.bind(db);
+ db.from=table=>{const q=from(table);if(table==="conversations")q.then=(yes,no)=>Promise.resolve({data:null,error:{code:"08006",message:"PRIVATE transcript token body"}}).then(yes,no);return q;};
+ const logs=[],old=console.error;console.error=v=>logs.push(JSON.parse(v));
+ try {
+  const response=await send(webhook,"agent-a",{}, {event:"call_analyzed",call:{agent_id:"agent-a",call_id:"call_probe",transcript:"PRIVATE transcript token body"}});
+  assert.equal(response.status,500);const failure=logs.find(v=>v.category==="webhook_failed");assert.ok(failure);assert.equal(failure.clinic_id,A);assert.equal(failure.dependency_category,"database_error");assert.match(failure.request_id,/^[a-f0-9-]{36}$/);assert.ok(!JSON.stringify(logs).includes("PRIVATE"));
+ }finally{console.error=old;}
 });

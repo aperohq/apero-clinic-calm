@@ -1,3 +1,4 @@
+import { operationalLog } from "./operational-log.ts";
 export const HUMAN_CATEGORIES = ["explicit_human_request", "unsafe_to_complete", "clinic_judgment", "repeated_failure", "appointment_dispute", "unsupported_operation"] as const;
 export function isHumanCategory(category: string) { return (HUMAN_CATEGORIES as readonly string[]).includes(category); }
 // Used only after the existing signed integration and call ownership checks.
@@ -46,6 +47,6 @@ export async function humanEscalationFollowUp(db: any, details: {
     }
   } catch { /* Never log raw dependency errors, reasons or contact details. */ }
   finally { clearTimeout(timer); }
-  console.info(JSON.stringify({clinic_id: details.clinicId, call_id: details.callId, category: details.category, follow_up_saved: saved}));
+  operationalLog(saved ? "human_escalation_saved" : "human_escalation_failed", "clinic-operations", {clinic_id: details.clinicId, call_id: details.callId, state: saved ? "success" : "failure", dependency_category: saved ? undefined : "database_error", follow_up_saved: saved});
   return humanEscalationResult(saved, id, status);
 }

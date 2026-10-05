@@ -1,3 +1,4 @@
+import { monitorHandler, setOperationalContext } from "../_shared/operational-log.ts";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { invitationRedirect } from "../_shared/clinic-users.ts";
 import { createTeamHandler } from "./handler.ts";
@@ -11,7 +12,7 @@ export function createTeamFunction(
   fetcher: typeof fetch = fetch,
   limits = { requestMs: 45000, fetchMs: 15000, calls: 8 },
 ) {
-  return async (req: Request): Promise<Response> => {
+  return monitorHandler("manage-clinic-users", async (req: Request): Promise<Response> => {
     let origin: string;
     try {
       origin = new URL(invitationRedirect(getEnv("APERO_PORTAL_ORIGIN") ?? "")).origin;
@@ -111,5 +112,5 @@ export function createTeamFunction(
       await userClient?.auth.dispose();
       await admin?.auth.dispose();
     }
-  };
+  });
 }

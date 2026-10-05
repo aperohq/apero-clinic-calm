@@ -56,9 +56,9 @@ function adapter({ unavailable = false } = {}) {
 let sequence=0;
 const details={clinicId:a.clinic,callId:a.call,requested:true,category:"explicit_human_request",reason:"Please ask the receptionist to help with my appointment dispute.",name:"Private Patient",phone:"+12025550109"};
 async function run(overrides={},store=adapter(),ms=1000){
- const logs=[],old=console.info;console.info=(...args)=>logs.push(args.join(" "));
+ const logs=[],old=console.info,oldError=console.error;console.info=console.error=(...args)=>logs.push(args.join(" "));
  try{return {result:await humanEscalationFollowUp(store,{...details,callId:`human-${++sequence}`,...overrides},ms),logs};}
- finally{console.info=old;}
+ finally{console.info=old;console.error=oldError;}
 }
 test("human escalation result contains no invented answer or price",()=>{
  const result=humanEscalationResult();assert.equal(result.resolved,false);
@@ -77,7 +77,7 @@ test("requested reason is retained in existing Requests queue and clinic RLS blo
  assert.equal(row.phone,details.phone);assert.ok(row.created_at);assert.ok(row.call_id);
  assert.equal(row.reason,"Human assistance required\nCategory: explicit_human_request\nRequest: "+details.reason);
  assert.equal((await asUser(db,b.user,sql=>sql.query("select * from voice_requests where id=$1",[result.follow_up_request_id]))).rows.length,0);
- assert.equal(logs.length,1);assert.deepEqual(Object.keys(JSON.parse(logs[0])).sort(),["call_id","category","clinic_id","follow_up_saved"]);
+ assert.equal(logs.length,1);assert.deepEqual(Object.keys(JSON.parse(logs[0])).sort(),["category","clinic_id","component","follow_up_saved","state","timestamp"]);
  for(const sensitive of [details.name,details.phone,details.reason,"secret-token"])assert.equal(logs.join().includes(sensitive),false);
 });
 test("name and phone are optional and absent data is not fabricated",async()=>{
@@ -141,5 +141,5 @@ test("normal supported requests and specific fallback categories do not escalate
 for(const category of ["unsafe_to_complete","clinic_judgment","repeated_failure","appointment_dispute"])
  test(`${category} retains a concise staff request`,async()=>{
   const {result,logs}=await run({category,reason:"Staff must review this operational issue"});
-  assert.equal(result.follow_up_saved,true);assert.equal(JSON.parse(logs[0]).category,category);
+  assert.equal(result.follow_up_saved,true);assert.equal(JSON.parse(logs[0]).category,"human_escalation_saved");
  });
