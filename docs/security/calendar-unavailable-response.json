@@ -1,0 +1,20 @@
+{
+  "success": false,
+  "available": false,
+  "availability_checked": false,
+  "slots": [],
+  "requested_time_available": null,
+  "appointment_booked": false,
+  "appointment_confirmed": false,
+  "appointment_id": null,
+  "error_type": "calendar_unavailable",
+  "failure_category": "calendar_unavailable",
+  "dependency_category": "database_error",
+  "retry_allowed": false,
+  "message": "I’m sorry, I can’t access the clinic’s availability right now. I can take your preferred date and time so the clinic can follow up with you.",
+  "follow_up_saved": false,
+  "follow_up_request_id": null,
+  "follow_up_status": "not_saved",
+  "follow_up_needs_details": true,
+  "patient_instruction": "No appointment is confirmed. Collect patient name, phone, service and preferred date/time, then save using calendar_follow_up. Do not retry availability or book."
+}

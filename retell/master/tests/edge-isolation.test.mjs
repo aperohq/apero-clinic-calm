@@ -7,6 +7,7 @@ import test from "node:test";
 import { transpileModule } from "typescript";
 import * as routing from "../../../supabase/functions/_shared/voice-routing.ts";
 import * as security from "../../../supabase/functions/_shared/request-security.ts";
+import * as calendar from "../../../supabase/functions/_shared/calendar-fallback.ts";
 import { bookingWithFallback } from "../../../supabase/functions/_shared/booking-fallback.ts";
 import * as logic from "../../../supabase/functions/clinic-operations/logic.ts";
 
@@ -253,6 +254,7 @@ function environment() {
     ...security,
     ...logic,
     bookingWithFallback,
+    ...calendar,
     // Only a UTC formatting shim for the RPC/checked-slot contract test.
     // Actual clinic timezone and duration math are covered in PostgreSQL tests.
     DateTime: {
@@ -578,3 +580,20 @@ test("real Edge booking accepts confirmed RPC success unchanged and creates no f
   assert.deepEqual(result, confirmed);
   assert.equal(db.tables.voice_requests.length, 0);
 });
+for (const bad of [{data:null,error:{code:"XX000",message:"secret-token"}}, {data:null,error:null}, {data:[{start_time:"bad",end_time:"bad",duration_minutes:45}],error:null}]) {
+ test("calendar error in real handler blocks booking and retries, retains follow-up without slots", async () => {
+  const {operations,send,db}=environment();
+  const original=db.rpc.bind(db);let mutations=0,checks=0;
+  db.rpc=(name,args)=>{if(name==="appointment_available_slots"){checks++;return abortable(bad)}mutations++;return original(name,args)};
+  const args={action:"availability",service_name:"Consultation",practitioner_mode:"specific",practitioner_id:SB,requested_date:"2099-01-01",requested_time:"10:00",client_name:"Secret Patient",client_phone:"+12025550101"};
+  const result=await (await send(operations.handler,"agent-b",args)).json();
+  assert.equal(result.error_type,"calendar_unavailable");assert.deepEqual(result.slots,[]);assert.equal(result.follow_up_saved,true);
+  const booking=await (await send(operations.handler,"agent-b",{...args,action:"book",slot_id:"stale-token"})).json();
+  assert.equal(booking.error_type,"calendar_unavailable");assert.equal(booking.appointment_confirmed,false);assert.equal(mutations,0);
+  await send(operations.handler,"agent-b",{action:"invalidate"});
+  const replay=await (await send(operations.handler,"agent-b",args)).json();
+  assert.equal(replay.error_type,"calendar_unavailable");assert.equal(checks,1);
+  const foreign=await send(operations.handler,"agent-a",{...args,action:"calendar_follow_up"},{call:{agent_id:"agent-a",call_id:"local-agent-b"}});
+  assert.equal(foreign.status,403);assert.equal(db.tables.voice_requests.length,1);
+ });
+}

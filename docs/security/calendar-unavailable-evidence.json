@@ -1,0 +1,78 @@
+{
+  "scope": "calendar_unavailable_only",
+  "base_commit": "04e0ac7f34d451629a9c3b13e0e49c80f8906463",
+  "local_validation": {
+    "passed": true,
+    "validatedAt": "2026-10-04T20:14:50.324Z",
+    "checks": [
+      "calendar",
+      "production-flow",
+      "typescript",
+      "helper-typescript",
+      "booking",
+      "appointments",
+      "conflicts",
+      "build",
+      "diff"
+    ],
+    "files": {
+      "supabase/functions/clinic-operations/index.ts": "5be72484e1d2b5b1fc3dc236c492bb277d5d696dd42faa9e3de2b83d07378782",
+      "supabase/functions/clinic-operations/logic.ts": "867f7196bdee49ab12e33d120bb2b3ca2a39ccb05d0078b80c2a22b631433310",
+      "supabase/functions/_shared/calendar-fallback.ts": "b2031e0b875ede209560fd8eba5bb25d9667672e1e9ce79b3d750bb802b8e0e7",
+      "supabase/functions/_shared/voice-integration.ts": "5c20e5c11efc10730bfc654211357682963f1314eee971620bb20560ee9c03f2",
+      "supabase/functions/_shared/voice-routing.ts": "beb9d2978747a0f309ff450831182d87a7949cb99c0d467bf30eb145f1b4b6a8",
+      "supabase/functions/_shared/request-security.ts": "bd0973e9f3577fddf1acdf0ad53bfbc515776cea44b15d273da248e7a76f1866",
+      "supabase/functions/_shared/booking-fallback.ts": "067d0d6ca2c042f16794d04aa3c22047f8341f13d1dc5f589830740883d5dec9",
+      "supabase/migrations/20261004180000_calendar_unavailable.sql": "09fc572d8e0fd8818e96a82946c2f42774ec35a19574c24af37ad0c64144ed25",
+      "src/components/requests.tsx": "7ec60d26a13334c384498633aac7ca17e604e4c46768f1a29de8479ad1710239",
+      "retell/calendar-fallback.py": "a2d3abaf3153d3cf78b9e7125fb7f70485d33cb7c1cb475ac6fcf6f6ac5d327c"
+    }
+  },
+  "production": {
+    "checkedAt": "2026-10-05T06:29:35.308Z",
+    "functionVersion": 10,
+    "functionStatus": "ACTIVE",
+    "unrelatedFunctionsUnchanged": true,
+    "columns": [
+      {
+        "column_name": "calendar_unavailable",
+        "data_type": "boolean",
+        "is_nullable": "NO",
+        "column_default": "false"
+      }
+    ],
+    "agentVersion": 11,
+    "agentPublished": true,
+    "flowVersion": 11,
+    "calendarFallbackPresent": true,
+    "recordingSettingsUnchanged": true
+  },
+  "synthetic_production_acceptance": {
+    "normalAvailabilityPassed": true,
+    "followUpSaved": true,
+    "clinicSpoofIgnored": true,
+    "queueLabelAndStatusPassed": true,
+    "noRetryPassed": true,
+    "noBookingPassed": true,
+    "appointmentCountUnchanged": true,
+    "disposableRowsCleaned": true,
+    "checkedAt": "2026-10-05T06:20:30.756Z",
+    "paidLiveCallPerformed": false
+  },
+  "acceptance_cleanup": {
+    "remaining_call_state_rows": 0,
+    "remaining_request_rows": 0
+  },
+  "published_frontend": {
+    "checkedAt": "2026-10-05T06:29:20.315Z",
+    "origin": "https://aperodashboard.lovable.app",
+    "requestsRouteStatus": 200,
+    "scripts": 17,
+    "calendarTitlePublished": false
+  },
+  "live_call_acceptance": {
+    "performed": false,
+    "required_for_completion": false,
+    "billing_rejection_observed": false
+  }
+}

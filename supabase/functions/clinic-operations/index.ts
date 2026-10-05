@@ -9,6 +9,7 @@ import { DateTime } from "npm:luxon@3";
 const encoder = new TextEncoder();
 type Slot = { slot_id: string; checked_slot_id: string; start_time: string; end_time: string; practitioner_id: string; practitioner_name: string; service_name: string; date: string; time: string; duration_minutes: number; timezone: string };
 
+import { availabilityWithFallback, calendarFollowUp, calendarBlocked, calendarDeadline, calendarFailure, validateRanges } from "../_shared/calendar-fallback.ts";
 import { bookingWithFallback } from "../_shared/booking-fallback.ts";
 import { resolveStaff, resolveService, phone as normalizePhone, value, type Staff } from "./logic.ts";
 
@@ -57,6 +58,7 @@ async function availableSlots(db: any, clinicId: string, staff: Staff[], service
       p_date: date, p_exclude_id: excludeId ?? null,
     });
     if (error) throw error;
+    validateRanges(ranges);
     for (const range of ranges ?? []) {
       const start = DateTime.fromISO(range.start_time, { zone: timezone });
       const checkedSlotId = crypto.randomUUID();
@@ -87,9 +89,18 @@ export default {
       const callId = typeof payload.call?.call_id === "string" ? payload.call.call_id : value(args, "call_id") || null;
       const db = ctx.supabaseAdmin;
       if (!callId) return Response.json(failure("missing_call_id"));
-      const { data: owner, error: ownerError } = await db.from("voice_call_state")
-        .select("clinic_id").eq("call_id", callId).maybeSingle();
-      if (ownerError) throw ownerError;
+      const ownershipQuery = db.from("voice_call_state").select("clinic_id").eq("call_id", callId).maybeSingle();
+      const { data: owner, error: ownerError } = await (action === "availability"
+        ? calendarDeadline(signal => ownershipQuery.abortSignal(signal), 3000).catch(() => ({data: null, error: {code: "57014"}}))
+        : ownershipQuery);
+      if (ownerError) {
+        if (action === "availability") {
+          const category = ownerError.code === "57014" ? "timeout" : "database_error";
+          console.error(JSON.stringify({clinic_id: clinicId, call_id: callId, failure_category: "calendar_unavailable", dependency_category: category, follow_up_saved: false}));
+          return Response.json(calendarFailure(category));
+        }
+        throw ownerError;
+      }
       if (owner && owner.clinic_id !== clinicId) return Response.json(failure("call_clinic_mismatch"), { status: 403 });
       if (action === "invalidate") {
         const { error } = await db.from("voice_call_state").upsert({ call_id: callId, clinic_id: clinicId,
@@ -97,7 +108,18 @@ export default {
         if (error) throw error;
         return Response.json({ success: true, availability_invalidated: true });
       }
+      const calendarDetails = { clinicId, callId, patientName: value(args, "client_name") || value(args, "patient_name") || value(args, "caller_name"),
+        patientPhone: phone(args.client_phone) || phone(args.caller_phone) || "", service: value(args, "service_name"),
+        practitioner: value(args, "practitioner_name") || value(args, "practitioner_id"),
+        date: value(args, "requested_date"), time: value(args, "requested_time") || [value(args, "window_start"), value(args, "window_end")].filter(Boolean).join("–") };
+      if (action === "calendar_follow_up") return Response.json(await calendarFollowUp(db, calendarDetails));
+      if (action === "book" || action === "reschedule") {
+        const blocked = await calendarBlocked(db, calendarDetails, 3000, false);
+        if (blocked) return Response.json(blocked);
+      }
       if (action === "resolve" || action === "availability") {
+        const run = async (db: any) => {
+        const identityResult = (body: unknown) => body;
         const checkId = crypto.randomUUID();
         const { error: resetError } = await db.from("voice_call_state").upsert({ call_id: callId, clinic_id: clinicId,
           current_check_id: action === "availability" ? checkId : null, updated_at: new Date().toISOString() }, { onConflict: "call_id" });
@@ -109,16 +131,16 @@ export default {
         const aliases: Record<string, string[]> = {};
         for (const row of aliasRows ?? []) (aliases[row.service] ??= []).push(row.alias);
         const serviceResult = resolveService(staff, value(args, "service_name"), aliases);
-        if (serviceResult.status !== "resolved") return Response.json({ ...failure(`service_${serviceResult.status}`), service_candidates: serviceResult.candidates ?? [] });
+        if (serviceResult.status !== "resolved") return identityResult({ ...failure(`service_${serviceResult.status}`), service_candidates: serviceResult.candidates ?? [] });
         const service = serviceResult.service!;
         const qualified = staff.filter(s => s.services.includes(service));
         const requestedName = value(args, "practitioner_name");
         const requestedId = value(args, "practitioner_id");
         if (action === "availability") {
           const mode = value(args, "practitioner_mode");
-          if (mode !== "specific" && mode !== "any") return Response.json(failure("practitioner_preference_missing"));
-          if (mode === "specific" && !requestedName && !requestedId) return Response.json(failure("practitioner_missing"));
-          if (mode === "any" && (requestedName || requestedId)) return Response.json(failure("practitioner_mode_mismatch"));
+          if (mode !== "specific" && mode !== "any") return identityResult(failure("practitioner_preference_missing"));
+          if (mode === "specific" && !requestedName && !requestedId) return identityResult(failure("practitioner_missing"));
+          if (mode === "any" && (requestedName || requestedId)) return identityResult(failure("practitioner_mode_mismatch"));
         }
         let selected = qualified;
         if (requestedName || requestedId) {
@@ -126,9 +148,9 @@ export default {
             ? { status: staff.some(s => s.id === requestedId) ? "resolved" : "not_found", practitioner: staff.find(s => s.id === requestedId) }
             : resolveStaff(staff, requestedName);
           if (result.status !== "resolved" || !result.practitioner)
-            return Response.json({ ...failure(`practitioner_${result.status}`), practitioner_found: false, practitioner_candidates: result.candidates ?? [] });
+            return identityResult({ ...failure(`practitioner_${result.status}`), practitioner_found: false, practitioner_candidates: result.candidates ?? [] });
           if (!qualified.some(s => s.id === result.practitioner!.id))
-            return Response.json({ ...failure("service_mismatch"), practitioner_found: true, service_supported: false,
+            return identityResult({ ...failure("service_mismatch"), practitioner_found: true, service_supported: false,
               qualified_practitioners: qualified.map(s => ({ id: s.id, name: s.full_name })) });
           selected = [result.practitioner];
         }
@@ -136,42 +158,42 @@ export default {
           qualified_practitioners: qualified.map(s => ({ id: s.id, name: s.full_name, specialty: s.specialty })),
           selected_practitioner_id: selected.length === 1 ? selected[0].id : null,
           selected_practitioner_name: selected.length === 1 ? selected[0].full_name : null };
-        if (action === "resolve") return Response.json({ ...base, selected_practitioner: selected.length === 1 ? selected[0] : null });
+        if (action === "resolve") return identityResult({ ...base, selected_practitioner: selected.length === 1 ? selected[0] : null });
         const timezone = await loadTimezone(db, clinicId);
         let excludeAppointmentId: string | undefined;
         const existingId = value(args, "appointment_id");
         if (existingId) {
           const patientName = value(args, "client_name");
           const patientPhone = phone(args.client_phone);
-          if (!patientName || !patientPhone) return Response.json(failure("invalid_patient_or_phone"));
+          if (!patientName || !patientPhone) return identityResult(failure("invalid_patient_or_phone"));
           const { data: existing, error: existingError } = await db.from("appointments")
             .select("id,client_id,start_time,staff_id,service").eq("id", existingId).eq("clinic_id", clinicId)
             .neq("status", "Cancelled").maybeSingle();
           if (existingError) throw existingError;
           if (!existing || DateTime.fromISO(existing.start_time) <= DateTime.now())
-            return Response.json(failure("appointment_not_found"));
+            return identityResult(failure("appointment_not_found"));
           const { data: patient, error: patientError } = await db.from("clients")
             .select("full_name,phone").eq("id", existing.client_id).eq("clinic_id", clinicId).maybeSingle();
           if (patientError) throw patientError;
           if (!patient || patient.full_name.trim().toLowerCase() !== patientName.toLowerCase() || phone(patient.phone) !== patientPhone)
-            return Response.json(failure("patient_mismatch"));
-          if (existing.service !== service) return Response.json(failure("service_mismatch"));
+            return identityResult(failure("patient_mismatch"));
+          if (existing.service !== service) return identityResult(failure("service_mismatch"));
           selected = selected.filter(person => person.id === existing.staff_id);
-          if (!selected.length) return Response.json(failure("practitioner_mismatch"));
+          if (!selected.length) return identityResult(failure("practitioner_mismatch"));
           base.selected_practitioner_id = selected[0]!.id;
           base.selected_practitioner_name = selected[0]!.full_name;
           excludeAppointmentId = existing.id;
         }
         const requestedDate = value(args, "requested_date");
         const earliest = value(args, "search_mode") === "earliest";
-        if (!earliest && !/^\d{4}-\d{2}-\d{2}$/.test(requestedDate)) return Response.json(failure("invalid_date"));
+        if (!earliest && !/^\d{4}-\d{2}-\d{2}$/.test(requestedDate)) return identityResult(failure("invalid_date"));
         const first = earliest ? DateTime.now().setZone(timezone).startOf("day") : DateTime.fromFormat(requestedDate, "yyyy-MM-dd", { zone: timezone });
-        if (!first.isValid || first < DateTime.now().setZone(timezone).startOf("day")) return Response.json(failure("past_or_invalid_date"));
+        if (!first.isValid || first < DateTime.now().setZone(timezone).startOf("day")) return identityResult(failure("past_or_invalid_date"));
         const maxDays = earliest ? 30 : 1;
         const windowStart = value(args, "window_start");
         const windowEnd = value(args, "window_end");
         const exactTime = value(args, "requested_time");
-        if ([windowStart, windowEnd, exactTime].some(t => t && !/^([01]\d|2[0-3]):[0-5]\d$/.test(t))) return Response.json(failure("invalid_time"));
+        if ([windowStart, windowEnd, exactTime].some(t => t && !/^([01]\d|2[0-3]):[0-5]\d$/.test(t))) return identityResult(failure("invalid_time"));
         let all: Slot[] = [];
         for (let offset = 0; offset < maxDays; offset++) {
           const day = first.plus({ days: offset }).toFormat("yyyy-MM-dd");
@@ -191,10 +213,13 @@ export default {
           })));
           if (saveError) throw saveError;
         }
-        return Response.json({ ...base, available: offered.length > 0, requested_time_available: requestedTimeAvailable,
+        return identityResult({ ...base, available: offered.length > 0, requested_time_available: requestedTimeAvailable,
           date: earliest ? all[0]?.date ?? first.toFormat("yyyy-MM-dd") : requestedDate, timezone,
           slots: offered.map(({ checked_slot_id, start_time, end_time, ...publicSlot }) => publicSlot),
           error_type: offered.length ? null : "no_slots" });
+        };
+        if (action === "resolve") return Response.json(await run(db));
+        return Response.json(await availabilityWithFallback(db, calendarDetails, run));
       }
       if (action === "book" || action === "reschedule") {
         const slotId = value(args, "slot_id");
