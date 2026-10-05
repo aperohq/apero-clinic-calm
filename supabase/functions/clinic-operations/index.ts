@@ -1,7 +1,8 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { withSupabase } from "jsr:@supabase/server@^1";
 import { resolveVoiceIntegration } from "../_shared/voice-integration.ts";
-import { logDatabaseFailure, readLimitedBody, RequestBodyTooLargeError } from "../_shared/request-security.ts";
+import { downtimeBoundary, downtimeResponse, SystemUnavailableError } from "../_shared/system-downtime.ts";
+import { readLimitedBody, RequestBodyTooLargeError } from "../_shared/request-security.ts";
 import { DateTime } from "npm:luxon@3";
 
 // Apero's current calendar defaults new appointments to 45 minutes.
@@ -48,7 +49,7 @@ async function loadStaff(db: any, clinicId: string): Promise<Staff[]> {
 }
 async function loadTimezone(db: any, clinicId: string): Promise<string> {
   const { data, error } = await db.from("clinics").select("timezone").eq("id", clinicId).single();
-  if (error || !data) throw error ?? new Error("Clinic missing");
+  if (error || !data || typeof data.timezone !== "string") throw new SystemUnavailableError("configuration_unavailable");
   return data.timezone;
 }
 async function availableSlots(db: any, clinicId: string, staff: Staff[], service: string, date: string, timezone: string, secret: string, callId: string, checkId: string, excludeId: string | undefined): Promise<Slot[]> {
@@ -75,7 +76,7 @@ async function availableSlots(db: any, clinicId: string, staff: Staff[], service
 }
 
 export default {
-  fetch: withSupabase({ auth: "none" }, async (req, ctx) => {
+  fetch: downtimeBoundary(withSupabase({ auth: "none" }, async (req, ctx) => {
     if (req.method !== "POST") return new Response("Method not allowed", { status: 405 });
     let raw: string;
     try { raw = await readLimitedBody(req, 128 * 1024); }
@@ -85,6 +86,7 @@ export default {
     const { secret } = identity;
     const clinicId = identity.integration.clinic_id;
     const phone = (input: unknown) => normalizePhone(input, identity.integration.dialing_prefix, identity.integration.local_number_length);
+    let trustedCallId: string | null = null;
     try {
       const payload = JSON.parse(raw);
       const args: Record<string, unknown> = payload.args ?? payload;
@@ -117,6 +119,7 @@ export default {
         throw ownerError;
       }
       if (owner && owner.clinic_id !== clinicId) return Response.json(failure("call_clinic_mismatch"), { status: 403 });
+      trustedCallId = callId;
       if (action === "transfer_gate" || action === "transfer_fallback") {
         try {
           const existing = await calendarDeadline(signal=>db.from("conversations").select("clinic_id").eq("retell_call_id",callId).maybeSingle().abortSignal(signal),3000) as {data:{clinic_id:string}|null;error:unknown};
@@ -301,7 +304,7 @@ export default {
           }); if (signal) query.abortSignal(signal);
           const { data, error } = await query;
           if (error) {
-            if (action !== "book") logDatabaseFailure("Voice operation", error);
+            if (action !== "book") throw new SystemUnavailableError("database_unavailable");
             return failure(action === "book" && typeof error === "object" && error !== null &&
               "code" in error && error.code === "57014" ? "booking_timeout" : "database_error");
           }
@@ -342,7 +345,7 @@ export default {
           p_caller_name: value(args, "caller_name") || null, p_caller_phone: phone(args.caller_phone),
           p_staff_id: null, p_service: null, p_start: null, p_end: null, p_check_id: null, p_slot_id: null,
         });
-        if (error) { logDatabaseFailure("Cancellation", error); return Response.json(failure("database_error")); }
+        if (error) return downtimeResponse({clinicId, callId:trustedCallId, dependency:"database_unavailable"});
         return Response.json(data);
       }
       if (["message", "callback", "urgent"].includes(action)) {
@@ -358,13 +361,13 @@ export default {
             .eq("clinic_id", clinicId).eq("request_key", requestKey).single();
           if (!existing.error && existing.data) return Response.json({ success: true, request_id: existing.data.id, status: existing.data.status });
         }
-        if (error || !data) { logDatabaseFailure("Voice request", error); return Response.json(failure("database_error")); }
+        if (error || !data) return downtimeResponse({clinicId, callId:trustedCallId, dependency:"database_unavailable"});
         return Response.json({ success: true, request_id: data.id, status: data.status });
       }
       return Response.json(failure("unknown_action"));
-    } catch {
-      console.error("Voice tool failed");
-      return Response.json(failure("tool_error"));
+    } catch (error) {
+      const dependency = error instanceof SystemUnavailableError ? error.dependency : error && typeof error === "object" && "code" in error ? "database_unavailable" : "internal_error";
+      return downtimeResponse({clinicId, callId:trustedCallId, dependency, db:trustedCallId && dependency === "internal_error" ? ctx.supabaseAdmin : undefined});
     }
-  }),
+  })),
 };

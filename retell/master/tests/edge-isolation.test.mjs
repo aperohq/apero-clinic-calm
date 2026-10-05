@@ -7,6 +7,7 @@ import test from "node:test";
 import { transpileModule } from "typescript";
 import * as routing from "../../../supabase/functions/_shared/voice-routing.ts";
 import * as security from "../../../supabase/functions/_shared/request-security.ts";
+import * as downtime from "../../../supabase/functions/_shared/system-downtime.ts";
 import * as transfer from "../../../supabase/functions/_shared/call-transfer.ts";
 import * as human from "../../../supabase/functions/_shared/human-escalation.ts";
 import * as unknown from "../../../supabase/functions/_shared/unknown-answer.ts";
@@ -277,6 +278,7 @@ function environment() {
     ...unknown,
     ...human,
     ...transfer,
+    ...downtime,
     // Only a UTC formatting shim for the RPC/checked-slot contract test.
     // Actual clinic timezone and duration math are covered in PostgreSQL tests.
     DateTime: {
@@ -599,7 +601,7 @@ test("real Edge booking accepts confirmed RPC success unchanged and creates no f
     client_phone: "+12025550101", practitioner_id: SB, service_name: "Consultation",
     appointment_date: slot.date, appointment_time: slot.time,
   })).json();
-  assert.deepEqual(result, confirmed);
+  assert.deepEqual(result, {...confirmed, apero_response_received:true, system_unavailable:false});
   assert.equal(db.tables.voice_requests.length, 0);
 });
 for (const bad of [{data:null,error:{code:"XX000",message:"secret-token"}}, {data:null,error:null}, {data:[{start_time:"bad",end_time:"bad",duration_minutes:45}],error:null}]) {
@@ -714,4 +716,27 @@ test("signed transfer cancellation retains human escalation and foreign transfer
  assert.equal(db.tables.voice_requests.length,1);assert.equal(db.tables.voice_requests[0].clinic_id,A);assert.equal(db.tables.voice_requests[0].phone,call.from_number);
  db.tables.voice_call_state.push({clinic_id:B,call_id:"foreign-transfer-event",transfer_attempt_reserved:true});
  assert.equal((await send(webhook,"agent-a",{}, {event:"transfer_bridged",call:{...call,call_id:"foreign-transfer-event"}})).status,403);
+});
+
+test('downtime: early database outage clears success, does not repeat failing dependency',async()=>{
+ const {operations,send,db}=environment();const original=db.from.bind(db);let failures=0;const logs=[];const old=console.error;console.error=x=>logs.push(x);
+ db.from=table=>{if(table==='voice_call_state'){failures++;const q={select(){return q},eq(){return q},maybeSingle(){return Promise.resolve({data:null,error:{code:'08006',message:'SECRET transcript patient'}})}};return q}return original(table)};
+ try{const r=await send(operations.handler,'agent-a',{action:'lookup',client_name:'Private',client_phone:'+12025550101',clinic_id:B,phone:'+12025550999'});const b=await r.json();assert.equal(b.error_type,'system_unavailable');assert.equal(b.follow_up_saved,false);assert.equal(b.appointment_id,null);assert.equal(failures,1);assert.equal(db.tables.voice_requests.length,0);assert.deepEqual(JSON.parse(logs[0]),{clinic_id:A,call_id:null,category:'system_unavailable',dependency_category:'database_unavailable',fallback_response_returned:true});assert.ok(!JSON.stringify(logs).includes('SECRET'));}finally{console.error=old}
+});
+test('downtime: configuration unavailable before booking does not imply appointment',async()=>{
+ const {operations,send,db}=environment();const available=await(await send(operations.handler,'agent-a',{action:'availability',service_name:'Consultation',practitioner_id:SA,practitioner_mode:'specific',requested_date:'2099-01-01'})).json();db.tables.clinics=[];
+ const result=await(await send(operations.handler,'agent-a',{action:'book',slot_id:available.slots[0].slot_id,client_name:'Alex Test',client_phone:'+12025550101'})).json();assert.equal(result.system_unavailable,true);assert.equal(result.appointment_booked,false);assert.equal(result.follow_up_saved,false);assert.equal(db.tables.voice_requests.length,0);assert.equal(db.rpcCalls.filter(x=>x.name==='voice_apply_appointment').length,0);
+});
+test('downtime: unexpected internal error uses only signed clinic config, no caller contact',async()=>{
+ const {operations,send,db}=environment();db.tables.clinics[0].fallback_phone='+12025550888';db.tables.clinics[1].fallback_phone='+12025550777';const original=db.from.bind(db);
+ db.from=table=>{if(table==='clients')throw new Error('SECRET raw provider payload');return original(table)};
+ const result=await(await send(operations.handler,'agent-a',{action:'lookup',client_name:'Alex Test',client_phone:'+12025550101',clinic_id:B,fallback_phone:'+12025550999'})).json();assert.equal(result.system_unavailable,true);assert.ok(result.message.includes('+12025550888'));assert.ok(!result.message.includes('+12025550777'));assert.ok(!result.message.includes('+12025550999'));assert.ok(!JSON.stringify(result).includes('SECRET'));
+});
+test('downtime: failed message persistence never confirms follow-up',async()=>{
+ const {operations,send,db}=environment();const original=db.from.bind(db);let writes=0;db.from=table=>{const q=original(table);if(table==='voice_requests'){q.insert=()=>{writes++;return q};q.then=(yes,no)=>Promise.resolve({data:null,error:{code:'08006',message:'private'}}).then(yes,no)}return q};
+ const result=await(await send(operations.handler,'agent-a',{action:'message',caller_phone:'+12025550101',reason:'Private request'})).json();assert.equal(result.success,false);assert.equal(result.follow_up_saved,false);assert.equal(result.request_id,null);assert.equal(result.system_unavailable,true);assert.equal(writes,1);
+});
+test('downtime: cancellation dependency failure is uncertain and never confirmed',async()=>{
+ const {operations,send,db}=environment();const original=db.rpc.bind(db);db.rpc=(name,args)=>name==='voice_apply_appointment'?abortable({data:null,error:{code:'08006',message:'secret-token'}}):original(name,args);
+ const b=await(await send(operations.handler,'agent-a',{action:'cancel',appointment_id:APPA,client_name:'Alex Test',client_phone:'+12025550101',confirmed:true})).json();assert.equal(b.system_unavailable,true);assert.equal(b.success,false);assert.equal(b.appointment_id,null);assert.ok(b.patient_instruction.includes('do not claim it failed or succeeded'));assert.equal(db.tables.voice_requests.length,0);
 });

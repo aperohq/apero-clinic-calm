@@ -1,0 +1,33 @@
+{
+  "deployment": {
+    "checkedAt": "2026-10-05T19:17:02.255Z",
+    "functionVersion": 14,
+    "functionStatus": "ACTIVE",
+    "unrelatedFunctionsUnchanged": true,
+    "agentVersion": 16,
+    "agentPublished": true,
+    "flowVersion": 16,
+    "systemDowntimePresent": true,
+    "webhookFunctionVersion": 11,
+    "recordingSettingsUnchanged": true
+  },
+  "productionSmoke": {
+    "signedReceiptPassed": true,
+    "invalidSignatureRejected": true,
+    "noWrites": true,
+    "noPaidCalls": true,
+    "productionContactConfigured": true,
+    "productionFallbackConfigured": false,
+    "liveTransferEnabled": false
+  },
+  "localTests": {
+    "uniqueChecksPassed": 305,
+    "currentPublishedFlowPreservationChecks": 9,
+    "helperTypecheckPassed": true,
+    "workspaceAdditiveIntegrationPassed": true
+  },
+  "telephonyAcceptance": "deferred \u2014 no paid call; final SIP provider not selected",
+  "providerFailover": "blocked and unconfigured",
+  "frontendUiChanged": false,
+  "lovablePublishRequiredForThisRelease": false
+}
