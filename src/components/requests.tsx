@@ -37,7 +37,9 @@ function RequestCard({ row, timeZone }: { row: VoiceRequestDisplay; timeZone: st
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           {isUrgent && <AlertCircle className="size-4 text-warning-strong" aria-hidden="true" />}
           <h3 className="font-semibold">
-            {row.kind === "message" && row.reason.startsWith("AI couldn’t answer —")
+            {row.kind === "message" && row.reason.startsWith("Human assistance required\nCategory: ")
+              ? "Human assistance required"
+              : row.kind === "message" && row.reason.startsWith("AI couldn’t answer —")
               ? "AI couldn’t answer — follow-up"
               : row.kind === "message" && row.reason.startsWith("Calendar unavailable —")
               ? "Calendar unavailable — follow-up"

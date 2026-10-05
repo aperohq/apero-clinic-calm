@@ -1,0 +1,46 @@
+{
+  "deployment": {
+    "checkedAt": "2026-10-05T10:52:36.964Z",
+    "functionVersion": 12,
+    "functionStatus": "ACTIVE",
+    "unrelatedFunctionsUnchanged": true,
+    "agentVersion": 14,
+    "agentPublished": true,
+    "flowVersion": 14,
+    "humanEscalationPresent": true,
+    "recordingSettingsUnchanged": true
+  },
+  "signedSyntheticAcceptance": {
+    "noRequestWithoutEscalation": true,
+    "escalationSaved": true,
+    "queueLabelCategoryAndStatusPassed": true,
+    "clinicSpoofIgnored": true,
+    "optionalContactNotFabricated": true,
+    "duplicateNotCreated": true,
+    "unsupportedRequestSaved": true,
+    "saveFailureWordingPassed": true,
+    "disposableRowsCleaned": true,
+    "checkedAt": "2026-10-05T10:55:30.603Z",
+    "paidLiveCallPerformed": false
+  },
+  "tests": {
+    "humanPersistenceAndUI": 16,
+    "signedEdgeHandlers": 23,
+    "humanFlow": 6,
+    "unknownAnswer": 10,
+    "unknownFlow": 8,
+    "calendarFallback": 17,
+    "calendarFlow": 5,
+    "bookingFallback": 15,
+    "bookingMaster": 16,
+    "clinicIsolation": 133,
+    "frontendTypeScript": true,
+    "helperTypeScript": true,
+    "productionBuild": true,
+    "workspaceHumanSuite": true,
+    "draftReadbackFlowContracts": 19
+  },
+  "realTelephonyAcceptance": "deferred",
+  "liveTransferImplemented": false,
+  "publicWebsitePublication": "pending Lovable publish"
+}

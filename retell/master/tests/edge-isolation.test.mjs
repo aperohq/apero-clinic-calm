@@ -7,6 +7,7 @@ import test from "node:test";
 import { transpileModule } from "typescript";
 import * as routing from "../../../supabase/functions/_shared/voice-routing.ts";
 import * as security from "../../../supabase/functions/_shared/request-security.ts";
+import * as human from "../../../supabase/functions/_shared/human-escalation.ts";
 import * as unknown from "../../../supabase/functions/_shared/unknown-answer.ts";
 import * as calendar from "../../../supabase/functions/_shared/calendar-fallback.ts";
 import { bookingWithFallback } from "../../../supabase/functions/_shared/booking-fallback.ts";
@@ -257,6 +258,7 @@ function environment() {
     bookingWithFallback,
     ...calendar,
     ...unknown,
+    ...human,
     // Only a UTC formatting shim for the RPC/checked-slot contract test.
     // Actual clinic timezone and duration math are covered in PostgreSQL tests.
     DateTime: {
@@ -623,4 +625,41 @@ test("unknown follow-up ownership dependency error returns safe wording and safe
  const body=await response.json();assert.equal(body.follow_up_saved,false);assert.equal(body.follow_up_status,"not_saved");assert.equal(body.message,unknown.UNKNOWN_SAVE_FAILED);
  assert.equal(db.tables.voice_requests.length,0);assert.equal(logs.length,1);assert.equal(logs.join().includes("private-question"),false);assert.equal(logs.join().includes("2025550109"),false);assert.equal(logs.join().includes("secret-token"),false);
  }finally{console.info=old;}
+});
+
+
+test("human escalation is signed, clinic scoped, and rejects foreign call ownership", async()=>{
+ const {db,operations,send}=environment();
+ const args={action:"human_escalation",escalation_required:true,escalation_category:"explicit_human_request",reason:"Wants receptionist assistance",clinic_id:B};
+ const result=await (await send(operations.handler,"agent-a",args)).json();
+ assert.equal(result.follow_up_saved,true);assert.equal(db.tables.voice_requests[0].clinic_id,A);
+ assert.equal((await send(operations.handler,"agent-a",args,{},keys.RETELL_B)).status,401);
+ db.tables.voice_call_state.push({clinic_id:B,call_id:"foreign-human"});
+ assert.equal((await send(operations.handler,"agent-a",args,{call:{agent_id:"agent-a",call_id:"foreign-human"}})).status,403);
+ assert.equal(db.tables.voice_requests.length,1);
+});
+test("supported requests and specific fallback categories cannot create general escalation", async()=>{
+ const {db,operations,send}=environment();
+ for(const category of ["supported_request","booking_failed","calendar_unavailable","unknown_answer"]){
+ const result=await (await send(operations.handler,"agent-a",{action:"human_escalation",escalation_required:true,escalation_category:category,reason:"test"})).json();
+ assert.equal(result.follow_up_saved,false);
+ }assert.equal(db.tables.voice_requests.length,0);
+});
+test("human ownership dependency failure gives safe unsaved wording and metadata only",async()=>{
+ const {db,operations,send}=environment(),from=db.from.bind(db);
+ db.from=table=>{const q=from(table);if(table==="voice_call_state")q.then=(yes,no)=>Promise.resolve({data:null,error:{message:"private-secret-token"}}).then(yes,no);return q;};
+ const logs=[],old=console.info;console.info=(...args)=>logs.push(args.join(" "));
+ try{
+ const body=await (await send(operations.handler,"agent-a",{action:"human_escalation",escalation_required:true,escalation_category:"explicit_human_request",reason:"private-reason"})).json();
+ assert.equal(body.follow_up_saved,false);assert.equal(body.message,human.HUMAN_SAVE_FAILED);
+ assert.equal(db.tables.voice_requests.length,0);assert.equal(logs.length,1);
+ assert.deepEqual(Object.keys(JSON.parse(logs[0])).sort(),["call_id","category","clinic_id","follow_up_saved"]);
+ assert.equal(logs.join().includes("private-"),false);
+ }finally{console.info=old;}
+});
+
+test("human escalation requires provider call identity rather than tool-supplied call ID",async()=>{
+ const {db,operations,send}=environment();
+ const response=await send(operations.handler,"agent-a",{action:"human_escalation",escalation_required:true,escalation_category:"explicit_human_request",reason:"Staff please",call_id:"claimed-call"},{call:{agent_id:"agent-a"}});
+ assert.equal((await response.json()).error_type,"missing_call_id");assert.equal(db.tables.voice_requests.length,0);
 });

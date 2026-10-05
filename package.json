@@ -28,7 +28,8 @@
     "test:recordings": "node --max-old-space-size=384 tests/recording-access.test.mjs && node tests/recording-player.test.mjs",
     "test:booking-fallback": "node --max-old-space-size=384 tests/booking-fallback.test.mjs && node retell/master/tests/edge-isolation.test.mjs && python3 -m unittest discover -s retell/master/tests -p test_master.py",
     "test:calendar-unavailable": "node --max-old-space-size=384 tests/calendar-fallback.test.mjs && node retell/master/tests/edge-isolation.test.mjs && python3 -m unittest discover -s tests -p test_calendar_flow.py",
-    "test:unknown-answer": "node --max-old-space-size=384 tests/unknown-answer.test.mjs && node retell/master/tests/edge-isolation.test.mjs && python3 -m unittest discover -s tests -p test_unknown_flow.py"
+    "test:unknown-answer": "node --max-old-space-size=384 tests/unknown-answer.test.mjs && node retell/master/tests/edge-isolation.test.mjs && python3 -m unittest discover -s tests -p test_unknown_flow.py",
+    "test:human-escalation": "node --max-old-space-size=384 tests/human-escalation.test.mjs && node retell/master/tests/edge-isolation.test.mjs && python3 -m unittest discover -s tests -p test_human_flow.py"
   },
   "overrides": {
     "rolldown": "1.2.1"
