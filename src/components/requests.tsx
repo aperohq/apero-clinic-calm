@@ -37,7 +37,9 @@ function RequestCard({ row, timeZone }: { row: VoiceRequestDisplay; timeZone: st
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           {isUrgent && <AlertCircle className="size-4 text-warning-strong" aria-hidden="true" />}
           <h3 className="font-semibold">
-            {row.kind === "message" && row.reason.startsWith("Calendar unavailable —")
+            {row.kind === "message" && row.reason.startsWith("AI couldn’t answer —")
+              ? "AI couldn’t answer — follow-up"
+              : row.kind === "message" && row.reason.startsWith("Calendar unavailable —")
               ? "Calendar unavailable — follow-up"
               : row.kind === "message" && row.reason.startsWith("Booking not confirmed —")
               ? "Failed booking — follow-up"
@@ -65,9 +67,13 @@ function RequestCard({ row, timeZone }: { row: VoiceRequestDisplay; timeZone: st
         )}
         <p className="mt-1 flex min-w-0 items-center gap-1 text-muted-foreground">
           <Phone className="size-3.5" aria-hidden="true" />
-          <a href={`tel:${row.phone}`} className="min-w-0 break-all hover:underline">
-            {row.phone}
-          </a>
+          {row.phone ? (
+            <a href={`tel:${row.phone}`} className="min-w-0 break-all hover:underline">
+              {row.phone}
+            </a>
+          ) : (
+            <span>No contact number supplied</span>
+          )}
         </p>
       </div>
       <p className="mt-3 whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-sm">{row.reason}</p>

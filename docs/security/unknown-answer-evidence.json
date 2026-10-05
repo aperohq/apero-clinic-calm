@@ -1,0 +1,35 @@
+{
+  "localTestsPassed": true,
+  "backendAndRetell": {
+    "checkedAt": "2026-10-05T10:09:36.420Z",
+    "functionVersion": 11,
+    "functionStatus": "ACTIVE",
+    "unrelatedFunctionsUnchanged": true,
+    "agentVersion": 13,
+    "agentPublished": true,
+    "flowVersion": 13,
+    "unknownFallbackPresent": true,
+    "recordingSettingsUnchanged": true
+  },
+  "syntheticProductionAcceptance": {
+    "noRequestWithoutOptIn": true,
+    "requestedFollowUpSaved": true,
+    "queueLabelCategoryAndStatusPassed": true,
+    "clinicSpoofIgnored": true,
+    "optionalContactNotFabricated": true,
+    "duplicateNotCreated": true,
+    "disposableRowsCleaned": true,
+    "checkedAt": "2026-10-05T07:30:59.617Z",
+    "paidLiveCallPerformed": false
+  },
+  "frontendPublicationCheck": {
+    "checkedAt": "2026-10-05T07:31:55.683Z",
+    "httpStatus": 200,
+    "scriptAssetsChecked": 17,
+    "newRequestsHeaderInPublishedAssets": false,
+    "authenticatedBrowserAcceptancePerformed": false
+  },
+  "liveModelAcceptancePerformed": false,
+  "billingBlockVerified": false,
+  "lovableConnected": false
+}

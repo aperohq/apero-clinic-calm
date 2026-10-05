@@ -7,6 +7,7 @@ import test from "node:test";
 import { transpileModule } from "typescript";
 import * as routing from "../../../supabase/functions/_shared/voice-routing.ts";
 import * as security from "../../../supabase/functions/_shared/request-security.ts";
+import * as unknown from "../../../supabase/functions/_shared/unknown-answer.ts";
 import * as calendar from "../../../supabase/functions/_shared/calendar-fallback.ts";
 import { bookingWithFallback } from "../../../supabase/functions/_shared/booking-fallback.ts";
 import * as logic from "../../../supabase/functions/clinic-operations/logic.ts";
@@ -255,6 +256,7 @@ function environment() {
     ...logic,
     bookingWithFallback,
     ...calendar,
+    ...unknown,
     // Only a UTC formatting shim for the RPC/checked-slot contract test.
     // Actual clinic timezone and duration math are covered in PostgreSQL tests.
     DateTime: {
@@ -597,3 +599,28 @@ for (const bad of [{data:null,error:{code:"XX000",message:"secret-token"}}, {dat
   assert.equal(foreign.status,403);assert.equal(db.tables.voice_requests.length,1);
  });
 }
+
+
+test("unknown-answer follow-up uses signed clinic and explicit opt-in; foreign call ownership is blocked", async()=>{
+ const {db,operations,send}=environment();
+ const args={action:"unknown_answer_follow_up",question:"Unknown price",patient_name:"Private Patient",caller_phone:"2025550109",clinic_id:B};
+ const declined=await (await send(operations.handler,"agent-a",args)).json();
+ assert.equal(declined.follow_up_status,"not_requested");assert.equal(db.tables.voice_requests.length,0);
+ const saved=await (await send(operations.handler,"agent-a",{...args,follow_up_requested:true})).json();
+ assert.equal(saved.follow_up_saved,true);assert.equal(saved.answer,null);assert.equal(db.tables.voice_requests.length,1);
+ assert.equal(db.tables.voice_requests[0].clinic_id,A);assert.equal(db.tables.voice_requests[0].status,"Open");
+ db.tables.voice_call_state.push({clinic_id:B,call_id:"foreign-unknown"});
+ const denied=await send(operations.handler,"agent-a",{...args,follow_up_requested:true},{call:{agent_id:"agent-a",call_id:"foreign-unknown"}});
+ assert.equal(denied.status,403);assert.equal(db.tables.voice_requests.length,1);
+});
+
+test("unknown follow-up ownership dependency error returns safe wording and safe logs",async()=>{
+ const {db,operations,send}=environment(),from=db.from.bind(db);
+ db.from=table=>{const q=from(table);if(table==="voice_call_state")q.then=(yes,no)=>Promise.resolve({data:null,error:{message:"private-question-phone-secret-token"}}).then(yes,no);return q;};
+ const logs=[],old=console.info;console.info=(...args)=>logs.push(args.join(" "));
+ try{
+ const response=await send(operations.handler,"agent-a",{action:"unknown_answer_follow_up",follow_up_requested:true,question:"private-question",caller_phone:"2025550109"});
+ const body=await response.json();assert.equal(body.follow_up_saved,false);assert.equal(body.follow_up_status,"not_saved");assert.equal(body.message,unknown.UNKNOWN_SAVE_FAILED);
+ assert.equal(db.tables.voice_requests.length,0);assert.equal(logs.length,1);assert.equal(logs.join().includes("private-question"),false);assert.equal(logs.join().includes("2025550109"),false);assert.equal(logs.join().includes("secret-token"),false);
+ }finally{console.info=old;}
+});

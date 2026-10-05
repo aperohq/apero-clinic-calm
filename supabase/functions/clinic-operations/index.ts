@@ -10,6 +10,7 @@ const encoder = new TextEncoder();
 type Slot = { slot_id: string; checked_slot_id: string; start_time: string; end_time: string; practitioner_id: string; practitioner_name: string; service_name: string; date: string; time: string; duration_minutes: number; timezone: string };
 
 import { availabilityWithFallback, calendarFollowUp, calendarBlocked, calendarDeadline, calendarFailure, validateRanges } from "../_shared/calendar-fallback.ts";
+import { unknownAnswerFollowUp, unknownAnswerResult } from "../_shared/unknown-answer.ts";
 import { bookingWithFallback } from "../_shared/booking-fallback.ts";
 import { resolveStaff, resolveService, phone as normalizePhone, value, type Staff } from "./logic.ts";
 
@@ -90,10 +91,14 @@ export default {
       const db = ctx.supabaseAdmin;
       if (!callId) return Response.json(failure("missing_call_id"));
       const ownershipQuery = db.from("voice_call_state").select("clinic_id").eq("call_id", callId).maybeSingle();
-      const { data: owner, error: ownerError } = await (action === "availability"
+      const { data: owner, error: ownerError } = await ((action === "availability" || action === "unknown_answer_follow_up")
         ? calendarDeadline(signal => ownershipQuery.abortSignal(signal), 3000).catch(() => ({data: null, error: {code: "57014"}}))
         : ownershipQuery);
       if (ownerError) {
+        if (action === "unknown_answer_follow_up") {
+          console.info(JSON.stringify({clinic_id: clinicId, call_id: callId, category: "unknown_answer", follow_up_saved: false}));
+          return Response.json(unknownAnswerResult(false, null, "not_saved"));
+        }
         if (action === "availability") {
           const category = ownerError.code === "57014" ? "timeout" : "database_error";
           console.error(JSON.stringify({clinic_id: clinicId, call_id: callId, failure_category: "calendar_unavailable", dependency_category: category, follow_up_saved: false}));
@@ -102,6 +107,10 @@ export default {
         throw ownerError;
       }
       if (owner && owner.clinic_id !== clinicId) return Response.json(failure("call_clinic_mismatch"), { status: 403 });
+      if (action === "unknown_answer_follow_up") return Response.json(await unknownAnswerFollowUp(db, {
+        clinicId, callId, requested: args.follow_up_requested === true, question: value(args, "question"),
+        name: value(args, "patient_name") || value(args, "caller_name"), phone: phone(args.caller_phone) || "",
+      }));
       if (action === "invalidate") {
         const { error } = await db.from("voice_call_state").upsert({ call_id: callId, clinic_id: clinicId,
           current_check_id: null, updated_at: new Date().toISOString() }, { onConflict: "call_id" });

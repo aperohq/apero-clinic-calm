@@ -1,0 +1,24 @@
+{
+  "notRequested": {
+    "success": false,
+    "answer_known": false,
+    "answer": null,
+    "category": "unknown_answer",
+    "message": "I don’t have that information available, and I don’t want to give you the wrong answer. I can take your details so the clinic can follow up with you.",
+    "follow_up_saved": false,
+    "follow_up_request_id": null,
+    "follow_up_status": "not_requested",
+    "patient_instruction": "Collect no patient details unless the patient requests clinic follow-up."
+  },
+  "saveFailure": {
+    "success": false,
+    "answer_known": false,
+    "answer": null,
+    "category": "unknown_answer",
+    "message": "I couldn’t save your follow-up request. Please contact the clinic directly. I still don’t have that information available, and I don’t want to give you the wrong answer.",
+    "follow_up_saved": false,
+    "follow_up_request_id": null,
+    "follow_up_status": "not_saved",
+    "patient_instruction": "Do not claim the clinic received this request. Use only configured clinic contact information."
+  }
+}
