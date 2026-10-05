@@ -23,6 +23,9 @@ class HumanFlowTests(unittest.TestCase):
         self.assertIn('do not create a second general escalation',module.POLICY)
         self.assertIn('Do not make medical judgments or perform medical triage',module.POLICY)
     def test_existing_nodes_tools_and_settings_preserved(self):
+        if any(n["id"]=="node_human_prepare" for n in self.before["nodes"]):
+            self.assertEqual(self.flow,self.before)
+            return
         for node in self.before['nodes']:
             if node['id']=='node_global_human':continue
             after=copy.deepcopy(self.nodes[node['id']])

@@ -10,6 +10,7 @@ const encoder = new TextEncoder();
 type Slot = { slot_id: string; checked_slot_id: string; start_time: string; end_time: string; practitioner_id: string; practitioner_name: string; service_name: string; date: string; time: string; duration_minutes: number; timezone: string };
 
 import { availabilityWithFallback, calendarFollowUp, calendarBlocked, calendarDeadline, calendarFailure, validateRanges } from "../_shared/calendar-fallback.ts";
+import { transferGate, transferFallback, observeTransferFallback, transferBlocked, transferLog, TRANSFER_FAILED_UNSAVED } from "../_shared/call-transfer.ts";
 import { humanEscalationFollowUp, humanEscalationResult, isHumanCategory } from "../_shared/human-escalation.ts";
 import { unknownAnswerFollowUp, unknownAnswerResult } from "../_shared/unknown-answer.ts";
 import { bookingWithFallback } from "../_shared/booking-fallback.ts";
@@ -88,14 +89,18 @@ export default {
       const payload = JSON.parse(raw);
       const args: Record<string, unknown> = payload.args ?? payload;
       const action = value(args, "action");
-      const callId = typeof payload.call?.call_id === "string" ? payload.call.call_id : action === "human_escalation" ? null : value(args, "call_id") || null;
+      const callId = typeof payload.call?.call_id === "string" ? payload.call.call_id : ["human_escalation","transfer_gate","transfer_fallback"].includes(action) ? null : value(args, "call_id") || null;
       const db = ctx.supabaseAdmin;
       if (!callId) return Response.json(failure("missing_call_id"));
       const ownershipQuery = db.from("voice_call_state").select("clinic_id").eq("call_id", callId).maybeSingle();
-      const { data: owner, error: ownerError } = await ((action === "availability" || action === "unknown_answer_follow_up" || action === "human_escalation")
+      const { data: owner, error: ownerError } = await ((action === "availability" || action === "unknown_answer_follow_up" || action === "human_escalation" || action === "transfer_gate" || action === "transfer_fallback")
         ? calendarDeadline(signal => ownershipQuery.abortSignal(signal), 3000).catch(() => ({data: null, error: {code: "57014"}}))
         : ownershipQuery);
       if (ownerError) {
+        if (action === "transfer_gate" || action === "transfer_fallback") {
+          transferLog(clinicId,callId,false,"provider_error",false);
+          return Response.json({...transferBlocked(),follow_up_saved:false,message:TRANSFER_FAILED_UNSAVED});
+        }
         if (action === "human_escalation") {
           console.info(JSON.stringify({clinic_id: clinicId, call_id: callId, category: isHumanCategory(value(args, "escalation_category")) ? value(args, "escalation_category") : "human_assistance", follow_up_saved: false}));
           return Response.json(humanEscalationResult(false, null, "not_saved"));
@@ -112,10 +117,26 @@ export default {
         throw ownerError;
       }
       if (owner && owner.clinic_id !== clinicId) return Response.json(failure("call_clinic_mismatch"), { status: 403 });
-      if (action === "human_escalation") return Response.json(await humanEscalationFollowUp(db, {
-        clinicId, callId, requested: args.escalation_required === true, category: value(args, "escalation_category"),
-        reason: value(args, "reason"), name: value(args, "patient_name"), phone: phone(args.caller_phone) || "",
-      }));
+      if (action === "transfer_gate" || action === "transfer_fallback") {
+        try {
+          const existing = await calendarDeadline(signal=>db.from("conversations").select("clinic_id").eq("retell_call_id",callId).maybeSingle().abortSignal(signal),3000) as {data:{clinic_id:string}|null;error:unknown};
+          if(existing.error)throw new Error();
+          if(existing.data && existing.data.clinic_id!==clinicId)return Response.json(failure("call_clinic_mismatch"),{status:403});
+        } catch {transferLog(clinicId,callId,false,"provider_error",false);return Response.json({...transferBlocked(),follow_up_saved:false,message:TRANSFER_FAILED_UNSAVED});}
+        if(action === "transfer_gate")return Response.json(await transferGate(db,{clinicId,callId,
+          category:value(args,"escalation_category"),explicitHuman:args.explicit_human_request===true,
+          liveAppropriate:args.live_transfer_appropriate===true,callType:payload.call?.call_type ?? "",
+          inboundNumber:payload.call?.direction === "inbound" ? payload.call?.to_number ?? "" : ""}));
+        return Response.json(await transferFallback(db,{clinicId,callId,name:value(args,"patient_name"),phone:phone(args.caller_phone)||""}));
+      }
+      if (action === "human_escalation") {
+        const result=await humanEscalationFollowUp(db, {
+          clinicId, callId, requested: args.escalation_required === true, category: value(args, "escalation_category"),
+          reason: value(args, "reason"), name: value(args, "patient_name"), phone: phone(args.caller_phone) || "",
+        });
+        await observeTransferFallback(db,{clinicId,callId},result.follow_up_saved);
+        return Response.json(result);
+      }
       if (action === "unknown_answer_follow_up") return Response.json(await unknownAnswerFollowUp(db, {
         clinicId, callId, requested: args.follow_up_requested === true, question: value(args, "question"),
         name: value(args, "patient_name") || value(args, "caller_name"), phone: phone(args.caller_phone) || "",

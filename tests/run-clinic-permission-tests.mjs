@@ -63,7 +63,7 @@ const session = (authUser = user) => {
 };
 const fixture = {
   settings: process.argv.includes("--settings"), settingsError: false, settingsDelay: 0, settingsSaveDelay: 0, settingsSaveError: false, settingsConflict: false, settingsUpdates: [],
-  clinicValues: { localized_name: "العيادة", clinic_type: "Dental", phone: "+12025550100", email: "clinic@example.test", website: "https://clinic.example.test", fallback_phone: "+12025550199", address: "Building 1", city: "City", country: "Country", directions: "Ground floor", parking_information: "Visitor parking", receptionist_name: "Apero", receptionist_localized_name: "أبيرو", opening_hours: null },
+  clinicValues: { localized_name: "العيادة", clinic_type: "Dental", phone: "+12025550100", email: "clinic@example.test", website: "https://clinic.example.test", fallback_phone: "+12025550199", address: "Building 1", city: "City", country: "Country", directions: "Ground floor", parking_information: "Visitor parking", receptionist_name: "Apero", receptionist_localized_name: "أبيرو", opening_hours: null, live_transfer_enabled: false },
   calendar: process.argv.includes("--calendar")
     ? {
         appointments: [],

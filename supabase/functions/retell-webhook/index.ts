@@ -1,6 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { withSupabase } from "jsr:@supabase/server@^1";
 
+import { transferEvent } from "../_shared/call-transfer.ts";
 import { resolveVoiceIntegration } from "../_shared/voice-integration.ts";
 import { logDatabaseFailure, readLimitedBody, RequestBodyTooLargeError } from "../_shared/request-security.ts";
 
@@ -53,7 +54,7 @@ export default {
     const { event, call } = payload;
 
     // For now we only care about completed/analyzed calls.
-    if (!["call_ended", "call_analyzed"].includes(event)) {
+    if (!["call_ended", "call_analyzed", "transfer_started", "transfer_bridged", "transfer_cancelled"].includes(event)) {
       return new Response(null, { status: 204 });
     }
 
@@ -65,6 +66,20 @@ export default {
     if (existingCallError) return new Response("Database error", { status: 500 });
     if (existingCall && existingCall.clinic_id !== clinicId)
       return new Response("Call clinic mismatch", { status: 403 });
+
+    if (["transfer_started","transfer_bridged","transfer_cancelled"].includes(event)) {
+      try {
+        const owner=await ctx.supabaseAdmin.from("voice_call_state").select("clinic_id").eq("call_id",call.call_id).maybeSingle();
+        if(owner.error)throw new Error();
+        if(owner.data && owner.data.clinic_id!==clinicId)return new Response("Call clinic mismatch",{status:403});
+        const collected=call.collected_dynamic_variables ?? {};
+        await transferEvent(ctx.supabaseAdmin,{clinicId,callId:call.call_id,
+          name:typeof collected.client_name === "string" ? collected.client_name : "",
+          phone:typeof collected.client_phone === "string" ? normalizePhone(collected.client_phone)||""
+            : normalizePhone(call.direction === "outbound" ? call.to_number : call.from_number)||""},event,call.disconnection_reason);
+        return new Response(null,{status:204});
+      }catch {return new Response("Transfer status unavailable",{status:503});}
+    }
 
     const analysis = call.call_analysis ?? {};
     const custom = analysis.custom_analysis_data ?? {};

@@ -1,0 +1,63 @@
+{
+  "deployment": {
+    "checkedAt": "2026-10-05T12:40:09.274Z",
+    "functionVersion": 13,
+    "functionStatus": "ACTIVE",
+    "unrelatedFunctionsUnchanged": true,
+    "agentVersion": 15,
+    "agentPublished": true,
+    "flowVersion": 15,
+    "guardedTransferPresent": true,
+    "webhookFunctionVersion": 11,
+    "recordingSettingsUnchanged": true
+  },
+  "configuration": [
+    {
+      "clinic_id": "11111111-1111-4111-8111-111111111111",
+      "live_transfer_enabled": false,
+      "destination_present": false,
+      "hours_present": false,
+      "timezone": "Asia/Kuwait"
+    }
+  ],
+  "signedSyntheticAcceptance": {
+    "noDestinationNoAttempt": true,
+    "callerDestinationIgnored": true,
+    "followUpOnlyDoesNotTransfer": true,
+    "existingHumanEscalationSaved": true,
+    "clinicSpoofIgnored": true,
+    "noDuplicateFollowUp": true,
+    "unclaimedBridgeCannotRecordSuccess": true,
+    "fallbackMetadataSaved": true,
+    "unsignedTransferEventRejected": true,
+    "disposableRowsCleaned": true,
+    "checkedAt": "2026-10-05T12:40:34.871Z",
+    "paidLiveCallPerformed": false
+  },
+  "tests": {
+    "transferDatabase": 18,
+    "signedEdgeHandlers": 26,
+    "transferFlow": 9,
+    "humanEscalation": 16,
+    "humanFlow": 6,
+    "unknownAnswer": 10,
+    "unknownFlow": 8,
+    "calendarFallback": 17,
+    "calendarFlow": 5,
+    "bookingFallback": 15,
+    "bookingMaster": 16,
+    "settingsDatabase": 65,
+    "settingsUI": 33,
+    "clinicIsolation": 133,
+    "frontendTypeScript": true,
+    "helperTypeScript": true,
+    "productionBuild": true,
+    "workspaceTransferSuite": true,
+    "draftReadbackFlowContracts": 28
+  },
+  "realTelephonyAcceptance": "deferred",
+  "paidLiveCallPerformed": false,
+  "newProviderAdded": false,
+  "destinationPopulated": false,
+  "publicWebsitePublication": "pending Lovable publish"
+}

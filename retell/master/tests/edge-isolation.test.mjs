@@ -7,6 +7,7 @@ import test from "node:test";
 import { transpileModule } from "typescript";
 import * as routing from "../../../supabase/functions/_shared/voice-routing.ts";
 import * as security from "../../../supabase/functions/_shared/request-security.ts";
+import * as transfer from "../../../supabase/functions/_shared/call-transfer.ts";
 import * as human from "../../../supabase/functions/_shared/human-escalation.ts";
 import * as unknown from "../../../supabase/functions/_shared/unknown-answer.ts";
 import * as calendar from "../../../supabase/functions/_shared/calendar-fallback.ts";
@@ -205,6 +206,22 @@ class Database {
   }
   rpc(name, args) {
     this.rpcCalls.push({ name, args });
+    if(name === "voice_claim_transfer") {
+      const old=this.tables.voice_call_state.find(r=>r.call_id===args.p_call_id);
+      if(old && (old.clinic_id!==args.p_clinic_id || old.transfer_attempt_reserved))return abortable({data:false,error:null});
+      const row=old??{clinic_id:args.p_clinic_id,call_id:args.p_call_id};
+      Object.assign(row,{transfer_attempt_reserved:true,transfer_result:"ready",transfer_category:args.p_category});
+      if(!old)this.tables.voice_call_state.push(row);
+      return abortable({data:true,error:null});
+    }
+    if(name === "voice_record_transfer") {
+      let row=this.tables.voice_call_state.find(r=>r.call_id===args.p_call_id);
+      if(!row&&!args.p_attempted){row={clinic_id:args.p_clinic_id,call_id:args.p_call_id};this.tables.voice_call_state.push(row);}
+      if(row?.clinic_id!==args.p_clinic_id || (args.p_attempted&&!row?.transfer_attempt_reserved))return abortable({data:{accepted:false},error:null});
+      if(row.transfer_result==="success"&&args.p_result!=="success")return abortable({data:{accepted:false,result:"success"},error:null});
+      row.transfer_result=args.p_result;row.transfer_fallback_saved ||= args.p_fallback_saved;
+      return abortable({data:{accepted:true,result:row.transfer_result},error:null});
+    }
     if (name === "appointment_available_slots")
       return abortable({
         data: [
@@ -259,6 +276,7 @@ function environment() {
     ...calendar,
     ...unknown,
     ...human,
+    ...transfer,
     // Only a UTC formatting shim for the RPC/checked-slot contract test.
     // Actual clinic timezone and duration math are covered in PostgreSQL tests.
     DateTime: {
@@ -662,4 +680,38 @@ test("human escalation requires provider call identity rather than tool-supplied
  const {db,operations,send}=environment();
  const response=await send(operations.handler,"agent-a",{action:"human_escalation",escalation_required:true,escalation_category:"explicit_human_request",reason:"Staff please",call_id:"claimed-call"},{call:{agent_id:"agent-a"}});
  assert.equal((await response.json()).error_type,"missing_call_id");assert.equal(db.tables.voice_requests.length,0);
+});
+
+test("transfer guard ignores caller destinations and clinic IDs; signed call ownership is required",async()=>{
+ const {db,operations,send}=environment();
+ const clinic=db.tables.clinics.find(c=>c.id===A);Object.assign(clinic,{live_transfer_enabled:true,fallback_phone:"+12025550123",opening_hours:{days:Array.from({length:7},(_,day)=>({day,periods:[{start:"00:00",end:"23:59"}]}))}});
+ const args={action:"transfer_gate",escalation_category:"explicit_human_request",explicit_human_request:true,live_transfer_appropriate:false,clinic_id:B,transfer_destination:"+12025550999"};
+ const call={agent_id:"agent-a",call_id:"transfer-signed-call",call_type:"phone_call"};
+ const result=await (await send(operations.handler,"agent-a",args,{call})).json();
+ assert.equal(result.transfer_allowed,true);assert.equal(result.transfer_destination,clinic.fallback_phone);assert.equal(db.tables.voice_requests.length,0);
+ assert.equal((await send(operations.handler,"agent-a",args,{call},keys.RETELL_B)).status,401);
+ db.tables.conversations.push({clinic_id:B,retell_call_id:"foreign-record"});
+ assert.equal((await send(operations.handler,"agent-a",args,{call:{...call,call_id:"foreign-record"}})).status,403);
+ const missing=await send(operations.handler,"agent-a",{...args,call_id:"supplied-call"},{call:{agent_id:"agent-a"}});
+ assert.equal((await missing.json()).error_type,"missing_call_id");
+});
+test("transfer success requires signed provider event; caller success/destination arguments are ignored",async()=>{
+ const {db,operations,webhook,send}=environment();
+ const call={agent_id:"agent-a",call_id:"provider-transfer-call",call_type:"phone_call"};
+ db.tables.voice_call_state.push({clinic_id:A,call_id:call.call_id,transfer_attempt_reserved:true,transfer_result:"ready",transfer_category:"explicit_human_request"});
+ assert.equal((await send(webhook,"agent-a",{}, {event:"transfer_bridged",call},keys.RETELL_B)).status,401);
+ assert.equal((await send(webhook,"agent-a",{}, {event:"transfer_bridged",call})).status,204);
+ assert.equal(db.tables.voice_call_state[0].transfer_result,"success");
+ assert.equal((await send(webhook,"agent-a",{}, {event:"transfer_cancelled",call:{...call,disconnection_reason:"dial_busy"}})).status,204);
+ assert.equal(db.tables.voice_requests.length,0);
+ const result=await (await send(operations.handler,"agent-a",{action:"transfer_fallback",transfer_result:"provider_error",destination:"+12025550999"},{call})).json();
+ assert.equal(result.transfer_result,"success");assert.equal(result.follow_up_saved,false);
+});
+test("signed transfer cancellation retains human escalation and foreign transfer events fail closed",async()=>{
+ const {db,webhook,send}=environment();const call={agent_id:"agent-a",call_id:"cancel-transfer-call",disconnection_reason:"dial_no_answer",from_number:"+12025550144",direction:"inbound"};
+ db.tables.voice_call_state.push({clinic_id:A,call_id:call.call_id,transfer_attempt_reserved:true,transfer_result:"ready",transfer_category:"explicit_human_request"});
+ assert.equal((await send(webhook,"agent-a",{}, {event:"transfer_cancelled",call})).status,204);
+ assert.equal(db.tables.voice_requests.length,1);assert.equal(db.tables.voice_requests[0].clinic_id,A);assert.equal(db.tables.voice_requests[0].phone,call.from_number);
+ db.tables.voice_call_state.push({clinic_id:B,call_id:"foreign-transfer-event",transfer_attempt_reserved:true});
+ assert.equal((await send(webhook,"agent-a",{}, {event:"transfer_bridged",call:{...call,call_id:"foreign-transfer-event"}})).status,403);
 });

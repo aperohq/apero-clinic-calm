@@ -13,7 +13,7 @@ export type ClinicRow = {
   address: string | null; city: string | null; country: string | null;
   directions: string | null; parking_information: string | null;
   receptionist_name: string | null; receptionist_localized_name: string | null;
-  opening_hours: ClinicHours | null;
+  opening_hours: ClinicHours | null; live_transfer_enabled: boolean;
 };
 export type ProfileRow = {
   id: string; auth_user_id: string; clinic_id: string; full_name: string;

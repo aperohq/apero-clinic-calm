@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/dialog";
 
 type Form = { clinicId: string; original: ClinicSettings; draft: SettingsDraft };
-type TextField = Exclude<keyof SettingsDraft, "opening_hours">;
+type TextField = Exclude<keyof SettingsDraft, "opening_hours" | "live_transfer_enabled">;
 
 export function ClinicSettingsPanel() {
   const { clinicId, role, refreshProfile } = useAuth();
@@ -314,12 +314,21 @@ export function ClinicSettingsPanel() {
             <div className="grid min-w-0 gap-4 sm:grid-cols-2">
               {textField("receptionist_name", "Receptionist name")}
               {textField("receptionist_localized_name", "Arabic / localized receptionist name")}
-              {textField("fallback_phone", "Fallback phone", { type: "tel" })}
+              {textField("fallback_phone", "Fallback / staff transfer phone", { type: "tel" })}
             </div>
+            <label className="mt-4 flex items-center gap-2 text-sm">
+              <input id="settings-live-transfer" type="checkbox" checked={current.draft.live_transfer_enabled} disabled={busy}
+                onChange={(event) => setForm((previous) => previous ? {...previous,draft:{...previous.draft,live_transfer_enabled:event.target.checked}} : previous)} />
+              Enable live staff transfer
+            </label>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Keep disabled until your phone provider and staff destination are ready. Enabled
+              transfers use the fallback phone in international format and configured clinic hours.
+              Missing destination or hours prevents transfer and uses clinic follow-up.
+            </p>
             <p className="mt-4 text-xs text-muted-foreground">
               These details are saved for your clinic. Changes to information spoken in calls
-              require Apero to synchronize the receptionist configuration. The fallback phone does
-              not enable live call transfer.
+              require Apero to synchronize the receptionist configuration. Live transfer also requires the enabled setting, a valid destination, and configured clinic hours.
             </p>
           </Panel>
           {error && (
