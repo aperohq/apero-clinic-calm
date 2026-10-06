@@ -31,6 +31,24 @@ class S3Tests(unittest.TestCase):
         self.file=self.root/'test.dump.age';self.file.write_bytes(b'age-encryption.org/v1\nsynthetic ciphertext')
         self.client=Client();self.now=dt.datetime(2026,10,6,0,17,tzinfo=s3.UTC)
     def tearDown(self):self.tmp.cleanup()
+    def test_bucket_controls_fail_closed(self):
+        from types import SimpleNamespace
+        client=SimpleNamespace(
+            get_bucket_location=lambda **kw:{'LocationConstraint':'me-south-1'},
+            get_public_access_block=lambda **kw:{'PublicAccessBlockConfiguration':{k:True for k in ['BlockPublicAcls','IgnorePublicAcls','BlockPublicPolicy','RestrictPublicBuckets']}},
+            get_bucket_policy_status=lambda **kw:{'PolicyStatus':{'IsPublic':False}},
+            get_bucket_policy=lambda **kw:{'Policy':json.dumps({'Statement':[{'Sid':k,'Effect':'Deny'} for k in ['TLSOnly','OnlyWriterAndRecoveryCanAccessObjects','RequireSSES3','RequireGovernanceLock','DenyUnencryptedFileNames']]})},
+            get_bucket_versioning=lambda **kw:{'Status':'Enabled'},
+            get_bucket_encryption=lambda **kw:{'ServerSideEncryptionConfiguration':{'Rules':[{'ServerSideEncryptionByDefault':{'SSEAlgorithm':'AES256'}}]}},
+            get_bucket_lifecycle_configuration=lambda **kw:{'Rules':[{'Id':k+'-retention','Status':'Enabled','Prefix':k+'/','Expiration':{'Days':v},'NoncurrentVersionExpiration':{'NoncurrentDays':1}} for k,v in s3.RETENTION.items()]},
+            get_object_lock_configuration=lambda **kw:{'ObjectLockConfiguration':{'ObjectLockEnabled':'Enabled'}})
+        s3.check_bucket(client,'bucket')
+        client.get_bucket_versioning=lambda **kw:{'Status':'Suspended'}
+        with self.assertRaises(ValueError):s3.check_bucket(client,'bucket')
+        client.get_bucket_versioning=lambda **kw:{'Status':'Enabled'}
+        client.get_bucket_policy_status=lambda **kw:{'PolicyStatus':{'IsPublic':True}}
+        with self.assertRaises(ValueError):s3.check_bucket(client,'bucket')
+
     def test_all_classes_on_first_success(self):
         self.assertEqual(s3.classes(self.client,'bucket','database',self.now),['hourly','daily','weekly','monthly'])
         self.assertEqual(s3.period(self.now,'weekly'),'2026-10-05')

@@ -13,12 +13,12 @@ select json_build_object(
   where schemaname in ('public','auth','storage','supabase_migrations','extensions')) x),
 'app_functions', (select coalesce(json_agg(x order by x.schema,x.name,x.arguments),'[]') from
  (select n.nspname as schema,p.proname as name,pg_get_function_identity_arguments(p.oid) as arguments,
-   md5(pg_get_functiondef(p.oid)) as definition_hash,p.proacl::text as acl
+   md5(pg_get_functiondef(p.oid)) as definition_hash,p.proacl::text as acl,pg_get_userbyid(p.proowner) as owner
   from pg_proc p join pg_namespace n on n.oid=p.pronamespace where p.prokind in ('f','p')
   and n.nspname in ('public','auth','storage','supabase_migrations')
   and not exists(select 1 from pg_depend d where d.classid='pg_proc'::regclass and d.objid=p.oid and d.deptype='e')) x),
 'table_acl', (select coalesce(json_agg(x order by x.schema,x.name),'[]') from
- (select n.nspname as schema,c.relname as name,c.relacl::text as acl from pg_class c join pg_namespace n on n.oid=c.relnamespace
+ (select n.nspname as schema,c.relname as name,c.relacl::text as acl,pg_get_userbyid(c.relowner) as owner from pg_class c join pg_namespace n on n.oid=c.relnamespace
   where c.relkind in ('r','p') and n.nspname in ('public','auth','storage','supabase_migrations','extensions')) x)
 )
 """

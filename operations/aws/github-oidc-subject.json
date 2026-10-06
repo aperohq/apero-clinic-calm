@@ -4,6 +4,5 @@
     "repository_id",
     "ref",
     "job_workflow_ref"
-  ],
-  "use_immutable_subject": false
+  ]
 }

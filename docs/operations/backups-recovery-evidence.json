@@ -149,7 +149,7 @@
   "production_restored": false,
   "database_changed": false,
   "paid_call": false,
-  "backup_status": "NOT_LAUNCH_READY",
+  "backup_status": "CREDENTIAL_DEPENDENT_PAUSE_NOT_COMPLETE",
   "blockers": [
     "AWS bucket/roles not provisioned or accessible",
     "DB password/CA and remaining GitHub environment values missing",
@@ -162,7 +162,7 @@
   "implementation_20261006": {
     "cloudformation_validated": true,
     "actionlint_validated": true,
-    "safety_tests_passed": 23,
+    "safety_tests_passed": 24,
     "workflow_files": [
       "production-backups.yml",
       "retell-recovery.yml",
@@ -198,6 +198,19 @@
     "retell_remote_snapshot": false,
     "two_custodian_key_test": false,
     "migration_plan": "migration-baseline-recovery.md",
-    "production_schema_or_history_changed": false
+    "production_schema_or_history_changed": false,
+    "oidc_jwt_subject_and_audience_verified": true,
+    "aws_sts_verified": false,
+    "preflight_run": {
+      "id": 37456410617,
+      "url": "https://github.com/aperohq/apero-clinic-calm/actions/runs/37456410617",
+      "conclusion": "failure_expected_missing_configuration",
+      "oidc_subject_step": "success",
+      "configuration_step": "failure_missing_bucket_role",
+      "aws_db_upload_steps": "skipped",
+      "cleanup": "success",
+      "visible_failure": "success"
+    },
+    "structure_query_validated_in_isolated_postgres_wasm": true
   }
 }

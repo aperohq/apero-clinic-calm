@@ -112,12 +112,18 @@ def main():
         if execute(psql,input=check.encode()).strip().splitlines()[-1]!=b'0':raise ValueError('unbound_user_rls_failed')
         # Choose one restored membership internally and check cross-clinic invisibility.
         # Suppress setup result (contains an identity) while retaining its session.
-        check="""do $$declare v uuid; begin select auth_user_id into v from profiles where revoked_at is null limit 1;
+        check="""do $$declare v uuid; c uuid; k bigint; begin
+          select auth_user_id,clinic_id into v,c from profiles where revoked_at is null limit 1;
           if v is null then raise exception 'missing representative member'; end if;
+          select count(*) into k from clients where clinic_id=c;
+          perform set_config('apero.drill.expected_clinic',c::text,false);
+          perform set_config('apero.drill.expected_clients',k::text,false);
           perform set_config('request.jwt.claims',jsonb_build_object('sub',v,'role','authenticated')::text,false); end $$;
           set role authenticated;
-          select count(*) from clients where clinic_id <> public.current_clinic_id();"""
-        if execute(psql,input=check.encode()).strip().splitlines()[-1]!=b'0':raise ValueError('clinic_isolation_failed')
+          select public.current_clinic_id()::text=current_setting('apero.drill.expected_clinic')
+            and (select count(*) from clients)=current_setting('apero.drill.expected_clients')::bigint
+            and (select count(*) from clients where clinic_id <> public.current_clinic_id())=0;"""
+        if execute(psql,input=check.encode()).strip().splitlines()[-1]!=b't':raise ValueError('clinic_isolation_failed')
         success=True
     except Exception:
         print(json.dumps({'category':'restore_drill_failed','state':'failure','patient_values_logged':False}))
