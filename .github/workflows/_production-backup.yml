@@ -1,0 +1,85 @@
+name: Restricted production backup executor
+on:
+  workflow_call:
+    inputs:
+      mode:
+        required: true
+        type: string
+permissions:
+  contents: read
+  id-token: write
+jobs:
+  execute:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    environment: production-backups
+    timeout-minutes: 45
+    concurrency:
+      group: production-backup-${{ inputs.mode }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4, verified 2026-10-06
+        with:
+          persist-credentials: false
+      - name: Verify federated subject
+        run: python3 scripts/operations/verify_oidc_subject.py
+      - name: Check configuration
+        env:
+          BACKUP_S3_BUCKET: ${{ vars.BACKUP_S3_BUCKET }}
+          BACKUP_AWS_ROLE_ARN: ${{ vars.BACKUP_AWS_ROLE_ARN }}
+          AWS_REGION: ${{ vars.BACKUP_AWS_REGION }}
+        run: |
+          python3 - <<'PY'
+          import os,sys
+          valid=bool(os.environ.get('BACKUP_S3_BUCKET') and os.environ.get('BACKUP_AWS_ROLE_ARN') and os.environ.get('AWS_REGION')=='me-south-1')
+          if not valid:
+              print('::error::Backup AWS configuration missing or invalid; see recovery runbook.')
+              sys.exit(1)
+          PY
+      - name: Install backup tools
+        run: |
+          sudo swapoff -a
+          sudo install -d /usr/share/postgresql-common/pgdg
+          curl --fail --silent --show-error https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo tee /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc >/dev/null
+          echo 'deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt noble-pgdg main' | sudo tee /etc/apt/sources.list.d/pgdg.list >/dev/null
+          sudo apt-get update -qq >/dev/null
+          sudo apt-get install -y -qq age postgresql-client-17 >/dev/null
+          python3 -m venv "$RUNNER_TEMP/apero-backup-venv"
+          "$RUNNER_TEMP/apero-backup-venv/bin/pip" install --disable-pip-version-check -r scripts/operations/requirements.txt >/dev/null
+      - name: Short-lived AWS identity
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4, verified 2026-10-06
+        with:
+          role-to-assume: ${{ vars.BACKUP_AWS_ROLE_ARN }}
+          aws-region: me-south-1
+          role-duration-seconds: 3600
+          role-session-name: apero-backup-${{ github.run_id }}
+          mask-aws-account-id: true
+      - name: Encrypted backup or freshness check
+        env:
+          BACKUP_S3_BUCKET: ${{ vars.BACKUP_S3_BUCKET }}
+          AGE_RECIPIENTS: ${{ vars.BACKUP_AGE_RECIPIENTS }}
+          PGHOST: ${{ vars.BACKUP_DB_HOST }}
+          PGPORT: ${{ vars.BACKUP_DB_PORT }}
+          PGDATABASE: ${{ vars.BACKUP_DB_NAME }}
+          PGUSER: ${{ vars.BACKUP_DB_USER }}
+          BACKUP_DB_PASSWORD: ${{ secrets.BACKUP_DB_PASSWORD }}
+          BACKUP_DB_CA_CERT: ${{ secrets.BACKUP_DB_CA_CERT }}
+          RETELL_API_KEY: ${{ secrets.BACKUP_RETELL_API_KEY }}
+          BACKUP_MODE: ${{ inputs.mode }}
+        run: |
+          ulimit -c 0
+          export PATH="/usr/lib/postgresql/17/bin:$PATH"
+          "$RUNNER_TEMP/apero-backup-venv/bin/python" scripts/operations/ci_backup.py --mode "$BACKUP_MODE"
+      - name: Remove temporary backup credentials and ciphertext
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import os,pathlib,shutil
+          for base in [pathlib.Path('/dev/shm'), pathlib.Path(os.environ['RUNNER_TEMP'])]:
+              for path in base.glob('apero-backup-*'):
+                  if path.is_dir() and not path.is_symlink(): shutil.rmtree(path)
+          PY
+      - name: Visible operational failure
+        if: failure()
+        run: |
+          echo '::error::Critical backup failure: inspect safe stage results and the recovery checklist. No successful backup is implied.'

@@ -23,6 +23,33 @@ def api(path):
         return json.load(response)
 
 
+def capture(agent_ids):
+    result = {'captured_at': dt.datetime.now(dt.timezone.utc).isoformat(),
+              'agents': [], 'flows': {}, 'knowledge_bases': {},
+              'limitations': ['Current/published versions only; capture each release to preserve history',
+                  'KB source bytes, custom voice source audio, call recordings, SIP/provider credentials excluded']}
+    for agent_id in agent_ids:
+        if not re.fullmatch(r'agent_[a-zA-Z0-9]+', agent_id):
+            raise ValueError('invalid_agent_id')
+        for selector in ('latest', 'latest_published'):
+            agent = api('get-agent/' + agent_id + '?version=' + selector)
+            result['agents'].append(agent)
+            engine = agent['response_engine']
+            flow_id = engine.get('conversation_flow_id')
+            if flow_id:
+                if not re.fullmatch(r'conversation_flow_[a-zA-Z0-9]+', flow_id):
+                    raise ValueError('invalid_flow_id')
+                version = int(engine['version'])
+                key = flow_id + ':' + str(version)
+                flow = api('get-conversation-flow/' + flow_id + '?version=' + str(version))
+                result['flows'][key] = flow
+                for kb_id in flow.get('knowledge_base_ids', []):
+                    if not re.fullmatch(r'knowledge_base_[a-zA-Z0-9]+', kb_id):
+                        raise ValueError('invalid_kb_id')
+                    result['knowledge_bases'][kb_id] = api('get-knowledge-base/' + kb_id)
+    return result
+
+
 def main():
     os.umask(0o077)
     parser = argparse.ArgumentParser(description=__doc__)
@@ -41,29 +68,7 @@ def main():
         recipients = [x.strip() for x in args.recipients.read_text().splitlines() if x.strip() and not x.startswith('#')]
         if not recipients or any(not x.startswith('age1') for x in recipients):
             raise ValueError('public_recipients_required')
-        result = {'captured_at': dt.datetime.now(dt.timezone.utc).isoformat(),
-                  'agents': [], 'flows': {}, 'knowledge_bases': {},
-                  'limitations': ['Current/published versions only; capture each release to preserve history',
-                      'KB source bytes, custom voice source audio, call recordings, SIP/provider credentials excluded']}
-        for agent_id in args.agent:
-            if not re.fullmatch(r'agent_[a-zA-Z0-9]+', agent_id):
-                raise ValueError('invalid_agent_id')
-            for selector in ('latest', 'latest_published'):
-                agent = api('get-agent/' + agent_id + '?version=' + selector)
-                result['agents'].append(agent)
-                engine = agent['response_engine']
-                flow_id = engine.get('conversation_flow_id')
-                if flow_id:
-                    if not re.fullmatch(r'conversation_flow_[a-zA-Z0-9]+', flow_id):
-                        raise ValueError('invalid_flow_id')
-                    version = int(engine['version'])
-                    key = flow_id + ':' + str(version)
-                    flow = api('get-conversation-flow/' + flow_id + '?version=' + str(version))
-                    result['flows'][key] = flow
-                    for kb_id in flow.get('knowledge_base_ids', []):
-                        if not re.fullmatch(r'knowledge_base_[a-zA-Z0-9]+', kb_id):
-                            raise ValueError('invalid_kb_id')
-                        result['knowledge_bases'][kb_id] = api('get-knowledge-base/' + kb_id)
+        result = capture(args.agent)
         output = args.destination / ('retell-' + dt.datetime.now(dt.timezone.utc).strftime('%Y%m%dT%H%M%SZ') + '-' + uuid.uuid4().hex + '.json.age')
         with output.open('xb') as target:
             completed = subprocess.run(['age', '-R', str(args.recipients)],

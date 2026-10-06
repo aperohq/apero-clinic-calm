@@ -1,0 +1,9 @@
+{
+  "use_default": false,
+  "include_claim_keys": [
+    "repository_id",
+    "ref",
+    "job_workflow_ref"
+  ],
+  "use_immutable_subject": false
+}

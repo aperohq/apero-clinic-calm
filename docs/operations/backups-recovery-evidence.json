@@ -140,24 +140,64 @@
   "independent_destination": null,
   "encrypted_production_backup_created": false,
   "selected_design": {
-    "platform": "verify daily; recommend approved 7-day PITR",
-    "independent": "hourly encrypted logical export plus verified offsite upload; not activated",
-    "retell": "nightly and before/after publish; not activated",
-    "retention": "hourly 48h / daily 35d / weekly 12w / monthly 12m"
+    "platform": "API rechecked: PITR off, no listed backups; dashboard plan/recovery-point verification needed",
+    "independent": "GitHub hourly :17 UTC; age+SSE-S3 Bahrain; ciphertext read-back verified by code, no live successful run yet",
+    "retell": "nightly 00:37 UTC + manual before/after publish; no live successful snapshot yet",
+    "retention": "hourly 48h / daily 35d / weekly 84d / monthly at least 12 calendar months (366d)"
   },
-  "user_storage_preference": "dedicated private S3-compatible bucket after requirements review; provider/account/region/runner unresolved",
+  "user_storage_preference": "AWS S3 Bahrain me-south-1, dedicated bucket, GitHub Actions hourly; approved",
   "production_restored": false,
   "database_changed": false,
   "paid_call": false,
   "backup_status": "NOT_LAUNCH_READY",
   "blockers": [
-    "no verified platform recovery point",
-    "destination/runner not provisioned",
-    "DB login/TLS and age key custody missing",
-    "first encrypted offsite set and full Auth logical restore drill missing",
-    "platform settings/secrets escrow unverified",
-    "exact Retell/source assets not archived",
-    "migration baseline/history incomplete",
-    "backup freshness/incident coverage unassigned"
-  ]
+    "AWS bucket/roles not provisioned or accessible",
+    "DB password/CA and remaining GitHub environment values missing",
+    "recovery recipients/custodian custody/key tests missing",
+    "first real S3 encrypted DB set and real isolated restore drill missing",
+    "first Retell config snapshot and original KB/voice custody missing",
+    "platform plan/recovery point unverified; PITR spending decision separate"
+  ],
+  "rechecked_date": "2026-10-06",
+  "implementation_20261006": {
+    "cloudformation_validated": true,
+    "actionlint_validated": true,
+    "safety_tests_passed": 23,
+    "workflow_files": [
+      "production-backups.yml",
+      "retell-recovery.yml",
+      "backup-freshness.yml",
+      "_production-backup.yml"
+    ],
+    "github_environment": "production-backups",
+    "environment_created": true,
+    "deployment_branch": "main",
+    "oidc_claim_keys": [
+      "repository_id",
+      "ref",
+      "job_workflow_ref"
+    ],
+    "oidc_jwt_and_sts_verified": false,
+    "nonsecret_defaults_set": [
+      "BACKUP_AWS_REGION",
+      "BACKUP_DB_PORT",
+      "BACKUP_DB_NAME"
+    ],
+    "aws_bucket_verified": false,
+    "iam_roles_provisioned": false,
+    "s3_retention_days": {
+      "hourly": 2,
+      "daily": 35,
+      "weekly": 84,
+      "monthly": 366
+    },
+    "noncurrent_days": 1,
+    "object_lock_respects_original_retention": true,
+    "first_real_backup": false,
+    "real_restore_drill": false,
+    "retell_remote_snapshot": false,
+    "two_custodian_key_test": false,
+    "migration_plan": "migration-baseline-recovery.md",
+    "production_schema_or_history_changed": false
+  }
 }

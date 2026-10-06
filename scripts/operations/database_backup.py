@@ -62,7 +62,7 @@ def digest(path):
     return result.hexdigest()
 
 
-def backup(destination, recipients):
+def backup(destination, recipients, snapshot=None, snapshot_catalog=None):
     for tool in ('pg_dump', 'pg_dumpall', 'pg_restore', 'psql', 'age'):
         if shutil.which(tool) is None:
             raise ValueError('missing_tool')
@@ -112,6 +112,8 @@ def backup(destination, recipients):
     try:
         archive = pending / 'database.dump.age'
         dump = ['pg_dump', '--format=custom', '--compress=6', '--no-password', '--lock-wait-timeout=60s']
+        if snapshot:
+            dump += ['--snapshot', snapshot]
         for schema in SCHEMAS:
             dump += ['--schema', schema]
         # Vault values / decrypted view excluded by positive schema allowlist.
@@ -124,7 +126,7 @@ def backup(destination, recipients):
         manifest = {'format_version': 1, 'started_at': started.isoformat(),
                     'completed_at': dt.datetime.now(dt.timezone.utc).isoformat(),
                     'schemas': SCHEMAS, 'files': files, 'catalog': catalog,
-                    'dump_format': 'pg_dump custom', 'encryption': 'age',
+                    'snapshot_catalog': snapshot_catalog, 'dump_format': 'pg_dump custom', 'encryption': 'age',
                     'archive_validated': False, 'restore_tested': False,
                     'scope': 'database + password-free role definitions; no object bytes or platform secrets'}
         with (pending / 'manifest.json').open('x') as file:

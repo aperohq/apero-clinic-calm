@@ -2,11 +2,15 @@
 
 Use [the full runbook](backups-and-recovery.md) and [existing monitoring](dental-zone-monitoring.md). **Current status: not launch-ready; no verified production recovery point/offsite set.** No incident command here authorizes an unreviewed production restore.
 
+## Activate the selected system
+
+Follow [AWS/GitHub setup](aws-github-backup-setup.md): deploy Bahrain CloudFormation bucket/roles, configure remaining protected environment values, verify two recovery keys, run database + Retell workflows, then execute the real isolated restore drill. GitHub environment/main-only policy and OIDC claim customization are configured; AWS/DB/key inputs are still missing. Do not mark complete from template/tests alone.
+
 ## Before opening / hourly while operating
 
 - Named Apero recovery lead and substitute assigned; both can reach platform settings and restricted backup receipts, and one can reach independent recovery keys.
 - Managed recovery point/window verified, PITR status known, independent final remote success within 75 minutes. Confirm scheduler/watcher are running, not just absence of errors.
-- Check export, hash/decryption/archive verification, upload/read-back and last full restore drill. Writer success alone is insufficient. First missing/failed check is critical.
+- Check GitHub Actions → Production database backups / Retell recovery snapshots / Backup freshness monitor; final remote-success summary and source timestamp must be current. Check export, hash/decryption/archive verification, upload/read-back and last full restore drill. Writer success alone is insufficient. First missing/failed check is critical.
 - No planned migration/config release without a verified fresh backup and pre-change config capture.
 - If failed/stale: open incident, retain last good set, stop destructive releases, notify named Apero technical lead through established human process. No patient values in notes.
 
@@ -40,3 +44,7 @@ Use [the full runbook](backups-and-recovery.md) and [existing monitoring](dental
 - Verify transfers and webhook events; keep per-clinic transfer enablement at its approved value.
 - Test synthetic tools/tenant isolation, review/publish, then reconnect authorized telephony. Current Retell number inventory is empty.
 - Config restoration does not recover provider-only recording bytes; follow existing patient-data policy.
+
+## Retell publication gate
+
+Run `retell-recovery.yml` manually on main with before-publication; wait for verified S3 success. Publish through the existing reviewed deployment process. Run again with after-publication and confirm version/receipt. Preserve original approved KB and voice assets separately; never snapshot recordings/transcripts as configuration.

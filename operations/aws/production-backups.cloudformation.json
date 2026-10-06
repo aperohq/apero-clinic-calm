@@ -1,0 +1,430 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Apero private production backups. Deploy ONLY in me-south-1; retain bucket on stack deletion.",
+  "Parameters": {
+    "GitHubOidcProviderArn": {
+      "Type": "String",
+      "Description": "Existing account OIDC provider ARN for token.actions.githubusercontent.com"
+    },
+    "RecoveryPrincipalArn": {
+      "Type": "String",
+      "Description": "Designated existing MFA-protected recovery/Identity Center role ARN; never clinic role"
+    }
+  },
+  "Rules": {
+    "BahrainOnly": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Equals": [
+              {
+                "Ref": "AWS::Region"
+              },
+              "me-south-1"
+            ]
+          },
+          "AssertDescription": "Deploy only in Bahrain me-south-1"
+        }
+      ]
+    }
+  },
+  "Resources": {
+    "BackupBucket": {
+      "Type": "AWS::S3::Bucket",
+      "DeletionPolicy": "Retain",
+      "UpdateReplacePolicy": "Retain",
+      "Properties": {
+        "BucketName": {
+          "Fn::Sub": "apero-production-backups-${AWS::AccountId}-me-south-1"
+        },
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "IgnorePublicAcls": true,
+          "BlockPublicPolicy": true,
+          "RestrictPublicBuckets": true
+        },
+        "OwnershipControls": {
+          "Rules": [
+            {
+              "ObjectOwnership": "BucketOwnerEnforced"
+            }
+          ]
+        },
+        "VersioningConfiguration": {
+          "Status": "Enabled"
+        },
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256"
+              }
+            }
+          ]
+        },
+        "ObjectLockEnabled": true,
+        "ObjectLockConfiguration": {
+          "ObjectLockEnabled": "Enabled"
+        },
+        "LifecycleConfiguration": {
+          "Rules": [
+            {
+              "Id": "hourly-retention",
+              "Status": "Enabled",
+              "Prefix": "hourly/",
+              "ExpirationInDays": 2,
+              "NoncurrentVersionExpiration": {
+                "NoncurrentDays": 1
+              },
+              "AbortIncompleteMultipartUpload": {
+                "DaysAfterInitiation": 1
+              }
+            },
+            {
+              "Id": "daily-retention",
+              "Status": "Enabled",
+              "Prefix": "daily/",
+              "ExpirationInDays": 35,
+              "NoncurrentVersionExpiration": {
+                "NoncurrentDays": 1
+              },
+              "AbortIncompleteMultipartUpload": {
+                "DaysAfterInitiation": 1
+              }
+            },
+            {
+              "Id": "weekly-retention",
+              "Status": "Enabled",
+              "Prefix": "weekly/",
+              "ExpirationInDays": 84,
+              "NoncurrentVersionExpiration": {
+                "NoncurrentDays": 1
+              },
+              "AbortIncompleteMultipartUpload": {
+                "DaysAfterInitiation": 1
+              }
+            },
+            {
+              "Id": "monthly-retention",
+              "Status": "Enabled",
+              "Prefix": "monthly/",
+              "ExpirationInDays": 366,
+              "NoncurrentVersionExpiration": {
+                "NoncurrentDays": 1
+              },
+              "AbortIncompleteMultipartUpload": {
+                "DaysAfterInitiation": 1
+              }
+            },
+            {
+              "Id": "expired-delete-markers",
+              "Status": "Enabled",
+              "Prefix": "",
+              "ExpiredObjectDeleteMarker": true
+            }
+          ]
+        },
+        "Tags": [
+          {
+            "Key": "purpose",
+            "Value": "apero-production-backups"
+          }
+        ]
+      }
+    },
+    "BackupWriter": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "MaxSessionDuration": 3600,
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Federated": {
+                  "Ref": "GitHubOidcProviderArn"
+                }
+              },
+              "Action": "sts:AssumeRoleWithWebIdentity",
+              "Condition": {
+                "StringEquals": {
+                  "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
+                  "token.actions.githubusercontent.com:sub": "repository_id:1373129122:ref:refs/heads/main:job_workflow_ref:aperohq/apero-clinic-calm/.github/workflows/_production-backup.yml@refs/heads/main"
+                }
+              }
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "AperoBackupWriteAndVerify",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "s3:GetBucketLocation",
+                    "s3:GetBucketPublicAccessBlock",
+                    "s3:GetBucketPolicyStatus",
+                    "s3:GetBucketPolicy",
+                    "s3:GetBucketVersioning",
+                    "s3:GetEncryptionConfiguration",
+                    "s3:GetLifecycleConfiguration",
+                    "s3:GetBucketObjectLockConfiguration"
+                  ],
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "BackupBucket",
+                      "Arn"
+                    ]
+                  }
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "s3:ListBucket"
+                  ],
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "BackupBucket",
+                      "Arn"
+                    ]
+                  },
+                  "Condition": {
+                    "StringLike": {
+                      "s3:prefix": [
+                        "hourly/*",
+                        "daily/*",
+                        "weekly/*",
+                        "monthly/*"
+                      ]
+                    }
+                  }
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "s3:PutObject",
+                    "s3:PutObjectRetention",
+                    "s3:GetObject",
+                    "s3:GetObjectVersion"
+                  ],
+                  "Resource": [
+                    {
+                      "Fn::Sub": "${BackupBucket.Arn}/hourly/*"
+                    },
+                    {
+                      "Fn::Sub": "${BackupBucket.Arn}/daily/*"
+                    },
+                    {
+                      "Fn::Sub": "${BackupBucket.Arn}/weekly/*"
+                    },
+                    {
+                      "Fn::Sub": "${BackupBucket.Arn}/monthly/*"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "RecoveryOperator": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "MaxSessionDuration": 3600,
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Ref": "RecoveryPrincipalArn"
+                }
+              },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "AperoRecoveryReadOnly",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "s3:GetBucketLocation",
+                    "s3:GetBucketPublicAccessBlock",
+                    "s3:GetBucketPolicyStatus",
+                    "s3:GetBucketPolicy",
+                    "s3:GetBucketVersioning",
+                    "s3:GetEncryptionConfiguration",
+                    "s3:GetLifecycleConfiguration",
+                    "s3:GetBucketObjectLockConfiguration",
+                    "s3:ListBucket",
+                    "s3:ListBucketVersions"
+                  ],
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "BackupBucket",
+                      "Arn"
+                    ]
+                  }
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "s3:GetObject",
+                    "s3:GetObjectVersion"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": "${BackupBucket.Arn}/*"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "BackupBucketPolicy": {
+      "Type": "AWS::S3::BucketPolicy",
+      "Properties": {
+        "Bucket": {
+          "Ref": "BackupBucket"
+        },
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "TLSOnly",
+              "Effect": "Deny",
+              "Principal": "*",
+              "Action": "s3:*",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "BackupBucket",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Sub": "${BackupBucket.Arn}/*"
+                }
+              ],
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false"
+                }
+              }
+            },
+            {
+              "Sid": "OnlyWriterAndRecoveryCanAccessObjects",
+              "Effect": "Deny",
+              "Principal": "*",
+              "Action": [
+                "s3:GetObject",
+                "s3:GetObjectVersion",
+                "s3:PutObject",
+                "s3:DeleteObject",
+                "s3:DeleteObjectVersion",
+                "s3:PutObjectRetention",
+                "s3:BypassGovernanceRetention"
+              ],
+              "Resource": {
+                "Fn::Sub": "${BackupBucket.Arn}/*"
+              },
+              "Condition": {
+                "ArnNotEquals": {
+                  "aws:PrincipalArn": [
+                    {
+                      "Fn::GetAtt": [
+                        "BackupWriter",
+                        "Arn"
+                      ]
+                    },
+                    {
+                      "Fn::GetAtt": [
+                        "RecoveryOperator",
+                        "Arn"
+                      ]
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "Sid": "RequireSSES3",
+              "Effect": "Deny",
+              "Principal": "*",
+              "Action": "s3:PutObject",
+              "Resource": {
+                "Fn::Sub": "${BackupBucket.Arn}/*"
+              },
+              "Condition": {
+                "StringNotEquals": {
+                  "s3:x-amz-server-side-encryption": "AES256"
+                }
+              }
+            },
+            {
+              "Sid": "RequireGovernanceLock",
+              "Effect": "Deny",
+              "Principal": "*",
+              "Action": "s3:PutObject",
+              "Resource": {
+                "Fn::Sub": "${BackupBucket.Arn}/*"
+              },
+              "Condition": {
+                "StringNotEquals": {
+                  "s3:object-lock-mode": "GOVERNANCE"
+                }
+              }
+            },
+            {
+              "Sid": "DenyUnencryptedFileNames",
+              "Effect": "Deny",
+              "Principal": "*",
+              "Action": "s3:PutObject",
+              "NotResource": {
+                "Fn::Sub": "${BackupBucket.Arn}/*.age"
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  "Outputs": {
+    "BucketName": {
+      "Value": {
+        "Ref": "BackupBucket"
+      }
+    },
+    "BackupWriterRoleArn": {
+      "Value": {
+        "Fn::GetAtt": [
+          "BackupWriter",
+          "Arn"
+        ]
+      }
+    },
+    "RecoveryOperatorRoleArn": {
+      "Value": {
+        "Fn::GetAtt": [
+          "RecoveryOperator",
+          "Arn"
+        ]
+      }
+    },
+    "GitHubOidcSubject": {
+      "Value": "repository_id:1373129122:ref:refs/heads/main:job_workflow_ref:aperohq/apero-clinic-calm/.github/workflows/_production-backup.yml@refs/heads/main"
+    }
+  }
+}

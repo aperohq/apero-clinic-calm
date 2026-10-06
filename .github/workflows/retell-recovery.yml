@@ -1,0 +1,22 @@
+name: Retell recovery snapshots
+run-name: Retell recovery (${{ inputs.publication_stage || 'nightly' }})
+on:
+  schedule:
+    - cron: '37 0 * * *'
+  workflow_dispatch:
+    inputs:
+      publication_stage:
+        description: 'nightly, before-publication, or after-publication'
+        type: choice
+        options: [nightly, before-publication, after-publication]
+        default: nightly
+permissions:
+  contents: read
+  id-token: write
+jobs:
+  snapshot:
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/_production-backup.yml
+    with:
+      mode: retell
+    secrets: inherit
