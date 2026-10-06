@@ -1,0 +1,33 @@
+name: Retention provider reconciliation
+on:
+  schedule:
+    - cron: "40 * * * *"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  provider:
+    if: vars.RETENTION_PROVIDER_ENABLED == 'true'
+    environment: production-retention
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    concurrency:
+      group: retention-provider
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: "22"
+      - name: Process verified tenant-scoped provider queue
+        env:
+          RETENTION_WORKER_KEY: ${{ secrets.RETENTION_WORKER_KEY }}
+          RETENTION_CLINIC_IDS: ${{ vars.RETENTION_CLINIC_IDS }}
+        run: node scripts/retention/run-provider.mjs
+  disabled:
+    if: vars.RETENTION_PROVIDER_ENABLED != 'true'
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo 'Retention provider processing disabled pending policy and custody approval.'

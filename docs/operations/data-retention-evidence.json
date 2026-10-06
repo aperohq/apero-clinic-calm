@@ -1,0 +1,178 @@
+{
+  "status": "DRY_RUN_DEPLOYED_POLICY_APPROVAL_REQUIRED",
+  "deployment": {
+    "checked_at": "2026-10-06T17:49:31.220Z",
+    "phase": "deploy",
+    "patient_deletion_enabled": false,
+    "before": [
+      {
+        "clients": 8,
+        "appointments": 11,
+        "conversations": 29,
+        "requests": 0
+      }
+    ],
+    "migrations": [
+      {
+        "source_version": "20261006160000",
+        "deployed_version": "20261006174935",
+        "sha256": "682006dfc0f7a05e5a8330867573f12f8aaa6b02a441173861e65169c558a0ee"
+      },
+      {
+        "source_version": "20261006161000",
+        "deployed_version": "20261006174939",
+        "sha256": "cf759734e40f50c28bef22fb6e6cbdac906aacbf8c8b467d6ca64656eba7d7d9"
+      },
+      {
+        "source_version": "20261006162000",
+        "deployed_version": "20261006174942",
+        "sha256": "f9df315b11ee6d62d9dfd33d84c9b3d40de07f496cc69d26ab9199ae4f4acb84"
+      }
+    ],
+    "function": {
+      "version": 1,
+      "status": "ACTIVE",
+      "verify_jwt": false
+    },
+    "after": [
+      {
+        "clients": 8,
+        "appointments": 11,
+        "conversations": 29,
+        "requests": 0
+      }
+    ],
+    "control": [
+      {
+        "mode": "dry_run",
+        "approved_at": null,
+        "restore_ledger_ready": false
+      }
+    ],
+    "cron": [
+      {
+        "jobname": "apero-retention-daily",
+        "schedule": "23 2 * * *",
+        "command": "select public.retention_daily()",
+        "active": true
+      }
+    ]
+  },
+  "production_dry_run": {
+    "checked_at": "2026-10-06T17:50:33.195Z",
+    "phase": "dry-run",
+    "patient_deletion_enabled": false,
+    "runs": [
+      {
+        "category": "expired_slot",
+        "mode": "dry_run",
+        "state": "success",
+        "processed": 88
+      },
+      {
+        "category": "run",
+        "mode": "dry_run",
+        "state": "success",
+        "processed": 0
+      }
+    ],
+    "counts": [
+      {
+        "category": "expired_slot",
+        "eligible": 88
+      }
+    ],
+    "inventory": [
+      {
+        "clients": 8,
+        "appointments": 11,
+        "conversations": 29,
+        "requests": 0,
+        "operations": 1,
+        "checked_slots": 88,
+        "call_states": 6
+      }
+    ],
+    "protected": [
+      {
+        "future_appointments": 0,
+        "unresolved_requests": 0,
+        "past_booked_review": 10,
+        "provider_jobs": 0,
+        "deletion_intents": 0
+      }
+    ],
+    "authentication_probe": 401
+  },
+  "retell_read_only_inventory": {
+    "total_calls": 30,
+    "calls_over_30_days": 0,
+    "calls_with_recording_reference": 30,
+    "paid_calls_made": 0,
+    "calls_deleted": 0,
+    "native_retention_changed": false
+  },
+  "validation": {
+    "node_synthetic_tests_passed": 32,
+    "python_custody_tests_passed": 4,
+    "python_backup_regression_tests_passed": 22,
+    "edge_bundle": "PASS",
+    "workflow_actionlint": "PASS",
+    "unauthenticated_worker_http_status": 401,
+    "live_provider_deletion_test": "NOT_RUN",
+    "real_custody_restore_test": "PENDING_INFRASTRUCTURE"
+  },
+  "activation": {
+    "destructive_database_cleanup": false,
+    "provider_deletion": false,
+    "native_retell_retention_configured": false,
+    "encrypted_ledger_custody_verified": false,
+    "backup_schedule_changed": false,
+    "github_retention_variables_present": 0
+  },
+  "eligible_categories": {
+    "call_content": 0,
+    "retell_call": 0,
+    "call_metadata": 0,
+    "appointment": 0,
+    "client_contact": 0,
+    "client_shell": 0,
+    "note": 0,
+    "closed_request": 0,
+    "operation": 0,
+    "call_state": 0,
+    "notification": 0,
+    "revoked_user": 0,
+    "invitation": 0,
+    "staff_contact": 0,
+    "staff_record": 0,
+    "staff_time_off": 0,
+    "provider_receipt": 0,
+    "expired_slot": 88
+  },
+  "release_files": [
+    "docs/operations/data-retention.md",
+    "docs/operations/data-retention-evidence.json",
+    "operations/retention/policy.json",
+    "operations/retention/schedule.sql",
+    "supabase/migrations/20261006160000_data_retention.sql",
+    "supabase/migrations/20261006161000_retention_lifecycle.sql",
+    "supabase/migrations/20261006162000_retention_daily_schedule.sql",
+    "supabase/functions/retention-worker/core.mjs",
+    "supabase/functions/retention-worker/index.ts",
+    "supabase/functions/retention-worker/deno.json",
+    "supabase/config.toml",
+    "tests/data-retention.test.mjs",
+    "tests/test_retention_custody.py",
+    "scripts/retention/export-ledger.py",
+    "scripts/retention/run-provider.mjs",
+    "scripts/operations/database_backup.py",
+    ".github/workflows/data-retention.yml",
+    "package.json"
+  ],
+  "worker_source_sha256": {
+    "supabase/functions/retention-worker/core.mjs": "4ad2b8628508722853913529bd7bd2be51d3893440c6e59e08f9041a840a6f49",
+    "supabase/functions/retention-worker/index.ts": "e854c42485f4cbbe9630932354c07afb4b644f1fb40f6a7dd7ad1e37fbcfa24b",
+    "supabase/functions/retention-worker/deno.json": "e7b124aa46c5a51cafca9268fcd14d14a6ec8e9f4bb41ff239315da41c2a3bb7"
+  }
+}

@@ -32,7 +32,8 @@
     "test:unknown-answer": "node --max-old-space-size=384 tests/unknown-answer.test.mjs && node retell/master/tests/edge-isolation.test.mjs && python3 -m unittest discover -s tests -p test_unknown_flow.py",
     "test:human-escalation": "node --max-old-space-size=384 tests/human-escalation.test.mjs && node retell/master/tests/edge-isolation.test.mjs && python3 -m unittest discover -s tests -p test_human_flow.py",
     "test:call-transfer": "node --max-old-space-size=384 tests/call-transfer.test.mjs && node retell/master/tests/edge-isolation.test.mjs && python3 -m unittest discover -s tests -p test_transfer_flow.py",
-    "test:system-downtime": "node --max-old-space-size=384 tests/system-downtime.test.mjs && node retell/master/tests/edge-isolation.test.mjs && python3 -m unittest discover -s tests -p test_downtime_flow.py"
+    "test:system-downtime": "node --max-old-space-size=384 tests/system-downtime.test.mjs && node retell/master/tests/edge-isolation.test.mjs && python3 -m unittest discover -s tests -p test_downtime_flow.py",
+    "test:retention": "node --max-old-space-size=512 tests/data-retention.test.mjs && python3 -m unittest discover -s tests -p test_retention_custody.py"
   },
   "overrides": {
     "rolldown": "1.2.1"

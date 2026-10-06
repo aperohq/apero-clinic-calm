@@ -17,6 +17,10 @@ import uuid
 
 SCHEMAS = ('public', 'auth', 'storage', 'supabase_migrations', 'extensions')
 
+def retention_cron_is_safe(jobs):
+    return jobs == [{'name':'apero-retention-daily','schedule':'23 2 * * *',
+        'command':'select public.retention_daily()','active':True}]
+
 
 def event(state):
     print(json.dumps({'timestamp': dt.datetime.now(dt.timezone.utc).isoformat(),
@@ -103,7 +107,17 @@ def backup(destination, recipients, snapshot=None, snapshot_catalog=None):
         raise ValueError('catalog_preflight_failed')
     catalog = json.loads(preflight.stdout)
     allowed = set(SCHEMAS) | {'realtime', 'vault'}
-    if set(catalog['schemas']) - allowed or catalog['vault_count'] or set(catalog['extensions']) & {'pg_cron','pg_net','wrappers','pgsodium'}:
+    if 'pg_cron' in catalog['extensions']:
+        # Retention adds one fixed SQL-only job. Never allow arbitrary cron
+        # commands, HTTP jobs or credentials to silently escape recovery scope.
+        cron_query = "select coalesce(json_agg(json_build_object('name',jobname,'schedule',schedule,'command',command,'active',active)), '[]') from cron.job"
+        cron = subprocess.run(['psql','--no-password','-X','-A','-t','-v','ON_ERROR_STOP=1','-c',cron_query],
+            stdout=subprocess.PIPE,stderr=subprocess.DEVNULL)
+        if cron.returncode or not retention_cron_is_safe(json.loads(cron.stdout)):
+            raise ValueError('cron_scope_review_required')
+        allowed.add('cron')
+        catalog['retention_cron_recovery'] = 'operations/retention/schedule.sql'
+    if set(catalog['schemas']) - allowed or catalog['vault_count'] or set(catalog['extensions']) & {'pg_net','wrappers','pgsodium'}:
         raise ValueError('scope_review_required')
     started = dt.datetime.now(dt.timezone.utc)
     name = started.strftime('%Y%m%dT%H%M%SZ') + '-' + uuid.uuid4().hex

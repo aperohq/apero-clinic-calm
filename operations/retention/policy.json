@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "status": "PROPOSED_APPROVAL_REQUIRED",
+  "timezone": "UTC",
+  "daily_cron": "23 2 * * *",
+  "batch_per_category": 100,
+  "defaults": {
+    "call_content_days": 30,
+    "retell_call_days": 30,
+    "call_metadata_days": 365,
+    "appointment_days": 730,
+    "client_inactivity_days": 730,
+    "note_days": 365,
+    "closed_request_days": 90,
+    "operation_days": 30,
+    "call_state_days": 30,
+    "expired_slot_days": 1,
+    "notification_days": 30,
+    "revoked_user_days": 90,
+    "invitation_days": 30,
+    "audit_days": 365,
+    "offboarding_grace_days": 30,
+    "tombstone_min_days": 400,
+    "staff_contact_days": 180,
+    "staff_record_days": 730
+  },
+  "native_logs": {
+    "operational_target_days": 30,
+    "security_target_days": 90,
+    "enforcement": "PROVIDER_CONFIGURATION_REQUIRED"
+  },
+  "approval_required": true,
+  "legal_review_required": [
+    "patient_content",
+    "appointments",
+    "contacts",
+    "notes",
+    "requests",
+    "provider_copies",
+    "account_deletion",
+    "offboarding",
+    "log_lifecycle",
+    "legal_holds",
+    "backup_erasure"
+  ],
+  "backup_retention": "SEPARATE_UNCHANGED"
+}
