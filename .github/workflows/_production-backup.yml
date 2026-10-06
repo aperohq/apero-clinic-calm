@@ -2,6 +2,10 @@ name: Restricted production backup executor
 on:
   workflow_call:
     inputs:
+      setup_test:
+        description: Explicit manual setup/test override for the activation gate
+        type: boolean
+        default: false
       mode:
         required: true
         type: string
@@ -18,12 +22,38 @@ jobs:
       group: production-backup-${{ inputs.mode }}
       cancel-in-progress: false
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4, verified 2026-10-06
+      - name: Check production backup activation
+        id: activation
+        env:
+          BACKUPS_ENABLED: ${{ vars.BACKUPS_ENABLED }}
+          SETUP_TEST: ${{ github.event_name == 'workflow_dispatch' && inputs.setup_test }}
+        run: |
+          python3 - <<'PY'
+          import os
+          enabled = os.environ.get('BACKUPS_ENABLED') == 'true'
+          override = os.environ.get('SETUP_TEST') == 'true'
+          run_backup = enabled or override
+          if enabled:
+              message = 'Production backups are activated; continuing to execution and verification.'
+          elif override:
+              message = 'Manual setup/test override: scheduled production backups remain disabled. Continuing to execution and verification.'
+          else:
+              message = 'Production backups are not yet activated. No backup or freshness verification was performed; this is not a backup success. Set BACKUPS_ENABLED=true after production setup is complete.'
+          print(message)
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write('run_backup=' + str(run_backup).lower() + '\n')
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as summary:
+              summary.write(message + '\n')
+          PY
+      - if: steps.activation.outputs.run_backup == 'true'
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4, verified 2026-10-06
         with:
           persist-credentials: false
       - name: Verify federated subject
+        if: steps.activation.outputs.run_backup == 'true'
         run: python3 scripts/operations/verify_oidc_subject.py
       - name: Check configuration
+        if: steps.activation.outputs.run_backup == 'true'
         env:
           BACKUP_S3_BUCKET: ${{ vars.BACKUP_S3_BUCKET }}
           BACKUP_AWS_ROLE_ARN: ${{ vars.BACKUP_AWS_ROLE_ARN }}
@@ -37,6 +67,7 @@ jobs:
               sys.exit(1)
           PY
       - name: Install backup tools
+        if: steps.activation.outputs.run_backup == 'true'
         run: |
           sudo swapoff -a
           sudo install -d /usr/share/postgresql-common/pgdg
@@ -47,6 +78,7 @@ jobs:
           python3 -m venv "$RUNNER_TEMP/apero-backup-venv"
           "$RUNNER_TEMP/apero-backup-venv/bin/pip" install --disable-pip-version-check -r scripts/operations/requirements.txt >/dev/null
       - name: Short-lived AWS identity
+        if: steps.activation.outputs.run_backup == 'true'
         uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4, verified 2026-10-06
         with:
           role-to-assume: ${{ vars.BACKUP_AWS_ROLE_ARN }}
@@ -55,6 +87,7 @@ jobs:
           role-session-name: apero-backup-${{ github.run_id }}
           mask-aws-account-id: true
       - name: Encrypted backup or freshness check
+        if: steps.activation.outputs.run_backup == 'true'
         env:
           BACKUP_S3_BUCKET: ${{ vars.BACKUP_S3_BUCKET }}
           AGE_RECIPIENTS: ${{ vars.BACKUP_AGE_RECIPIENTS }}
@@ -71,7 +104,7 @@ jobs:
           export PATH="/usr/lib/postgresql/17/bin:$PATH"
           "$RUNNER_TEMP/apero-backup-venv/bin/python" scripts/operations/ci_backup.py --mode "$BACKUP_MODE"
       - name: Remove temporary backup credentials and ciphertext
-        if: always()
+        if: always() && steps.activation.outputs.run_backup == 'true'
         run: |
           python3 - <<'PY'
           import os,pathlib,shutil
@@ -80,6 +113,6 @@ jobs:
                   if path.is_dir() and not path.is_symlink(): shutil.rmtree(path)
           PY
       - name: Visible operational failure
-        if: failure()
+        if: failure() && steps.activation.outputs.run_backup == 'true'
         run: |
           echo '::error::Critical backup failure: inspect safe stage results and the recovery checklist. No successful backup is implied.'

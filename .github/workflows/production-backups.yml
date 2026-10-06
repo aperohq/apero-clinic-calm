@@ -3,6 +3,11 @@ on:
   schedule:
     - cron: '17 * * * *'
   workflow_dispatch:
+    inputs:
+      setup_test:
+        description: 'Explicitly run setup/testing while scheduled backups are disabled'
+        type: boolean
+        default: false
 permissions:
   contents: read
   id-token: write
@@ -11,5 +16,6 @@ jobs:
     if: github.ref == 'refs/heads/main'
     uses: ./.github/workflows/_production-backup.yml
     with:
+      setup_test: ${{ github.event_name == 'workflow_dispatch' && inputs.setup_test }}
       mode: database
     secrets: inherit

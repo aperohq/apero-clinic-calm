@@ -9,7 +9,7 @@
 1. In an Apero-owned AWS account, activate **Middle East (Bahrain)** if needed. In IAM → Identity providers, use/create `https://token.actions.githubusercontent.com`, audience `sts.amazonaws.com`. Identify an existing designated recovery/Identity Center role protected by individual MFA; it must permit `sts:AssumeRole` on the new recovery role. Clinic identities must not have it.
 2. In **CloudFormation in me-south-1**, create stack `apero-production-backups` using `operations/aws/production-backups.cloudformation.json`. Supply `GitHubOidcProviderArn` and `RecoveryPrincipalArn`; acknowledge IAM creation. The bucket name is deterministically `apero-production-backups-ACCOUNT_ID-me-south-1`. Read outputs `BucketName`, `BackupWriterRoleArn`, `RecoveryOperatorRoleArn`. Set account-level S3 Block Public Access too. Keep bucket and stack admin permissions outside the writer/recovery roles.
 3. Open the already-created GitHub environment **production-backups** (main-only branch policy already configured) and populate the remaining exact values below. Bahrain region, DB port 5432 and DB name postgres are already set. Hourly backups need unattended execution: do not require per-run human approval on this environment. Restrict repo administrators, protect main and workflow/operations files from unreviewed changes. Generate two independent age identities on the custodians' secure machines, put only their public recipients in GitHub, and confirm both can recover their keys.
-4. Run **Production database backups** manually on main, then **Retell recovery snapshots** manually. Require green runs with verified S3 version/read-back markers. Download the first verified database set with the recovery role to an approved encrypted host and run the real isolated drill below. Record evidence and key-custodian confirmation. Review the next two hourly scheduled runs and the freshness workflow before marking complete.
+4. Leave `BACKUPS_ENABLED` unset or `false` during setup. Run **Production database backups** manually on main with `setup_test=true`, then **Retell recovery snapshots** manually with the same explicit override. Require green runs with verified S3 version/read-back markers. Download the first verified database set with the recovery role to an approved encrypted host and run the real isolated drill below. Record evidence and key-custodian confirmation. After configuration and the real drill pass, set the **production-backups** environment variable `BACKUPS_ENABLED` to exactly `true`. Review the next two hourly scheduled runs and the freshness workflow before marking complete.
 
 OIDC customization and main-only environment policy are applied. A real GitHub workflow preflight verified the exact JWT subject/audience on 2026-10-06, then failed as expected at missing AWS configuration before obtaining any AWS/DB access. To reproduce the subject setting from an authorized checkout:
 
@@ -32,6 +32,7 @@ GitHub repository Settings → Environments → **production-backups** → Envir
 
 | Type | Name | Exact purpose |
 |---|---|---|
+| Variable | `BACKUPS_ENABLED` | Exactly `true` activates scheduled jobs; unset or any other value disables execution |
 | Variable | `BACKUP_AWS_REGION` | `me-south-1` |
 | Variable | `BACKUP_S3_BUCKET` | CloudFormation `BucketName` output; no URL |
 | Variable | `BACKUP_AWS_ROLE_ARN` | `BackupWriterRoleArn` output |
@@ -78,6 +79,11 @@ Every run verifies bucket region, public-access flags/policy status, versioning,
 
 ## Execution, privacy and monitoring
 
+The reusable executor checks `BACKUPS_ENABLED` **before checkout, OIDC, configuration checks, tool installation, AWS authentication or database/Retell access**. Unset, `false`, `True`, whitespace or any value other than exactly `true` produces a clean inactive run for all three workflows. Its log and job summary explicitly say production backups are not yet activated and no backup/freshness verification was performed. No upload, receipt or freshness timestamp is created. A green inactive run is **not** evidence of a successful backup.
+
+Manual dispatch remains available. Its optional `setup_test` checkbox defaults to false; explicitly selecting it permits a real setup/test execution while schedules stay disabled, and genuine execution failures still fail the run. This override is accepted only for `workflow_dispatch`. Once enabled, normal manual dispatch needs no override. To activate, use **Settings → Environments → production-backups → Environment variables → BACKUPS_ENABLED = true**. Repository variables also work if no environment value overrides them; keep one authoritative environment value. To pause execution intentionally, set it to `false`; disabled monitoring does not prove protection or freshness.
+
+
 - **Production database backups:** `17 * * * *` UTC; manual dispatch on main. Off-minute reduces queue contention. GitHub scheduling can delay; this is not a guaranteed hourly SLA.
 - **Retell recovery snapshots:** `37 0 * * *` UTC; manual before/after publish.
 - **Backup freshness monitor:** `7,37 * * * *` UTC; fails when the newest verified DB source timestamp is older than **75 minutes**, missing or future-dated. It checks both today's/yesterday's encrypted receipt metadata. Export/upload completion delay counts against freshness/RPO.
@@ -104,7 +110,7 @@ If primary is absent, backup custodian retrieves their own key and assumes the d
 
 ## Real first-backup and restore drill
 
-After configuration, manually dispatch database backup. It must produce green final remote-success summary and `hourly/database/.../receipt.json.age` with verified source timestamp. Verify bucket controls from AWS and the two recovery custodians' access. Record UTC/set/version/checksum evidence without decrypted contents. Then let two scheduled hourly jobs pass.
+After configuration, manually dispatch database backup with `setup_test=true` while schedules remain disabled. It must produce green final remote-success summary and `hourly/database/.../receipt.json.age` with verified source timestamp. Verify bucket controls from AWS and the two recovery custodians' access. Record UTC/set/version/checksum evidence without decrypted contents. Then let two scheduled hourly jobs pass.
 
 On an approved recovery host with encrypted disk, Docker, age and PostgreSQL 17 tool support, disable swap/core dumps. Assume `RecoveryOperatorRoleArn` through individual MFA/Identity Center. Retrieve the **exact verified** database bundle's three ciphertext files into a 0700 directory, not into Git or a cloud-synced home. Credentials remain in the AWS CLI/session provider chain.
 

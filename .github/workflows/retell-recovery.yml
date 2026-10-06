@@ -5,6 +5,10 @@ on:
     - cron: '37 0 * * *'
   workflow_dispatch:
     inputs:
+      setup_test:
+        description: 'Explicitly run setup/testing while scheduled backups are disabled'
+        type: boolean
+        default: false
       publication_stage:
         description: 'nightly, before-publication, or after-publication'
         type: choice
@@ -18,5 +22,6 @@ jobs:
     if: github.ref == 'refs/heads/main'
     uses: ./.github/workflows/_production-backup.yml
     with:
+      setup_test: ${{ github.event_name == 'workflow_dispatch' && inputs.setup_test }}
       mode: retell
     secrets: inherit
