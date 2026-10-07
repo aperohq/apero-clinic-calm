@@ -1,0 +1,1850 @@
+{
+  "hosted": {
+    "checkedAt": "2026-10-07T13:33:53.699Z",
+    "project": "svoybvzvmygszklcmudh",
+    "run": "fcb5ee8c-55ac-4433-a4d2-af348b698b47",
+    "paidCalls": false,
+    "results": [
+      {
+        "name": "Valid login ownerA",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Valid login managerA",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Valid login staffA",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Valid login ownerB",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Valid login ownerA2",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Invalid login",
+        "status": "PASS",
+        "http": 400
+      },
+      {
+        "name": "Cross-clinic SELECT clinics",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Anonymous SELECT clinics",
+        "status": "PASS",
+        "http": 401
+      },
+      {
+        "name": "Cross-clinic SELECT profiles",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Anonymous SELECT profiles",
+        "status": "PASS",
+        "http": 401
+      },
+      {
+        "name": "Cross-clinic SELECT clients",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Anonymous SELECT clients",
+        "status": "PASS",
+        "http": 401
+      },
+      {
+        "name": "Cross-clinic SELECT staff",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Anonymous SELECT staff",
+        "status": "PASS",
+        "http": 401
+      },
+      {
+        "name": "Cross-clinic SELECT appointments",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Anonymous SELECT appointments",
+        "status": "PASS",
+        "http": 401
+      },
+      {
+        "name": "Cross-clinic SELECT voice_requests",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Anonymous SELECT voice_requests",
+        "status": "PASS",
+        "http": 401
+      },
+      {
+        "name": "Cross-clinic SELECT notifications",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Anonymous SELECT notifications",
+        "status": "PASS",
+        "http": 401
+      },
+      {
+        "name": "Cross-clinic calls/transcripts",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Own calls/transcripts",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Legacy recording column denied",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Cross-clinic POST clients",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Cross-clinic PATCH clients",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Cross-clinic DELETE clients",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Cross-clinic POST appointments",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Cross-clinic PATCH appointments",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Cross-clinic DELETE appointments",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Cross-clinic POST staff",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Cross-clinic PATCH staff",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Cross-clinic DELETE staff",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Cross-clinic POST profiles",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Cross-clinic PATCH profiles",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Cross-clinic DELETE profiles",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Cross-clinic POST voice_requests",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Cross-clinic PATCH voice_requests",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Cross-clinic DELETE voice_requests",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Cross-clinic POST conversations",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Cross-clinic PATCH conversations",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Cross-clinic DELETE conversations",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Cross-clinic POST notifications",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Cross-clinic PATCH notifications",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Cross-clinic DELETE notifications",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Operational read owner",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Operational appointment update owner",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Practitioner management owner",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Requests permission owner",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Team directory owner",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Analytics owner",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Cross-clinic analytics owner",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Clinic settings direct owner",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Clinic settings RPC owner",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Protected profile field owner role",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Protected profile field owner clinic_id",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Protected profile field owner auth_user_id",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Protected profile field owner revoked_at",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Operational read manager",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Operational appointment update manager",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Practitioner management manager",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Requests permission manager",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Team directory manager",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Analytics manager",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Cross-clinic analytics manager",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Clinic settings direct manager",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Clinic settings RPC manager",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Protected profile field manager role",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Protected profile field manager clinic_id",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Protected profile field manager auth_user_id",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Protected profile field manager revoked_at",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Operational read staff",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Operational appointment update staff",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Practitioner management staff",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Requests permission staff",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Team directory staff",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Analytics staff",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Cross-clinic analytics staff",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Clinic settings direct staff",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Clinic settings RPC staff",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Protected profile field staff role",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Protected profile field staff clinic_id",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Protected profile field staff auth_user_id",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Protected profile field staff revoked_at",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Restricted set_clinic_member_role manager",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Restricted revoke_clinic_member manager",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Restricted invite manager",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Restricted set_clinic_member_role staff",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Restricted revoke_clinic_member staff",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Restricted invite staff",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Owner changes staff to manager",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Owner changes manager to staff",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Self promotion",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Owner cannot revoke self",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Owner cannot change owner/foreign role cbd2f9c0-4e8e-4a50-9b8e-e96fef4303c0",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Owner cannot revoke another owner",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Owner cannot change owner/foreign role d7bc3181-741c-4ccd-9385-50b8ee2fcc77",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Owner cannot revoke foreign",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Owner cannot change owner/foreign role 596307e0-4c74-4b27-b899-0ae5247e14d4",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Owner cannot create Owner",
+        "status": "PASS",
+        "http": 400
+      },
+      {
+        "name": "Cross-clinic resend",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Server-only SELECT voice_integrations",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Server-only SELECT voice_operations",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Server-only SELECT voice_call_state",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Server-only SELECT voice_checked_slots",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Server-only SELECT clinic_invitation_claims",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Server-only SELECT clinic_invitation_budgets",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Server-only SELECT clinic_retention",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Server-only SELECT clinic_offboarding",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Server-only SELECT retention_control",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Server-only SELECT retention_client_activity",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Server-only SELECT retention_deletion_ledger",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Server-only SELECT retention_provider_jobs",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Server-only SELECT retention_runs",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Recording anonymous",
+        "status": "PASS",
+        "http": 401
+      },
+      {
+        "name": "Recording invalid token",
+        "status": "PASS",
+        "http": 401
+      },
+      {
+        "name": "Recording wrong clinic substitution",
+        "status": "PASS",
+        "http": 404
+      },
+      {
+        "name": "Recording own no provider exists",
+        "status": "PASS",
+        "http": 404
+      },
+      {
+        "name": "Unauthenticated team endpoint",
+        "status": "PASS",
+        "http": 401
+      },
+      {
+        "name": "Invalid JWT data",
+        "status": "PASS",
+        "http": 401
+      },
+      {
+        "name": "Expired/tampered JWT data",
+        "status": "PASS",
+        "http": 401
+      },
+      {
+        "name": "Owner revokes staff",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Revoked retained token Auth remains valid",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Revoked existing JWT SELECT clients",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Revoked existing JWT SELECT appointments",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Revoked existing JWT SELECT staff",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Revoked existing JWT SELECT voice_requests",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Revoked existing JWT SELECT profiles",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Revoked existing JWT SELECT conversations",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Revoked existing JWT SELECT notifications",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Revoked existing JWT INSERT appointment",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Revoked existing JWT UPDATE appointment",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Revoked existing JWT recording",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Generate synthetic recovery link",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Recovery token accepted correct user",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Recovery cross-clinic read",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Recovery cannot modify foreign profile",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Recovery cannot admin-update another Auth user",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Recovery password change",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Recovery replay rejected",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Old password rejected",
+        "status": "PASS",
+        "http": 400
+      },
+      {
+        "name": "New password accepted",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Existing access JWT after password change observed",
+        "status": "PASS",
+        "http": 403,
+        "behavior": "Rejected"
+      },
+      {
+        "name": "Existing refresh after password change observed",
+        "status": "PASS",
+        "http": 400,
+        "behavior": "Revoked"
+      },
+      {
+        "name": "Forgot-password synthetic existing",
+        "status": "PASS",
+        "http": 200,
+        "mailerStatus": null
+      },
+      {
+        "name": "Forgot-password synthetic absent",
+        "status": "PASS",
+        "http": 200,
+        "mailerStatus": null
+      },
+      {
+        "name": "Logout local Supabase endpoint",
+        "status": "PASS",
+        "http": 204
+      },
+      {
+        "name": "Logout refresh rejected",
+        "status": "PASS",
+        "http": 400
+      },
+      {
+        "name": "Logout retained access JWT behavior observed",
+        "status": "PASS",
+        "http": 200,
+        "behavior": "Access JWT remains valid until expiry; application removes stored session"
+      },
+      {
+        "name": "Synthetic cleanup",
+        "status": "FAIL",
+        "errors": [
+          {
+            "table": "clinics",
+            "status": 409
+          },
+          {
+            "table": "clinic remains",
+            "status": 200
+          },
+          {
+            "table": "clinics",
+            "status": 409
+          },
+          {
+            "table": "clinic remains",
+            "status": 200
+          }
+        ]
+      }
+    ]
+  },
+  "browser": {
+    "checkedAt": "2026-10-07T13:43:11.992Z",
+    "run": "33ef5401-26dc-44ac-a04b-7db21cf7f79e",
+    "results": [
+      {
+        "name": "Published browser unauthenticated protected route",
+        "status": "PASS"
+      },
+      {
+        "name": "Published browser invalid login safe error",
+        "status": "PASS"
+      },
+      {
+        "name": "Published browser valid login",
+        "status": "PASS"
+      },
+      {
+        "name": "Published browser localStorage session",
+        "status": "PASS",
+        "storageKeys": [
+          "sb-svoybvzvmygszklcmudh-auth-token"
+        ]
+      },
+      {
+        "name": "Published browser persisted session",
+        "status": "PASS"
+      },
+      {
+        "name": "Published browser Owner team controls",
+        "status": "PASS"
+      },
+      {
+        "name": "Published browser logout redirects and removes auth storage",
+        "status": "PASS"
+      },
+      {
+        "name": "Published browser Staff team route blocked",
+        "status": "PASS"
+      },
+      {
+        "name": "Published browser Staff settings blocked",
+        "status": "PASS"
+      },
+      {
+        "name": "Published browser Manager no invite control",
+        "status": "PASS"
+      },
+      {
+        "name": "Published browser Manager settings blocked",
+        "status": "PASS"
+      },
+      {
+        "name": "Published browser recovery link and password change",
+        "status": "PASS"
+      },
+      {
+        "name": "Browser recovery old password rejected",
+        "status": "PASS",
+        "http": 400
+      },
+      {
+        "name": "Browser recovery new password accepted",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Published browser invalid recovery link safe state",
+        "status": "PASS"
+      },
+      {
+        "name": "Published browser logged-in Staff revoked by Owner",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Published browser revoked session blocks workspace",
+        "status": "PASS"
+      },
+      {
+        "name": "Published browser invalid stored JWT fails safely",
+        "status": "PASS"
+      },
+      {
+        "name": "Browser synthetic user cleanup owner",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Browser synthetic user cleanup manager",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Browser synthetic user cleanup staff",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Browser synthetic clinic cleanup",
+        "status": "PASS",
+        "http": 200
+      }
+    ]
+  },
+  "invitations": {
+    "checkedAt": "2026-10-07T13:44:56.089Z",
+    "run": "77a6b865-2f71-488c-89e1-6b33fd0111f7",
+    "results": [
+      {
+        "name": "Hosted Owner invitation mail API",
+        "status": "FAIL",
+        "http": 502,
+        "code": "invite_email_failed"
+      },
+      {
+        "name": "Hosted Owner invite creates only own-clinic Staff",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Foreign-clinic invitation takeover rejected",
+        "status": "PASS",
+        "http": 409
+      },
+      {
+        "name": "Synthetic invitation acceptance link generated",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Hosted invitation token accepted intended identity",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Invitation session cannot read unintended clinic",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Invitation session cannot move membership",
+        "status": "PASS",
+        "http": 403
+      },
+      {
+        "name": "Invitation password set for intended user",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Invitation password login",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Existing foreign confirmed account invite rejected",
+        "status": "PASS",
+        "http": 409
+      },
+      {
+        "name": "Invitation synthetic user cleanup",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Invitation synthetic user cleanup",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Invitation synthetic user cleanup",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Invitation synthetic clinic cleanup",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Invitation synthetic clinic cleanup",
+        "status": "PASS",
+        "http": 200
+      }
+    ]
+  },
+  "passwordPolicy": {
+    "checkedAt": "2026-10-07T13:40:54.325Z",
+    "results": [
+      {
+        "name": "Pre-fix six-character direct API bypass reproduced",
+        "status": "PASS",
+        "http": 200
+      },
+      {
+        "name": "Password-policy synthetic user cleanup",
+        "status": "PASS",
+        "http": 200
+      }
+    ],
+    "before": {
+      "password_min_length": 6,
+      "password_required_characters": null
+    },
+    "error": "Auth configuration HTTP 403",
+    "controlStatus": "FAIL: server minimum remains 6; PATCH denied with HTTP 403; user requested unresolved launch blocker"
+  },
+  "secretScan": {
+    "checkedAt": "2026-10-07T13:45:35.983Z",
+    "historyBlobs": 624,
+    "assets": [
+      {
+        "url": "https://aperodashboard.lovable.app/login",
+        "status": 200,
+        "bytes": 17433
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/reset-password",
+        "status": 200,
+        "bytes": 13672
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/account/team",
+        "status": 200,
+        "bytes": 13684
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/home",
+        "status": 200,
+        "bytes": 13744
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/analytics",
+        "status": 200,
+        "bytes": 13990
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/conversations",
+        "status": 200,
+        "bytes": 14088
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/account/settings",
+        "status": 200,
+        "bytes": 14141
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/account/setup",
+        "status": 200,
+        "bytes": 13630
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/assets/index-D45CQZAh.js",
+        "status": 200,
+        "bytes": 309802
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/assets/useRouter-Ch6OGJRG.js",
+        "status": 200,
+        "bytes": 9187
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/assets/link-hTTio95_.js",
+        "status": 200,
+        "bytes": 26210
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/assets/Match-BvYXlciT.js",
+        "status": 200,
+        "bytes": 48629
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/assets/redirect-1Dss4sOM.js",
+        "status": 200,
+        "bytes": 534
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/assets/useMatch-UfKIlb4j.js",
+        "status": 200,
+        "bytes": 620
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/assets/db-ld6s4Jvt.js",
+        "status": 200,
+        "bytes": 218665
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/assets/login-D5JdEFHu.js",
+        "status": 200,
+        "bytes": 78
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/assets/clinic-pages-pUPgtkc5.js",
+        "status": 200,
+        "bytes": 155993
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/~flock.js",
+        "status": 200,
+        "bytes": 21296
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/assets/reset-password-sC_Xk04l.js",
+        "status": 200,
+        "bytes": 78
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/assets/account_.team-CtRhHnEB.js",
+        "status": 200,
+        "bytes": 350
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/assets/route-shell-SnIssxv8.js",
+        "status": 200,
+        "bytes": 9041
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/assets/page-ui-BFf9ww4x.js",
+        "status": 200,
+        "bytes": 2267
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/assets/account-access-panel-B96Hkpfw.js",
+        "status": 200,
+        "bytes": 9195
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/assets/home-BzIBAqAE.js",
+        "status": 200,
+        "bytes": 211
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/assets/analytics-BxtAOWSu.js",
+        "status": 200,
+        "bytes": 384665
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/assets/useQuery-BQYFuBDG.js",
+        "status": 200,
+        "bytes": 8786
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/assets/x-CT56kexI.js",
+        "status": 200,
+        "bytes": 1901
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/assets/utils-C8dnTwFy.js",
+        "status": 200,
+        "bytes": 29409
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/assets/button-Box55kXc.js",
+        "status": 200,
+        "bytes": 4680
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/assets/clinic-time-CtuBgHyO.js",
+        "status": 200,
+        "bytes": 1232
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/assets/conversations-DB7Idlop.js",
+        "status": 200,
+        "bytes": 209
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/assets/conversations.index-B2qpx1Xc.js",
+        "status": 200,
+        "bytes": 78
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/assets/account_.settings-CKelnQvX.js",
+        "status": 200,
+        "bytes": 14804
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/assets/dialog-BlBJQwhM.js",
+        "status": 200,
+        "bytes": 35644
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/assets/label-BWtr15kF.js",
+        "status": 200,
+        "bytes": 1759
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/assets/textarea-3yWznm6h.js",
+        "status": 200,
+        "bytes": 517
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/assets/account_.setup-CA7t1zM1.js",
+        "status": 200,
+        "bytes": 3289
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/assets/routes-NxoRFC3r.js",
+        "status": 200,
+        "bytes": 150
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/assets/account-Chy7gENt.js",
+        "status": 200,
+        "bytes": 211
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/assets/requests-u3DqZxz3.js",
+        "status": 200,
+        "bytes": 18652
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/assets/useMutation-DcylxtWO.js",
+        "status": 200,
+        "bytes": 2248
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/assets/calendar-BT1jK-cA.js",
+        "status": 200,
+        "bytes": 206
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/assets/clients-DB7Idlop.js",
+        "status": 200,
+        "bytes": 209
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/assets/privacy-Bi3wm9ka.js",
+        "status": 200,
+        "bytes": 77
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/assets/legal-pages-DPr17nK3.js",
+        "status": 200,
+        "bytes": 6713
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/assets/requests-CeLtOdlO.js",
+        "status": 200,
+        "bytes": 202
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/assets/staff-DB7Idlop.js",
+        "status": 200,
+        "bytes": 209
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/assets/support-DchGVZIx.js",
+        "status": 200,
+        "bytes": 211
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/assets/terms-D5Z0406i.js",
+        "status": 200,
+        "bytes": 77
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/assets/clients.index-M-Km1U_g.js",
+        "status": 200,
+        "bytes": 78
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/assets/clients._id-CTYiw7U6.js",
+        "status": 200,
+        "bytes": 227
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/assets/conversations._id-Cl58kDA8.js",
+        "status": 200,
+        "bytes": 227
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/assets/staff.index-DHAzmWCX.js",
+        "status": 200,
+        "bytes": 78
+      },
+      {
+        "url": "https://aperodashboard.lovable.app/assets/staff._id-CzNiuUy0.js",
+        "status": 200,
+        "bytes": 222
+      }
+    ],
+    "placeholderMatches": 4,
+    "actualExposures": 0
+  },
+  "rlsInventory": {
+    "tables": [
+      {
+        "tablename": "voice_requests",
+        "rowsecurity": true
+      },
+      {
+        "tablename": "voice_call_state",
+        "rowsecurity": true
+      },
+      {
+        "tablename": "voice_operations",
+        "rowsecurity": true
+      },
+      {
+        "tablename": "voice_checked_slots",
+        "rowsecurity": true
+      },
+      {
+        "tablename": "voice_integrations",
+        "rowsecurity": true
+      },
+      {
+        "tablename": "staff_time_off",
+        "rowsecurity": true
+      },
+      {
+        "tablename": "clinic_service_aliases",
+        "rowsecurity": true
+      },
+      {
+        "tablename": "clinics",
+        "rowsecurity": true
+      },
+      {
+        "tablename": "staff_availability",
+        "rowsecurity": true
+      },
+      {
+        "tablename": "appointments",
+        "rowsecurity": true
+      },
+      {
+        "tablename": "client_notes",
+        "rowsecurity": true
+      },
+      {
+        "tablename": "notifications",
+        "rowsecurity": true
+      },
+      {
+        "tablename": "conversations",
+        "rowsecurity": true
+      },
+      {
+        "tablename": "profiles",
+        "rowsecurity": true
+      },
+      {
+        "tablename": "clinic_invitation_claims",
+        "rowsecurity": true
+      },
+      {
+        "tablename": "clinic_invitation_budgets",
+        "rowsecurity": true
+      },
+      {
+        "tablename": "retention_client_activity",
+        "rowsecurity": true
+      },
+      {
+        "tablename": "clients",
+        "rowsecurity": true
+      },
+      {
+        "tablename": "staff",
+        "rowsecurity": true
+      },
+      {
+        "tablename": "retention_deletion_ledger",
+        "rowsecurity": true
+      },
+      {
+        "tablename": "retention_control",
+        "rowsecurity": true
+      },
+      {
+        "tablename": "clinic_retention",
+        "rowsecurity": true
+      },
+      {
+        "tablename": "retention_runs",
+        "rowsecurity": true
+      },
+      {
+        "tablename": "retention_provider_jobs",
+        "rowsecurity": true
+      },
+      {
+        "tablename": "clinic_offboarding",
+        "rowsecurity": true
+      }
+    ],
+    "policies": [
+      {
+        "tablename": "voice_requests",
+        "policyname": "voice requests clinic select",
+        "cmd": "SELECT",
+        "qual": "((clinic_id = current_clinic_id()) AND (current_profile_role() = ANY (ARRAY['owner'::profile_role, 'manager'::profile_role])))",
+        "with_check": null
+      },
+      {
+        "tablename": "voice_requests",
+        "policyname": "voice requests clinic update status",
+        "cmd": "UPDATE",
+        "qual": "((clinic_id = current_clinic_id()) AND (current_profile_role() = ANY (ARRAY['owner'::profile_role, 'manager'::profile_role])))",
+        "with_check": "((clinic_id = current_clinic_id()) AND (current_profile_role() = ANY (ARRAY['owner'::profile_role, 'manager'::profile_role])))"
+      },
+      {
+        "tablename": "staff_time_off",
+        "policyname": "staff time off select",
+        "cmd": "SELECT",
+        "qual": "(clinic_id = current_clinic_id())",
+        "with_check": null
+      },
+      {
+        "tablename": "staff_time_off",
+        "policyname": "staff time off write",
+        "cmd": "ALL",
+        "qual": "((clinic_id = current_clinic_id()) AND (current_profile_role() = ANY (ARRAY['owner'::profile_role, 'manager'::profile_role])))",
+        "with_check": "((clinic_id = current_clinic_id()) AND (current_profile_role() = ANY (ARRAY['owner'::profile_role, 'manager'::profile_role])))"
+      },
+      {
+        "tablename": "clinics",
+        "policyname": "clinic members read own clinic",
+        "cmd": "SELECT",
+        "qual": "(id = current_clinic_id())",
+        "with_check": null
+      },
+      {
+        "tablename": "clinics",
+        "policyname": "clinic owners update own clinic",
+        "cmd": "UPDATE",
+        "qual": "((id = current_clinic_id()) AND (current_profile_role() = 'owner'::profile_role))",
+        "with_check": "(id = current_clinic_id())"
+      },
+      {
+        "tablename": "staff_availability",
+        "policyname": "staff availability select",
+        "cmd": "SELECT",
+        "qual": "(clinic_id = current_clinic_id())",
+        "with_check": null
+      },
+      {
+        "tablename": "staff_availability",
+        "policyname": "staff availability write",
+        "cmd": "ALL",
+        "qual": "((clinic_id = current_clinic_id()) AND (current_profile_role() = ANY (ARRAY['owner'::profile_role, 'manager'::profile_role])))",
+        "with_check": "((clinic_id = current_clinic_id()) AND (current_profile_role() = ANY (ARRAY['owner'::profile_role, 'manager'::profile_role])))"
+      },
+      {
+        "tablename": "appointments",
+        "policyname": "appointments delete",
+        "cmd": "DELETE",
+        "qual": "((clinic_id = current_clinic_id()) AND (current_profile_role() = ANY (ARRAY['owner'::profile_role, 'manager'::profile_role])))",
+        "with_check": null
+      },
+      {
+        "tablename": "appointments",
+        "policyname": "appointments insert",
+        "cmd": "INSERT",
+        "qual": null,
+        "with_check": "(clinic_id = current_clinic_id())"
+      },
+      {
+        "tablename": "appointments",
+        "policyname": "appointments select",
+        "cmd": "SELECT",
+        "qual": "(clinic_id = current_clinic_id())",
+        "with_check": null
+      },
+      {
+        "tablename": "appointments",
+        "policyname": "appointments update",
+        "cmd": "UPDATE",
+        "qual": "(clinic_id = current_clinic_id())",
+        "with_check": "(clinic_id = current_clinic_id())"
+      },
+      {
+        "tablename": "client_notes",
+        "policyname": "client notes delete",
+        "cmd": "DELETE",
+        "qual": "((clinic_id = current_clinic_id()) AND (current_profile_role() = ANY (ARRAY['owner'::profile_role, 'manager'::profile_role])))",
+        "with_check": null
+      },
+      {
+        "tablename": "client_notes",
+        "policyname": "client notes insert",
+        "cmd": "INSERT",
+        "qual": null,
+        "with_check": "((clinic_id = current_clinic_id()) AND (author_profile_id = current_profile_id()))"
+      },
+      {
+        "tablename": "client_notes",
+        "policyname": "client notes select",
+        "cmd": "SELECT",
+        "qual": "(clinic_id = current_clinic_id())",
+        "with_check": null
+      },
+      {
+        "tablename": "notifications",
+        "policyname": "notifications owner delete",
+        "cmd": "DELETE",
+        "qual": "((clinic_id = current_clinic_id()) AND (current_profile_role() = 'owner'::profile_role))",
+        "with_check": null
+      },
+      {
+        "tablename": "notifications",
+        "policyname": "notifications owner write",
+        "cmd": "INSERT",
+        "qual": null,
+        "with_check": "((clinic_id = current_clinic_id()) AND (current_profile_role() = 'owner'::profile_role))"
+      },
+      {
+        "tablename": "notifications",
+        "policyname": "notifications select",
+        "cmd": "SELECT",
+        "qual": "((clinic_id = current_clinic_id()) AND ((current_profile_role() = 'owner'::profile_role) OR (profile_id = current_profile_id())))",
+        "with_check": null
+      },
+      {
+        "tablename": "notifications",
+        "policyname": "notifications update",
+        "cmd": "UPDATE",
+        "qual": "((clinic_id = current_clinic_id()) AND ((current_profile_role() = 'owner'::profile_role) OR (profile_id = current_profile_id())))",
+        "with_check": "((clinic_id = current_clinic_id()) AND ((current_profile_role() = 'owner'::profile_role) OR (profile_id = current_profile_id())))"
+      },
+      {
+        "tablename": "conversations",
+        "policyname": "conversations select",
+        "cmd": "SELECT",
+        "qual": "(clinic_id = current_clinic_id())",
+        "with_check": null
+      },
+      {
+        "tablename": "profiles",
+        "policyname": "read clinic profiles",
+        "cmd": "SELECT",
+        "qual": "((clinic_id = current_clinic_id()) AND ((auth_user_id = auth.uid()) OR (current_profile_role() = ANY (ARRAY['owner'::profile_role, 'manager'::profile_role]))))",
+        "with_check": null
+      },
+      {
+        "tablename": "profiles",
+        "policyname": "update own profile",
+        "cmd": "UPDATE",
+        "qual": "(auth_user_id = auth.uid())",
+        "with_check": "((auth_user_id = auth.uid()) AND (clinic_id = current_clinic_id()))"
+      },
+      {
+        "tablename": "clients",
+        "policyname": "clients delete",
+        "cmd": "DELETE",
+        "qual": "((clinic_id = current_clinic_id()) AND (current_profile_role() = ANY (ARRAY['owner'::profile_role, 'manager'::profile_role])))",
+        "with_check": null
+      },
+      {
+        "tablename": "clients",
+        "policyname": "clients insert",
+        "cmd": "INSERT",
+        "qual": null,
+        "with_check": "((clinic_id = current_clinic_id()) AND (current_profile_role() = ANY (ARRAY['owner'::profile_role, 'manager'::profile_role])))"
+      },
+      {
+        "tablename": "clients",
+        "policyname": "clients select",
+        "cmd": "SELECT",
+        "qual": "(clinic_id = current_clinic_id())",
+        "with_check": null
+      },
+      {
+        "tablename": "clients",
+        "policyname": "clients update",
+        "cmd": "UPDATE",
+        "qual": "(clinic_id = current_clinic_id())",
+        "with_check": "(clinic_id = current_clinic_id())"
+      },
+      {
+        "tablename": "staff",
+        "policyname": "staff select",
+        "cmd": "SELECT",
+        "qual": "(clinic_id = current_clinic_id())",
+        "with_check": null
+      },
+      {
+        "tablename": "staff",
+        "policyname": "staff write",
+        "cmd": "ALL",
+        "qual": "((clinic_id = current_clinic_id()) AND (current_profile_role() = ANY (ARRAY['owner'::profile_role, 'manager'::profile_role])))",
+        "with_check": "((clinic_id = current_clinic_id()) AND (current_profile_role() = ANY (ARRAY['owner'::profile_role, 'manager'::profile_role])))"
+      }
+    ],
+    "grants": [
+      {
+        "relname": "voice_requests",
+        "anon_select": false,
+        "sel": true,
+        "ins": false,
+        "upd": false,
+        "del": false
+      },
+      {
+        "relname": "voice_call_state",
+        "anon_select": false,
+        "sel": false,
+        "ins": false,
+        "upd": false,
+        "del": false
+      },
+      {
+        "relname": "voice_operations",
+        "anon_select": false,
+        "sel": false,
+        "ins": false,
+        "upd": false,
+        "del": false
+      },
+      {
+        "relname": "voice_checked_slots",
+        "anon_select": false,
+        "sel": false,
+        "ins": false,
+        "upd": false,
+        "del": false
+      },
+      {
+        "relname": "voice_integrations",
+        "anon_select": false,
+        "sel": false,
+        "ins": false,
+        "upd": false,
+        "del": false
+      },
+      {
+        "relname": "staff_time_off",
+        "anon_select": false,
+        "sel": true,
+        "ins": true,
+        "upd": true,
+        "del": true
+      },
+      {
+        "relname": "clinic_service_aliases",
+        "anon_select": false,
+        "sel": false,
+        "ins": false,
+        "upd": false,
+        "del": false
+      },
+      {
+        "relname": "clinics",
+        "anon_select": false,
+        "sel": true,
+        "ins": false,
+        "upd": false,
+        "del": false
+      },
+      {
+        "relname": "staff_availability",
+        "anon_select": false,
+        "sel": true,
+        "ins": true,
+        "upd": true,
+        "del": true
+      },
+      {
+        "relname": "appointments",
+        "anon_select": false,
+        "sel": true,
+        "ins": true,
+        "upd": true,
+        "del": true
+      },
+      {
+        "relname": "client_notes",
+        "anon_select": false,
+        "sel": true,
+        "ins": true,
+        "upd": false,
+        "del": true
+      },
+      {
+        "relname": "notifications",
+        "anon_select": false,
+        "sel": true,
+        "ins": true,
+        "upd": false,
+        "del": true
+      },
+      {
+        "relname": "conversations",
+        "anon_select": false,
+        "sel": false,
+        "ins": false,
+        "upd": false,
+        "del": false
+      },
+      {
+        "relname": "profiles",
+        "anon_select": false,
+        "sel": true,
+        "ins": false,
+        "upd": false,
+        "del": false
+      },
+      {
+        "relname": "clinic_invitation_claims",
+        "anon_select": false,
+        "sel": false,
+        "ins": false,
+        "upd": false,
+        "del": false
+      },
+      {
+        "relname": "clinic_invitation_budgets",
+        "anon_select": false,
+        "sel": false,
+        "ins": false,
+        "upd": false,
+        "del": false
+      },
+      {
+        "relname": "retention_client_activity",
+        "anon_select": false,
+        "sel": false,
+        "ins": false,
+        "upd": false,
+        "del": false
+      },
+      {
+        "relname": "clients",
+        "anon_select": false,
+        "sel": true,
+        "ins": true,
+        "upd": true,
+        "del": true
+      },
+      {
+        "relname": "staff",
+        "anon_select": false,
+        "sel": true,
+        "ins": true,
+        "upd": true,
+        "del": true
+      },
+      {
+        "relname": "retention_candidates",
+        "anon_select": false,
+        "sel": false,
+        "ins": false,
+        "upd": false,
+        "del": false
+      },
+      {
+        "relname": "retention_deletion_ledger",
+        "anon_select": false,
+        "sel": false,
+        "ins": false,
+        "upd": false,
+        "del": false
+      },
+      {
+        "relname": "retention_control",
+        "anon_select": false,
+        "sel": false,
+        "ins": false,
+        "upd": false,
+        "del": false
+      },
+      {
+        "relname": "clinic_retention",
+        "anon_select": false,
+        "sel": false,
+        "ins": false,
+        "upd": false,
+        "del": false
+      },
+      {
+        "relname": "retention_runs",
+        "anon_select": false,
+        "sel": false,
+        "ins": false,
+        "upd": false,
+        "del": false
+      },
+      {
+        "relname": "retention_provider_jobs",
+        "anon_select": false,
+        "sel": false,
+        "ins": false,
+        "upd": false,
+        "del": false
+      },
+      {
+        "relname": "clinic_offboarding",
+        "anon_select": false,
+        "sel": false,
+        "ins": false,
+        "upd": false,
+        "del": false
+      }
+    ]
+  },
+  "deployedSources": {
+    "recording-access": {
+      "version": 2,
+      "status": "ACTIVE",
+      "verify_jwt": false,
+      "sourceMatchesMain": true,
+      "bundleHash": "0416213b921c6f95e461947807d4808c572bcb003a13988a8c8875556818250a"
+    },
+    "manage-clinic-users": {
+      "version": 2,
+      "status": "ACTIVE",
+      "verify_jwt": false,
+      "sourceMatchesMain": true,
+      "bundleHash": "180c78288e57380c0f97e67169f66d0e197a0acf2703870bdf34f1fba7e944d1"
+    },
+    "provision-clinic-user": {
+      "version": 5,
+      "status": "ACTIVE",
+      "verify_jwt": false,
+      "sourceMatchesMain": true,
+      "bundleHash": "58410732a35164ba2907fd80fed3c203ba177b1aa3ccb348d014750f9afb87f8"
+    }
+  },
+  "cleanup": {
+    "status": "PENDING_OPERATOR_SQL",
+    "remainingClinics": 4,
+    "remainingClosedRequests": 4,
+    "remainingSyntheticAuthUsers": 0,
+    "cleanupFile": "access-auth-synthetic-cleanup.sql"
+  },
+  "acceptanceLimits": {
+    "providerRecordingSuccess": "NOT VERIFIED: no explicitly synthetic/test-marked recording exists; no paid calls or real patient content accessed",
+    "mailDelivery": "FAIL: Owner invitation mail API returned invite_email_failed HTTP 502; synthetic recovery accepted at mail API but inbox delivery not verified",
+    "genuinelyExpiredSignedJWT": "NOT VERIFIED: hosted malformed and expired/tampered tokens denied; actual signed token expiration covered locally"
+  },
+  "localValidation": {
+    "team": {
+      "reportedTests": [
+        15,
+        26,
+        13,
+        17
+      ],
+      "reportedFailures": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "isolation": {
+      "reportedTests": [
+        133
+      ],
+      "reportedFailures": [
+        0
+      ]
+    },
+    "inviteSetup": {
+      "reportedTests": [
+        8,
+        3
+      ],
+      "reportedFailures": [
+        0,
+        0
+      ]
+    },
+    "earlierSuitesPassed": [
+      "Auth (29 reported tests)",
+      "permissions",
+      "clinic-users (23 reported tests)",
+      "recording handler (11 reported tests)",
+      "recording player"
+    ]
+  }
+}
