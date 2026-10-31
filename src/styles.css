@@ -44,7 +44,7 @@
 .voice-demo-waves span:nth-child(even) { background: var(--foreground); animation-delay: .25s; }
 .voice-demo-waves span:nth-child(3) { animation-delay: .4s; }
 @keyframes demo-wave { 50% { height: 28px; } }
-@media (max-width: 600px) { .voice-demo-header { padding: 20px 16px; gap: 10px; } .voice-demo-footer { flex-direction: column; padding: 20px 16px; } .voice-demo-main { padding-top: 18px; } }
+@media (max-width: 600px) { .voice-demo-header { padding: 20px 16px; gap: 10px; } .voice-demo-header > div:last-child > .voice-demo-tag { display: none; } .voice-demo-header .voice-demo-tag { white-space: nowrap; } .voice-demo-footer { flex-direction: column; padding: 20px 16px; } .voice-demo-main { padding-top: 18px; } }
 @media (prefers-reduced-motion: reduce) { .voice-demo-waves span { animation: none; } }
 
 /*

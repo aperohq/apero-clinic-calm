@@ -2,7 +2,7 @@
 
 ## Uploaded voice presentation
 - [x] Add a separate public voice-demo page matching the supplied HTML, with simulated controls and no backend integration.
-- [ ] Verify animated rendering and call controls at desktop and mobile sizes.
+- [x] Verify animated rendering and call controls at desktop and mobile sizes.
 
 - [x] Clinical Calm visual system and responsive application shell
 - [x] Centralized linked clinic mock data
