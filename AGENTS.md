@@ -8,3 +8,5 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Keep the public `/voice-demo` presentation isolated from clinic data and use the uploaded shader with React lifecycle cleanup; its call controls simulate states without making calls or saving records.

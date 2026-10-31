@@ -23,6 +23,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as StaffRouteImport } from './routes/staff'
 import { Route as SupportRouteImport } from './routes/support'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as VoiceDemoRouteImport } from './routes/voice-demo'
 import { Route as AccountSettingsRouteImport } from './routes/account_.settings'
 import { Route as AccountSetupRouteImport } from './routes/account_.setup'
 import { Route as AccountTeamRouteImport } from './routes/account_.team'
@@ -103,6 +104,11 @@ const TermsRoute = TermsRouteImport.update({
   path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VoiceDemoRoute = VoiceDemoRouteImport.update({
+  id: '/voice-demo',
+  path: '/voice-demo',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AccountSettingsRoute = AccountSettingsRouteImport.update({
   id: '/account_/settings',
   path: '/account/settings',
@@ -164,6 +170,7 @@ export interface FileRoutesByFullPath {
   '/staff': typeof StaffRouteWithChildren
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
+  '/voice-demo': typeof VoiceDemoRoute
   '/account/settings': typeof AccountSettingsRoute
   '/account/setup': typeof AccountSetupRoute
   '/account/team': typeof AccountTeamRoute
@@ -186,6 +193,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
+  '/voice-demo': typeof VoiceDemoRoute
   '/account/settings': typeof AccountSettingsRoute
   '/account/setup': typeof AccountSetupRoute
   '/account/team': typeof AccountTeamRoute
@@ -212,6 +220,7 @@ export interface FileRoutesById {
   '/staff': typeof StaffRouteWithChildren
   '/support': typeof SupportRoute
   '/terms': typeof TermsRoute
+  '/voice-demo': typeof VoiceDemoRoute
   '/account_/settings': typeof AccountSettingsRoute
   '/account_/setup': typeof AccountSetupRoute
   '/account_/team': typeof AccountTeamRoute
@@ -239,6 +248,7 @@ export interface FileRouteTypes {
     | '/staff'
     | '/support'
     | '/terms'
+    | '/voice-demo'
     | '/account/settings'
     | '/account/setup'
     | '/account/team'
@@ -261,6 +271,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/support'
     | '/terms'
+    | '/voice-demo'
     | '/account/settings'
     | '/account/setup'
     | '/account/team'
@@ -286,6 +297,7 @@ export interface FileRouteTypes {
     | '/staff'
     | '/support'
     | '/terms'
+    | '/voice-demo'
     | '/account_/settings'
     | '/account_/setup'
     | '/account_/team'
@@ -312,6 +324,7 @@ export interface RootRouteChildren {
   StaffRoute: typeof StaffRouteWithChildren
   SupportRoute: typeof SupportRoute
   TermsRoute: typeof TermsRoute
+  VoiceDemoRoute: typeof VoiceDemoRoute
   AccountSettingsRoute: typeof AccountSettingsRoute
   AccountSetupRoute: typeof AccountSetupRoute
   AccountTeamRoute: typeof AccountTeamRoute
@@ -415,6 +428,13 @@ declare module '@tanstack/react-router' {
       path: '/terms'
       fullPath: '/terms'
       preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/voice-demo': {
+      id: '/voice-demo'
+      path: '/voice-demo'
+      fullPath: '/voice-demo'
+      preLoaderRoute: typeof VoiceDemoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/account_/settings': {
@@ -537,6 +557,7 @@ const rootRouteChildren: RootRouteChildren = {
   StaffRoute: StaffRouteWithChildren,
   SupportRoute: SupportRoute,
   TermsRoute: TermsRoute,
+  VoiceDemoRoute: VoiceDemoRoute,
   AccountSettingsRoute: AccountSettingsRoute,
   AccountSetupRoute: AccountSetupRoute,
   AccountTeamRoute: AccountTeamRoute,
