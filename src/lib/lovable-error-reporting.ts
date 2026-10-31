@@ -28,7 +28,7 @@ export function reportLovableError(_error: unknown, _context: Record<string, unk
   if (typeof window === "undefined") return;
   // Hooks may forward data to telemetry: send no route, URL, raw exception or context.
   const error = new Error("Unexpected application error");
-  error.stack = undefined;
+  delete error.stack;
   try {
     window.__lovableEvents?.captureException?.(error, {source: "react_error_boundary"}, {
       mechanism: "react_error_boundary", handled: false, severity: "error",
