@@ -1,7 +1,7 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type RefObject } from "react";
 import { vertexShader, fragmentShader } from "./voice-demo-shaders";
 
-export function VoiceDemoOrb() {
+export function VoiceDemoOrb({ audioLevel }: { audioLevel: RefObject<number> }) {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
     const canvas = ref.current;
@@ -20,7 +20,10 @@ export function VoiceDemoOrb() {
     const vertex = compile(gl.VERTEX_SHADER, vertexShader);
     const fragment = compile(gl.FRAGMENT_SHADER, fragmentShader);
     const program = gl.createProgram();
-    if (!vertex || !fragment || !program) { shaders.forEach(s => gl.deleteShader(s)); return; }
+    if (!vertex || !fragment || !program) {
+      shaders.forEach((s) => gl.deleteShader(s));
+      return;
+    }
     gl.attachShader(program, vertex);
     gl.attachShader(program, fragment);
     gl.linkProgram(program);
@@ -34,7 +37,11 @@ export function VoiceDemoOrb() {
     const time = gl.getUniformLocation(program, "u_time");
     const resolution = gl.getUniformLocation(program, "u_resolution");
     const pointer = gl.getUniformLocation(program, "u_mouse");
-    let mouseX = .5, mouseY = .5, frame = 0;
+    const amplitude = gl.getUniformLocation(program, "u_audio");
+    let smoothed = 0;
+    let mouseX = 0.5,
+      mouseY = 0.5,
+      frame = 0;
     const resize = () => {
       const ratio = Math.min(window.devicePixelRatio || 1, 2);
       canvas.width = Math.max(1, Math.round(canvas.clientWidth * ratio));
@@ -52,11 +59,13 @@ export function VoiceDemoOrb() {
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const render = (t: number) => {
       gl.viewport(0, 0, canvas.width, canvas.height);
-      gl.uniform1f(time, t * .001);
+      gl.uniform1f(time, reduced ? 0 : t * 0.001);
+      smoothed += (audioLevel.current - smoothed) * 0.16;
+      gl.uniform1f(amplitude, reduced ? 0 : smoothed);
       gl.uniform2f(resolution, canvas.width, canvas.height);
       gl.uniform2f(pointer, mouseX * canvas.width, mouseY * canvas.height);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-      if (!reduced) frame = requestAnimationFrame(render);
+      frame = requestAnimationFrame(render);
     };
     render(0);
     return () => {
@@ -65,8 +74,14 @@ export function VoiceDemoOrb() {
       canvas.removeEventListener("pointermove", move);
       gl.deleteBuffer(buffer);
       gl.deleteProgram(program);
-      shaders.forEach(s => gl.deleteShader(s));
+      shaders.forEach((s) => gl.deleteShader(s));
     };
-  }, []);
-  return <canvas ref={ref} className="voice-demo-canvas" aria-label="Animated Apero pearl and emerald voice visual" />;
+  }, [audioLevel]);
+  return (
+    <canvas
+      ref={ref}
+      className="voice-demo-canvas"
+      aria-label="Animated Apero pearl and emerald voice visual"
+    />
+  );
 }

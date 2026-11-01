@@ -6,6 +6,7 @@ void main() {
 }`;
 export const fragmentShader = `precision highp float;
 uniform float u_time;
+uniform float u_audio;
 uniform vec2 u_resolution;
 uniform vec2 u_mouse;
 
@@ -90,8 +91,8 @@ void main() {
     float n2 = snoise(vec3(uv * 5.2 + vec2(t * 0.4, -t * 0.5), t * 0.6));
     float n3 = snoise(vec3(uv * 8.5 - vec2(t * 0.6, t * 0.3), t * 1.1));
     
-    float displacement = n1 * 0.065 + n2 * 0.028 + n3 * 0.012;
-    float baseRadius = 0.285;
+    float displacement = (n1 * 0.065 + n2 * 0.028 + n3 * 0.012) * (1.0 + u_audio * 0.6);
+    float baseRadius = 0.285 + u_audio * 0.025;
     float orbDist = r - (baseRadius + displacement);
 
     // Core shape & smooth edge

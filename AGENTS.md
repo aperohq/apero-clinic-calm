@@ -9,4 +9,6 @@
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
 
-- Keep the public `/voice-demo` presentation isolated from clinic data and use the uploaded shader with React lifecycle cleanup; its call controls simulate states without making calls or saving records.
+- Keep `/voice-demo` and `/demo` restricted to authenticated, active, non-revoked Dental Zone Owners. Preserve the approved Lovable layout and uploaded shader with React lifecycle cleanup.
+- Preserve the real Retell integration through the authenticated `demo-call` Edge Function. Keep private provider credentials server-side; do not replace SDK lifecycle/audio signals with simulated call states.
+- Keep existing booking handlers, dashboard functionality, and live Retell agent configuration unchanged when editing the demo. Applying migrations, deploying, publishing, enabling calls, and live testing require explicit authorization.
