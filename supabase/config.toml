@@ -18,3 +18,7 @@ verify_jwt = false
 [functions.retention-worker]
 # SDK validates backend project secret. Browser/user tokens do not authorize it.
 verify_jwt = false
+
+[functions.demo-call]
+# Handler verifies user tokens using Auth getUser, then current Owner membership.
+verify_jwt = false

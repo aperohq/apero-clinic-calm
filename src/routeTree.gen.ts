@@ -15,6 +15,7 @@ import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as ClientsRouteImport } from './routes/clients'
 import { Route as ConversationsRouteImport } from './routes/conversations'
+import { Route as DemoRouteImport } from './routes/demo'
 import { Route as HomeRouteImport } from './routes/home'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as PrivacyRouteImport } from './routes/privacy'
@@ -62,6 +63,11 @@ const ClientsRoute = ClientsRouteImport.update({
 const ConversationsRoute = ConversationsRouteImport.update({
   id: '/conversations',
   path: '/conversations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DemoRoute = DemoRouteImport.update({
+  id: '/demo',
+  path: '/demo',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HomeRoute = HomeRouteImport.update({
@@ -162,6 +168,7 @@ export interface FileRoutesByFullPath {
   '/calendar': typeof CalendarRoute
   '/clients': typeof ClientsRouteWithChildren
   '/conversations': typeof ConversationsRouteWithChildren
+  '/demo': typeof DemoRoute
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
@@ -186,6 +193,7 @@ export interface FileRoutesByTo {
   '/account': typeof AccountRoute
   '/analytics': typeof AnalyticsRoute
   '/calendar': typeof CalendarRoute
+  '/demo': typeof DemoRoute
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
@@ -212,6 +220,7 @@ export interface FileRoutesById {
   '/calendar': typeof CalendarRoute
   '/clients': typeof ClientsRouteWithChildren
   '/conversations': typeof ConversationsRouteWithChildren
+  '/demo': typeof DemoRoute
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
@@ -240,6 +249,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/clients'
     | '/conversations'
+    | '/demo'
     | '/home'
     | '/login'
     | '/privacy'
@@ -264,6 +274,7 @@ export interface FileRouteTypes {
     | '/account'
     | '/analytics'
     | '/calendar'
+    | '/demo'
     | '/home'
     | '/login'
     | '/privacy'
@@ -289,6 +300,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/clients'
     | '/conversations'
+    | '/demo'
     | '/home'
     | '/login'
     | '/privacy'
@@ -316,6 +328,7 @@ export interface RootRouteChildren {
   CalendarRoute: typeof CalendarRoute
   ClientsRoute: typeof ClientsRouteWithChildren
   ConversationsRoute: typeof ConversationsRouteWithChildren
+  DemoRoute: typeof DemoRoute
   HomeRoute: typeof HomeRoute
   LoginRoute: typeof LoginRoute
   PrivacyRoute: typeof PrivacyRoute
@@ -372,6 +385,13 @@ declare module '@tanstack/react-router' {
       path: '/conversations'
       fullPath: '/conversations'
       preLoaderRoute: typeof ConversationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/demo': {
+      id: '/demo'
+      path: '/demo'
+      fullPath: '/demo'
+      preLoaderRoute: typeof DemoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/home': {
@@ -549,6 +569,7 @@ const rootRouteChildren: RootRouteChildren = {
   CalendarRoute: CalendarRoute,
   ClientsRoute: ClientsRouteWithChildren,
   ConversationsRoute: ConversationsRouteWithChildren,
+  DemoRoute: DemoRoute,
   HomeRoute: HomeRoute,
   LoginRoute: LoginRoute,
   PrivacyRoute: PrivacyRoute,

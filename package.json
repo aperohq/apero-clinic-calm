@@ -33,7 +33,8 @@
     "test:human-escalation": "node --max-old-space-size=384 tests/human-escalation.test.mjs && node retell/master/tests/edge-isolation.test.mjs && python3 -m unittest discover -s tests -p test_human_flow.py",
     "test:call-transfer": "node --max-old-space-size=384 tests/call-transfer.test.mjs && node retell/master/tests/edge-isolation.test.mjs && python3 -m unittest discover -s tests -p test_transfer_flow.py",
     "test:system-downtime": "node --max-old-space-size=384 tests/system-downtime.test.mjs && node retell/master/tests/edge-isolation.test.mjs && python3 -m unittest discover -s tests -p test_downtime_flow.py",
-    "test:retention": "node --max-old-space-size=512 tests/data-retention.test.mjs && python3 -m unittest discover -s tests -p test_retention_custody.py"
+    "test:retention": "node --max-old-space-size=512 tests/data-retention.test.mjs && python3 -m unittest discover -s tests -p test_retention_custody.py",
+    "test:demo": "node --max-old-space-size=512 tests/demo-call.test.mjs"
   },
   "overrides": {
     "rolldown": "1.2.1"
@@ -85,6 +86,7 @@
     "react-hook-form": "^7.71.2",
     "react-resizable-panels": "^4.6.5",
     "recharts": "^2.15.4",
+    "retell-client-js-sdk": "3.0.3",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.5.0",
     "tailwindcss": "^4.2.1",
