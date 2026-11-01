@@ -1,0 +1,36 @@
+{
+  "function": "clinic-operations",
+  "version": 17,
+  "sha256": "fa75558859db3dfe0b08e357534e2cbe66f351710d954787f300585c96a13a97",
+  "bookingRequired": [
+    "action=book",
+    "slot_id",
+    "client_name",
+    "client_phone",
+    "service_name",
+    "practitioner_id",
+    "appointment_date",
+    "appointment_time"
+  ],
+  "availabilityRequired": [
+    "action=availability",
+    "service_name",
+    "practitioner_mode=specific|any",
+    "search_mode",
+    "requested_date unless earliest",
+    "practitioner_name or practitioner_id when specific"
+  ],
+  "phone": {
+    "dialing_prefix": "+965",
+    "local_number_length": 8,
+    "source": "read-only voice_integrations query"
+  },
+  "trustedAutomatic": [
+    "signed Retell call identity",
+    "verified integration clinic_id",
+    "clinic timezone",
+    "qualified practitioner IDs from service resolution",
+    "slot token and exact slot tuple from availability"
+  ],
+  "contactPolicy": "Patient contact must be explicitly established for this booking; no trusted automatic current-patient phone mapping is deployed."
+}

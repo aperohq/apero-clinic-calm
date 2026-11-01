@@ -1,0 +1,29 @@
+{
+  "published_version": 17,
+  "flow_version": 17,
+  "agent_id": "agent_b84b2766efeb85afc809147d7a",
+  "conversation_flow_id": "conversation_flow_43f53e5e8531",
+  "nodes": 180,
+  "published": true,
+  "published_readback_matches": true,
+  "agent_voice_security_webhook_settings_preserved": true,
+  "offline_tests": {
+    "booking_intake": 17,
+    "booking_fallback": 15,
+    "edge_isolation_and_handler_regressions": 32,
+    "calendar_fallback": 17,
+    "unknown_answer": 10,
+    "human_escalation": 16,
+    "call_transfer": 18,
+    "system_downtime": 12,
+    "total": 137
+  },
+  "retell_schema_validation": "PASS",
+  "database_alias_repair_applied": false,
+  "arabic_alias_handling": "14 existing repository-approved aliases normalized before authoritative backend resolution",
+  "calls_performed": 0,
+  "try_a_call_used": false,
+  "ai_simulated_conversations": 0,
+  "manual_calls": 0,
+  "paid_testing": false
+}

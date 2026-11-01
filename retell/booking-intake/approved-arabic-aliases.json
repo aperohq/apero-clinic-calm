@@ -1,0 +1,32 @@
+{
+  "Dental Cleaning": [
+    "تنظيف",
+    "تنظيف اسنان",
+    "تنظيف الأسنان"
+  ],
+  "Consultation": [
+    "استشارة عامة",
+    "كشف اسنان"
+  ],
+  "Root Canal": [
+    "علاج عصب",
+    "سحب عصب"
+  ],
+  "Veneers Consultation": [
+    "فينير",
+    "قشور"
+  ],
+  "Teeth Whitening": [
+    "تبييض",
+    "تبييض الاسنان"
+  ],
+  "Orthodontic Consultation": [
+    "استشارة تقويم"
+  ],
+  "Braces Review": [
+    "مراجعة تقويم"
+  ],
+  "Preventive Care": [
+    "رعاية وقائية"
+  ]
+}
