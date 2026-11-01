@@ -1,0 +1,18 @@
+{
+  "agent_id": "agent_b84b2766efeb85afc809147d7a",
+  "conversation_flow_id": "conversation_flow_43f53e5e8531",
+  "baseline_published_version": 19,
+  "published_version": 21,
+  "published": true,
+  "published_readback_matches": true,
+  "untouched_existing_draft_version": 20,
+  "changed_nodes": ["node_reset_prepare", "node_fresh_request", "node_reset_verify", "node_reset_language_gate", "node_reset_language_capture", "node_guard_search", "node_guard_search_clear_result"],
+  "other_nodes_tools_prompts_and_settings_preserved": true,
+  "backend_changed": false,
+  "tests": {"focused": 14, "existing_v19_on_candidate": 76, "booking_fallback": 15, "calendar": 17, "unknown_answer": 10, "human_escalation": 16, "transfer": 18, "system_downtime": 12, "total_passed": 178, "failed": 0},
+  "code_nodes_schema_validated": 125,
+  "live_calls": 0,
+  "try_a_call": false,
+  "simulated_conversations": 0,
+  "paid_testing": false
+}

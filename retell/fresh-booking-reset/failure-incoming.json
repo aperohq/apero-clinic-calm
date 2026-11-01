@@ -1,0 +1,2780 @@
+[
+  {
+    "source": "node_invalidate_booking",
+    "name": "Invalidate Changed Booking",
+    "edge": "edge_node_invalidate_booking_failure",
+    "condition": {
+      "prompt": "Else",
+      "type": "prompt"
+    },
+    "default": true,
+    "reads": [],
+    "normal_transitions": [
+      {
+        "destination_node_id": "node_downtime_clear",
+        "id": "edge_downtime_node_invalidate_booking",
+        "transition_condition": {
+          "equations": [
+            {
+              "left": "{{apero_response_received}}",
+              "operator": "!=",
+              "right": "true"
+            },
+            {
+              "left": "{{apero_system_unavailable}}",
+              "operator": "==",
+              "right": "true"
+            }
+          ],
+          "operator": "||",
+          "type": "equation"
+        }
+      },
+      {
+        "destination_node_id": "node_clear_correction",
+        "id": "edge_node_invalidate_booking_confirmed",
+        "transition_condition": {
+          "equations": [
+            {
+              "left": "{{availability_invalidated}}",
+              "operator": "==",
+              "right": "true"
+            },
+            {
+              "left": "{{invalidation_success}}",
+              "operator": "==",
+              "right": "true"
+            }
+          ],
+          "operator": "&&",
+          "type": "equation"
+        }
+      }
+    ],
+    "writes": {},
+    "tool": {
+      "args_at_root": false,
+      "description": "Clear the previous checked slot immediately when any booking parameter changes or a booking completes.",
+      "enable_typing_sound": false,
+      "execution_message_description": "One moment, let me check that for you.",
+      "execution_message_type": "static_text",
+      "headers": {},
+      "max_retry": 0,
+      "method": "POST",
+      "name": "invalidate_availability",
+      "parameter_type": "json",
+      "parameters": {
+        "properties": {
+          "action": {
+            "description": "Always invalidate.",
+            "enum": [
+              "invalidate"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "action"
+        ],
+        "type": "object"
+      },
+      "query_params": {},
+      "response_variables": {
+        "apero_downtime_message": "message",
+        "apero_response_received": "apero_response_received",
+        "apero_system_unavailable": "system_unavailable",
+        "availability_invalidated": "availability_invalidated",
+        "invalidation_success": "success"
+      },
+      "speak_after_execution": true,
+      "speak_during_execution": false,
+      "timeout_ms": 20000,
+      "tool_id": "tool-apero-invalidate",
+      "type": "custom",
+      "url": "https://svoybvzvmygszklcmudh.supabase.co/functions/v1/clinic-operations"
+    },
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_invalidate_reschedule",
+    "name": "Invalidate Reschedule Slot",
+    "edge": "edge_node_invalidate_reschedule_failure",
+    "condition": {
+      "prompt": "Else",
+      "type": "prompt"
+    },
+    "default": true,
+    "reads": [],
+    "normal_transitions": [
+      {
+        "destination_node_id": "node_downtime_clear",
+        "id": "edge_downtime_node_invalidate_reschedule",
+        "transition_condition": {
+          "equations": [
+            {
+              "left": "{{apero_response_received}}",
+              "operator": "!=",
+              "right": "true"
+            },
+            {
+              "left": "{{apero_system_unavailable}}",
+              "operator": "==",
+              "right": "true"
+            }
+          ],
+          "operator": "||",
+          "type": "equation"
+        }
+      },
+      {
+        "destination_node_id": "node_reschedule_details",
+        "id": "edge_node_invalidate_reschedule_confirmed",
+        "transition_condition": {
+          "equations": [
+            {
+              "left": "{{availability_invalidated}}",
+              "operator": "==",
+              "right": "true"
+            },
+            {
+              "left": "{{invalidation_success}}",
+              "operator": "==",
+              "right": "true"
+            }
+          ],
+          "operator": "&&",
+          "type": "equation"
+        }
+      }
+    ],
+    "writes": {},
+    "tool": {
+      "args_at_root": false,
+      "description": "Clear the previous checked slot immediately when any booking parameter changes or a booking completes.",
+      "enable_typing_sound": false,
+      "execution_message_description": "One moment, let me check that for you.",
+      "execution_message_type": "static_text",
+      "headers": {},
+      "max_retry": 0,
+      "method": "POST",
+      "name": "invalidate_availability",
+      "parameter_type": "json",
+      "parameters": {
+        "properties": {
+          "action": {
+            "description": "Always invalidate.",
+            "enum": [
+              "invalidate"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "action"
+        ],
+        "type": "object"
+      },
+      "query_params": {},
+      "response_variables": {
+        "apero_downtime_message": "message",
+        "apero_response_received": "apero_response_received",
+        "apero_system_unavailable": "system_unavailable",
+        "availability_invalidated": "availability_invalidated",
+        "invalidation_success": "success"
+      },
+      "speak_after_execution": true,
+      "speak_during_execution": false,
+      "timeout_ms": 20000,
+      "tool_id": "tool-apero-invalidate",
+      "type": "custom",
+      "url": "https://svoybvzvmygszklcmudh.supabase.co/functions/v1/clinic-operations"
+    },
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_reset_prepare",
+    "name": "Clear Active Booking Cycle",
+    "edge": "edge_node_reset_prepare_failure",
+    "condition": {
+      "prompt": "Else",
+      "type": "prompt"
+    },
+    "default": true,
+    "reads": [
+      "dv.first_cycle_proven",
+      "dv.booking_cycle_seen",
+      "dv.call_id",
+      "dv.first_cycle_call_id",
+      "dv.historical_completed_appointments",
+      "dv.fresh_request_language",
+      "dv.caller_name",
+      "dv.caller_phone",
+      "dv.caller_phone_confirmed",
+      "dv.historical_call_appointment_booked",
+      "dv.appointment_booked",
+      "dv.booking_success",
+      "dv.booking_id",
+      "dv.reschedule_success",
+      "dv.rescheduled_id",
+      "dv.service_name",
+      "dv.selected_practitioner_name",
+      "dv.appointment_date",
+      "dv.appointment_time"
+    ],
+    "normal_transitions": [
+      {
+        "destination_node_id": "node_fresh_request",
+        "id": "edge_reset_prepared",
+        "transition_condition": {
+          "equations": [
+            {
+              "left": "{{reset_prepared}}",
+              "operator": "==",
+              "right": "true"
+            },
+            {
+              "left": "{{reset_ready}}",
+              "operator": "==",
+              "right": "false"
+            }
+          ],
+          "operator": "&&",
+          "type": "equation"
+        }
+      }
+    ],
+    "writes": {
+      "active_booking_state": "active_booking_state",
+      "appointment_booked": "appointment_booked",
+      "appointment_count": "appointment_count",
+      "appointment_date": "appointment_date",
+      "appointment_time": "appointment_time",
+      "appointments": "appointments",
+      "availability_ack_key": "availability_ack_key",
+      "availability_error_type": "availability_error_type",
+      "availability_invalidated": "availability_invalidated",
+      "availability_query_signature": "availability_query_signature",
+      "availability_success": "availability_success",
+      "available": "available",
+      "booking_cycle_seen": "booking_cycle_seen",
+      "booking_error_type": "booking_error_type",
+      "booking_id": "booking_id",
+      "booking_readback": "booking_readback",
+      "booking_success": "booking_success",
+      "boundary_verified": "boundary_verified",
+      "caller_snapshot": "caller_snapshot",
+      "cancel_error_type": "cancel_error_type",
+      "cancel_success": "cancel_success",
+      "cancelled_id": "cancelled_id",
+      "client_name": "client_name",
+      "client_phone": "client_phone",
+      "consent_confirmed": "consent_confirmed",
+      "consent_cycle": "consent_cycle",
+      "consent_tuple": "consent_tuple",
+      "correction_ambiguous": "correction_ambiguous",
+      "correction_date": "correction_date",
+      "correction_decision": "correction_decision",
+      "correction_doctor": "correction_doctor",
+      "correction_doctor_mode": "correction_doctor_mode",
+      "correction_other_doctor": "correction_other_doctor",
+      "correction_reason": "correction_reason",
+      "correction_search_mode": "correction_search_mode",
+      "correction_service": "correction_service",
+      "correction_time": "correction_time",
+      "correction_window_end": "correction_window_end",
+      "correction_window_start": "correction_window_start",
+      "first_cycle_proven": "first_cycle_proven",
+      "fresh_request_present": "fresh_request_present",
+      "fresh_request_summary": "fresh_request_summary",
+      "historical_call_appointment_booked": "historical_call_appointment_booked",
+      "historical_completed_appointments": "historical_completed_appointments",
+      "history_snapshot": "history_snapshot",
+      "history_valid": "history_valid",
+      "language_snapshot": "language_snapshot",
+      "lookup_error_type": "lookup_error_type",
+      "lookup_success": "lookup_success",
+      "patient_confirmed": "patient_confirmed",
+      "patient_cycle": "patient_cycle",
+      "patient_evidence": "patient_evidence",
+      "practitioner_found": "practitioner_found",
+      "practitioner_id": "practitioner_id",
+      "practitioner_mode": "practitioner_mode",
+      "practitioner_name": "practitioner_name",
+      "qualified_practitioners": "qualified_practitioners",
+      "requested_date": "requested_date",
+      "requested_time": "requested_time",
+      "requested_time_available": "requested_time_available",
+      "reschedule_error_type": "reschedule_error_type",
+      "reschedule_success": "reschedule_success",
+      "rescheduled_id": "rescheduled_id",
+      "reset_attempt": "reset_attempt",
+      "reset_cleared_variable_count": "reset_cleared_variable_count",
+      "reset_error": "reset_error",
+      "reset_prepared": "reset_prepared",
+      "reset_ready": "reset_ready",
+      "reset_verified_attempt": "reset_verified_attempt",
+      "resolve_error_type": "resolve_error_type",
+      "resolve_success": "resolve_success",
+      "search_mode": "search_mode",
+      "selected_practitioner_id": "selected_practitioner_id",
+      "selected_practitioner_name": "selected_practitioner_name",
+      "selection_cycle": "selection_cycle",
+      "service_candidates": "service_candidates",
+      "service_name": "service_name",
+      "service_query": "service_query",
+      "slot_choice_date": "slot_choice_date",
+      "slot_choice_time": "slot_choice_time",
+      "slot_choice_unclear": "slot_choice_unclear",
+      "slot_id": "slot_id",
+      "slot_match_reason": "slot_match_reason",
+      "slot_match_status": "slot_match_status",
+      "slots": "slots",
+      "stage_ok": "stage_ok",
+      "wait_filler_decision": "wait_filler_decision",
+      "window_end": "window_end",
+      "window_start": "window_start",
+      "operation_kind": "operation_kind",
+      "existing_selected_id": "existing_selected_id",
+      "existing_target_snapshot": "existing_target_snapshot",
+      "existing_staff_id": "existing_staff_id",
+      "existing_service": "existing_service",
+      "existing_start": "existing_start",
+      "existing_action": "existing_action",
+      "existing_readback": "existing_readback",
+      "existing_approval": "existing_approval",
+      "existing_approval_tuple": "existing_approval_tuple",
+      "existing_attempt": "existing_attempt",
+      "existing_attempt_tuple": "existing_attempt_tuple",
+      "existing_attempt_target": "existing_attempt_target",
+      "existing_attempt_action": "existing_attempt_action",
+      "existing_slot_id": "existing_slot_id",
+      "existing_slots_snapshot": "existing_slots_snapshot",
+      "existing_current_check": "existing_current_check",
+      "existing_new_date": "existing_new_date",
+      "existing_new_time": "existing_new_time",
+      "current_cancelled": "current_cancelled",
+      "current_rescheduled": "current_rescheduled",
+      "existing_result_verified": "existing_result_verified",
+      "r18_route": "r18_route",
+      "existing_cycle": "existing_cycle",
+      "existing_lookup_cycle": "existing_lookup_cycle",
+      "existing_lookup_snapshot": "existing_lookup_snapshot",
+      "existing_patient_name": "existing_patient_name",
+      "existing_patient_phone": "existing_patient_phone"
+    },
+    "tool": null,
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_fresh_request",
+    "name": "Capture New Request Only",
+    "edge": "edge_node_fresh_request_failure",
+    "condition": {
+      "prompt": "Else",
+      "type": "prompt"
+    },
+    "default": true,
+    "reads": [],
+    "normal_transitions": [
+      {
+        "destination_node_id": "node_reset_language_gate",
+        "id": "edge_fresh_request_captured",
+        "transition_condition": {
+          "equations": [
+            {
+              "left": "{{fresh_request_present}}",
+              "operator": "==",
+              "right": "true"
+            },
+            {
+              "left": "{{fresh_request_summary}}",
+              "operator": "!=",
+              "right": ""
+            }
+          ],
+          "operator": "&&",
+          "type": "equation"
+        }
+      }
+    ],
+    "writes": [
+      "fresh_request_summary",
+      "fresh_request_present"
+    ],
+    "tool": null,
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_reset_invalidate",
+    "name": "Invalidate Previous Booking Check",
+    "edge": "edge_node_reset_invalidate_failure",
+    "condition": {
+      "prompt": "Else",
+      "type": "prompt"
+    },
+    "default": true,
+    "reads": [],
+    "normal_transitions": [
+      {
+        "destination_node_id": "node_downtime_clear",
+        "id": "edge_downtime_node_reset_invalidate",
+        "transition_condition": {
+          "equations": [
+            {
+              "left": "{{apero_response_received}}",
+              "operator": "!=",
+              "right": "true"
+            },
+            {
+              "left": "{{apero_system_unavailable}}",
+              "operator": "==",
+              "right": "true"
+            }
+          ],
+          "operator": "||",
+          "type": "equation"
+        }
+      },
+      {
+        "destination_node_id": "node_reset_verify",
+        "id": "edge_reset_invalidated",
+        "transition_condition": {
+          "equations": [
+            {
+              "left": "{{availability_invalidated}}",
+              "operator": "==",
+              "right": "true"
+            },
+            {
+              "left": "{{invalidation_success}}",
+              "operator": "==",
+              "right": "true"
+            }
+          ],
+          "operator": "&&",
+          "type": "equation"
+        }
+      }
+    ],
+    "writes": {},
+    "tool": {
+      "args_at_root": false,
+      "description": "Clear the previous checked slot immediately when any booking parameter changes or a booking completes.",
+      "enable_typing_sound": false,
+      "execution_message_description": "One moment, let me check that for you.",
+      "execution_message_type": "static_text",
+      "headers": {},
+      "max_retry": 0,
+      "method": "POST",
+      "name": "invalidate_availability",
+      "parameter_type": "json",
+      "parameters": {
+        "properties": {
+          "action": {
+            "description": "Always invalidate.",
+            "enum": [
+              "invalidate"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "action"
+        ],
+        "type": "object"
+      },
+      "query_params": {},
+      "response_variables": {
+        "apero_downtime_message": "message",
+        "apero_response_received": "apero_response_received",
+        "apero_system_unavailable": "system_unavailable",
+        "availability_invalidated": "availability_invalidated",
+        "invalidation_success": "success"
+      },
+      "speak_after_execution": true,
+      "speak_during_execution": false,
+      "timeout_ms": 20000,
+      "tool_id": "tool-apero-invalidate",
+      "type": "custom",
+      "url": "https://svoybvzvmygszklcmudh.supabase.co/functions/v1/clinic-operations"
+    },
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_reset_verify",
+    "name": "Verify Fresh Booking State",
+    "edge": "edge_node_reset_verify_failure",
+    "condition": {
+      "prompt": "Else",
+      "type": "prompt"
+    },
+    "default": true,
+    "reads": [
+      "dv.reset_prepared",
+      "dv.reset_attempt",
+      "dv.availability_invalidated",
+      "dv.first_cycle_proven",
+      "dv.booking_cycle_seen",
+      "dv.call_id",
+      "dv.first_cycle_call_id",
+      "dv.fresh_request_present",
+      "dv.fresh_request_summary",
+      "dv.fresh_request_language",
+      "dv.language_snapshot",
+      "dv.history_valid",
+      "dv.historical_completed_appointments",
+      "dv.history_snapshot",
+      "dv.caller_name",
+      "dv.caller_phone",
+      "dv.caller_phone_confirmed",
+      "dv.caller_snapshot"
+    ],
+    "normal_transitions": [
+      {
+        "destination_node_id": "node_intake_name_capture",
+        "id": "edge_reset_verified",
+        "transition_condition": {
+          "equations": [
+            {
+              "left": "{{reset_ready}}",
+              "operator": "==",
+              "right": "true"
+            },
+            {
+              "left": "{{reset_verified_attempt}}",
+              "operator": "==",
+              "right": "{{reset_attempt}}"
+            },
+            {
+              "left": "{{first_cycle_proven}}",
+              "operator": "==",
+              "right": "true"
+            }
+          ],
+          "operator": "&&",
+          "type": "equation"
+        }
+      },
+      {
+        "destination_node_id": "node_new_cycle_readback",
+        "id": "edge_full_cycle_request_readback",
+        "transition_condition": {
+          "equations": [
+            {
+              "left": "{{reset_ready}}",
+              "operator": "==",
+              "right": "true"
+            },
+            {
+              "left": "{{reset_verified_attempt}}",
+              "operator": "==",
+              "right": "{{reset_attempt}}"
+            },
+            {
+              "left": "{{first_cycle_proven}}",
+              "operator": "==",
+              "right": "false"
+            }
+          ],
+          "operator": "&&",
+          "type": "equation"
+        }
+      }
+    ],
+    "writes": {
+      "active_booking_state": "active_booking_state",
+      "boundary_verified": "boundary_verified",
+      "reset_error": "reset_error",
+      "reset_prepared": "reset_prepared",
+      "reset_ready": "reset_ready",
+      "reset_verified_attempt": "reset_verified_attempt"
+    },
+    "tool": null,
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_reset_language_gate",
+    "name": "Preserve Established Language",
+    "edge": "edge_node_reset_language_gate_failure",
+    "condition": {
+      "prompt": "Else",
+      "type": "prompt"
+    },
+    "default": true,
+    "reads": [
+      "dv.fresh_request_language",
+      "dv.language_snapshot"
+    ],
+    "normal_transitions": [
+      {
+        "destination_node_id": "node_reset_verify",
+        "id": "edge_proven_first_language_kept",
+        "transition_condition": {
+          "equations": [
+            {
+              "left": "{{language_known}}",
+              "operator": "==",
+              "right": "true"
+            },
+            {
+              "left": "{{first_cycle_proven}}",
+              "operator": "==",
+              "right": "true"
+            }
+          ],
+          "operator": "&&",
+          "type": "equation"
+        }
+      },
+      {
+        "destination_node_id": "node_reset_invalidate_clear_ack",
+        "id": "edge_language_kept",
+        "transition_condition": {
+          "equations": [
+            {
+              "left": "{{language_known}}",
+              "operator": "==",
+              "right": "true"
+            }
+          ],
+          "operator": "&&",
+          "type": "equation"
+        }
+      },
+      {
+        "destination_node_id": "node_reset_language_capture",
+        "id": "edge_language_missing",
+        "transition_condition": {
+          "equations": [
+            {
+              "left": "{{language_initialization_allowed}}",
+              "operator": "==",
+              "right": "true"
+            }
+          ],
+          "operator": "&&",
+          "type": "equation"
+        }
+      }
+    ],
+    "writes": {
+      "language_initialization_allowed": "language_initialization_allowed",
+      "language_known": "language_known"
+    },
+    "tool": null,
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_reset_language_capture",
+    "name": "Establish Missing Speaking Language",
+    "edge": "edge_node_reset_language_capture_failure",
+    "condition": {
+      "prompt": "Else",
+      "type": "prompt"
+    },
+    "default": true,
+    "reads": [],
+    "normal_transitions": [
+      {
+        "destination_node_id": "node_reset_verify",
+        "id": "edge_proven_first_language_initialized",
+        "transition_condition": {
+          "equations": [
+            {
+              "left": "{{first_cycle_proven}}",
+              "operator": "==",
+              "right": "true"
+            },
+            {
+              "left": "{{fresh_request_language}}",
+              "operator": "!=",
+              "right": ""
+            }
+          ],
+          "operator": "&&",
+          "type": "equation"
+        }
+      },
+      {
+        "destination_node_id": "node_reset_invalidate_clear_ack",
+        "id": "edge_language_initialized",
+        "transition_condition": {
+          "equations": [
+            {
+              "left": "{{fresh_request_language}}",
+              "operator": "!=",
+              "right": ""
+            }
+          ],
+          "operator": "&&",
+          "type": "equation"
+        }
+      }
+    ],
+    "writes": [
+      "fresh_request_language"
+    ],
+    "tool": null,
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_capture_service",
+    "name": "Capture Current Cycle Service",
+    "edge": "edge_node_capture_service_failure",
+    "condition": {
+      "prompt": "Else",
+      "type": "prompt"
+    },
+    "default": true,
+    "reads": [],
+    "normal_transitions": [
+      {
+        "destination_node_id": "node_guard_service_clear_result",
+        "id": "edge_node_capture_service",
+        "transition_condition": {
+          "prompt": "Always",
+          "type": "prompt"
+        }
+      }
+    ],
+    "writes": [
+      "service_query"
+    ],
+    "tool": null,
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_guard_service",
+    "name": "Verify Current Service Input",
+    "edge": "edge_node_guard_service_failure",
+    "condition": {
+      "prompt": "Else",
+      "type": "prompt"
+    },
+    "default": true,
+    "reads": [
+      "dv.active_booking_state",
+      "dv.reset_ready",
+      "dv.boundary_verified",
+      "dv.reset_attempt",
+      "dv.reset_verified_attempt",
+      "dv.client_name",
+      "dv.intake_name_cycle",
+      "dv.client_phone",
+      "dv.patient_evidence",
+      "dv.patient_confirmed",
+      "dv.qualified_practitioners",
+      "dv.resolve_success",
+      "dv.service_name",
+      "dv.practitioner_mode",
+      "dv.practitioner_id",
+      "dv.practitioner_name",
+      "dv.selection_cycle",
+      "dv.slot_id",
+      "dv.service_query"
+    ],
+    "normal_transitions": [
+      {
+        "destination_node_id": "node_downtime_prepare_node_resolve",
+        "id": "edge_node_guard_service",
+        "transition_condition": {
+          "equations": [
+            {
+              "left": "{{stage_ok}}",
+              "operator": "==",
+              "right": "true"
+            }
+          ],
+          "operator": "&&",
+          "type": "equation"
+        }
+      }
+    ],
+    "writes": {
+      "reset_error": "reset_error",
+      "reset_ready": "reset_ready",
+      "service_query": "service_query",
+      "stage_ok": "stage_ok"
+    },
+    "tool": null,
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_capture_search",
+    "name": "Capture Current Cycle Availability Arguments",
+    "edge": "edge_node_capture_search_failure",
+    "condition": {
+      "prompt": "Else",
+      "type": "prompt"
+    },
+    "default": true,
+    "reads": [],
+    "normal_transitions": [
+      {
+        "destination_node_id": "node_r18_practitioner_scope",
+        "id": "edge_node_capture_search",
+        "transition_condition": {
+          "prompt": "Always",
+          "type": "prompt"
+        }
+      }
+    ],
+    "writes": [
+      "practitioner_name",
+      "practitioner_id",
+      "practitioner_mode",
+      "requested_date",
+      "requested_time",
+      "window_start",
+      "window_end",
+      "search_mode"
+    ],
+    "tool": null,
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_guard_search",
+    "name": "Verify Fresh Availability Inputs",
+    "edge": "edge_node_guard_search_failure",
+    "condition": {
+      "prompt": "Else",
+      "type": "prompt"
+    },
+    "default": true,
+    "reads": [
+      "dv.practitioner_mode",
+      "dv.practitioner_scope",
+      "dv.practitioner_id",
+      "dv.practitioner_name",
+      "dv.active_booking_state",
+      "dv.reset_ready",
+      "dv.boundary_verified",
+      "dv.reset_attempt",
+      "dv.reset_verified_attempt",
+      "dv.client_name",
+      "dv.intake_name_cycle",
+      "dv.client_phone",
+      "dv.patient_evidence",
+      "dv.patient_confirmed",
+      "dv.qualified_practitioners",
+      "dv.resolve_success",
+      "dv.service_name",
+      "dv.selection_cycle",
+      "dv.slot_id",
+      "dv.search_mode",
+      "dv.requested_date",
+      "dv.requested_time",
+      "dv.window_start",
+      "dv.window_end"
+    ],
+    "normal_transitions": [
+      {
+        "destination_node_id": "node_check_wait_language_gate",
+        "id": "edge_node_guard_search",
+        "transition_condition": {
+          "equations": [
+            {
+              "left": "{{stage_ok}}",
+              "operator": "==",
+              "right": "true"
+            }
+          ],
+          "operator": "&&",
+          "type": "equation"
+        }
+      }
+    ],
+    "writes": {
+      "active_booking_state": "active_booking_state",
+      "availability_query_signature": "availability_query_signature",
+      "reset_error": "reset_error",
+      "reset_ready": "reset_ready",
+      "stage_ok": "stage_ok"
+    },
+    "tool": null,
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_capture_slot",
+    "name": "Capture Local Slot Choice",
+    "edge": "edge_node_capture_slot_failure",
+    "condition": {
+      "prompt": "Else",
+      "type": "prompt"
+    },
+    "default": true,
+    "reads": [],
+    "normal_transitions": [
+      {
+        "destination_node_id": "node_match_slot",
+        "id": "edge_capture_local_slot_match",
+        "transition_condition": {
+          "prompt": "Always",
+          "type": "prompt"
+        }
+      }
+    ],
+    "writes": [
+      "slot_choice_time",
+      "slot_choice_date",
+      "slot_choice_unclear",
+      "slot_choice_index",
+      "slot_choice_practitioner"
+    ],
+    "tool": null,
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_guard_slot",
+    "name": "Verify Selected Slot Membership",
+    "edge": "edge_node_guard_slot_failure",
+    "condition": {
+      "prompt": "Else",
+      "type": "prompt"
+    },
+    "default": true,
+    "reads": [
+      "dv.active_booking_state",
+      "dv.reset_ready",
+      "dv.boundary_verified",
+      "dv.reset_verified_attempt",
+      "dv.reset_attempt",
+      "dv.slots",
+      "dv.slot_id",
+      "dv.availability_success",
+      "dv.service_name"
+    ],
+    "normal_transitions": [
+      {
+        "destination_node_id": "node_capture_patient",
+        "id": "edge_node_guard_slot",
+        "transition_condition": {
+          "equations": [
+            {
+              "left": "{{stage_ok}}",
+              "operator": "==",
+              "right": "true"
+            }
+          ],
+          "operator": "&&",
+          "type": "equation"
+        }
+      }
+    ],
+    "writes": {
+      "active_booking_state": "active_booking_state",
+      "appointment_date": "appointment_date",
+      "appointment_time": "appointment_time",
+      "practitioner_id": "practitioner_id",
+      "reset_error": "reset_error",
+      "reset_ready": "reset_ready",
+      "selection_cycle": "selection_cycle",
+      "stage_ok": "stage_ok"
+    },
+    "tool": null,
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_capture_patient",
+    "name": "Capture Explicit Current Patient",
+    "edge": "edge_node_capture_patient_failure",
+    "condition": {
+      "prompt": "Else",
+      "type": "prompt"
+    },
+    "default": true,
+    "reads": [],
+    "normal_transitions": [
+      {
+        "destination_node_id": "node_guard_patient_clear_result",
+        "id": "edge_node_capture_patient",
+        "transition_condition": {
+          "prompt": "Always",
+          "type": "prompt"
+        }
+      }
+    ],
+    "writes": [
+      "client_name",
+      "client_phone",
+      "patient_confirmed",
+      "patient_evidence"
+    ],
+    "tool": null,
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_guard_patient",
+    "name": "Verify Current Patient and Readback",
+    "edge": "edge_node_guard_patient_failure",
+    "condition": {
+      "prompt": "Else",
+      "type": "prompt"
+    },
+    "default": true,
+    "reads": [
+      "dv.active_booking_state",
+      "dv.reset_ready",
+      "dv.boundary_verified",
+      "dv.reset_verified_attempt",
+      "dv.reset_attempt",
+      "dv.selection_cycle",
+      "dv.slot_id",
+      "dv.patient_confirmed",
+      "dv.client_name",
+      "dv.client_phone",
+      "dv.patient_evidence",
+      "dv.service_name",
+      "dv.practitioner_id",
+      "dv.appointment_date",
+      "dv.appointment_time"
+    ],
+    "normal_transitions": [
+      {
+        "destination_node_id": "node_final",
+        "id": "edge_node_guard_patient",
+        "transition_condition": {
+          "equations": [
+            {
+              "left": "{{stage_ok}}",
+              "operator": "==",
+              "right": "true"
+            }
+          ],
+          "operator": "&&",
+          "type": "equation"
+        }
+      }
+    ],
+    "writes": {
+      "active_booking_state": "active_booking_state",
+      "booking_readback": "booking_readback",
+      "consent_confirmed": "consent_confirmed",
+      "consent_cycle": "consent_cycle",
+      "consent_tuple": "consent_tuple",
+      "patient_cycle": "patient_cycle",
+      "reset_error": "reset_error",
+      "reset_ready": "reset_ready",
+      "stage_ok": "stage_ok"
+    },
+    "tool": null,
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_capture_consent",
+    "name": "Capture Consent For Current Readback",
+    "edge": "edge_node_capture_consent_failure",
+    "condition": {
+      "prompt": "Else",
+      "type": "prompt"
+    },
+    "default": true,
+    "reads": [],
+    "normal_transitions": [
+      {
+        "destination_node_id": "node_guard_book_clear_result",
+        "id": "edge_node_capture_consent",
+        "transition_condition": {
+          "prompt": "Always",
+          "type": "prompt"
+        }
+      }
+    ],
+    "writes": [
+      "consent_confirmed",
+      "consent_tuple"
+    ],
+    "tool": null,
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_guard_book",
+    "name": "Verify Exact Current Booking Consent",
+    "edge": "edge_node_guard_book_failure",
+    "condition": {
+      "prompt": "Else",
+      "type": "prompt"
+    },
+    "default": true,
+    "reads": [
+      "dv.booking_reconciliation_required",
+      "dv.practitioner_id",
+      "dv.active_booking_state",
+      "dv.reset_ready",
+      "dv.boundary_verified",
+      "dv.reset_attempt",
+      "dv.reset_verified_attempt",
+      "dv.client_name",
+      "dv.intake_name_cycle",
+      "dv.client_phone",
+      "dv.patient_evidence",
+      "dv.patient_confirmed",
+      "dv.qualified_practitioners",
+      "dv.resolve_success",
+      "dv.service_name",
+      "dv.practitioner_mode",
+      "dv.practitioner_name",
+      "dv.selection_cycle",
+      "dv.slot_id",
+      "dv.appointment_date",
+      "dv.appointment_time",
+      "dv.patient_cycle",
+      "dv.consent_confirmed",
+      "dv.booking_readback",
+      "dv.consent_tuple",
+      "dv.caller_name",
+      "dv.caller_phone_confirmed",
+      "dv.caller_phone"
+    ],
+    "normal_transitions": [
+      {
+        "destination_node_id": "node_book_wait_language_gate",
+        "id": "edge_node_guard_book",
+        "transition_condition": {
+          "equations": [
+            {
+              "left": "{{stage_ok}}",
+              "operator": "==",
+              "right": "true"
+            }
+          ],
+          "operator": "&&",
+          "type": "equation"
+        }
+      }
+    ],
+    "writes": {
+      "booking_caller_name": "booking_caller_name",
+      "booking_caller_phone": "booking_caller_phone",
+      "consent_cycle": "consent_cycle",
+      "reset_error": "reset_error",
+      "reset_ready": "reset_ready",
+      "stage_ok": "stage_ok"
+    },
+    "tool": null,
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_guard_service_clear_result",
+    "name": "Clear Stage Verification Result",
+    "edge": "edge_node_guard_service_clear_result_failure",
+    "condition": {
+      "prompt": "Else",
+      "type": "prompt"
+    },
+    "default": true,
+    "reads": [],
+    "normal_transitions": [
+      {
+        "destination_node_id": "node_guard_service",
+        "id": "edge_node_guard_service_clear_result",
+        "transition_condition": {
+          "equations": [
+            {
+              "left": "{{stage_ok}}",
+              "operator": "==",
+              "right": "false"
+            }
+          ],
+          "operator": "&&",
+          "type": "equation"
+        }
+      }
+    ],
+    "writes": {
+      "stage_ok": "stage_ok"
+    },
+    "tool": null,
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_guard_search_clear_result",
+    "name": "Clear Stage Verification Result",
+    "edge": "edge_node_guard_search_clear_result_failure",
+    "condition": {
+      "prompt": "Else",
+      "type": "prompt"
+    },
+    "default": true,
+    "reads": [],
+    "normal_transitions": [
+      {
+        "destination_node_id": "node_guard_search",
+        "id": "edge_node_guard_search_clear_result",
+        "transition_condition": {
+          "equations": [
+            {
+              "left": "{{stage_ok}}",
+              "operator": "==",
+              "right": "false"
+            }
+          ],
+          "operator": "&&",
+          "type": "equation"
+        }
+      }
+    ],
+    "writes": {
+      "stage_ok": "stage_ok"
+    },
+    "tool": null,
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_guard_slot_clear_result",
+    "name": "Clear Stage Verification Result",
+    "edge": "edge_node_guard_slot_clear_result_failure",
+    "condition": {
+      "prompt": "Else",
+      "type": "prompt"
+    },
+    "default": true,
+    "reads": [],
+    "normal_transitions": [
+      {
+        "destination_node_id": "node_guard_slot",
+        "id": "edge_node_guard_slot_clear_result",
+        "transition_condition": {
+          "equations": [
+            {
+              "left": "{{stage_ok}}",
+              "operator": "==",
+              "right": "false"
+            }
+          ],
+          "operator": "&&",
+          "type": "equation"
+        }
+      }
+    ],
+    "writes": {
+      "stage_ok": "stage_ok"
+    },
+    "tool": null,
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_guard_patient_clear_result",
+    "name": "Clear Stage Verification Result",
+    "edge": "edge_node_guard_patient_clear_result_failure",
+    "condition": {
+      "prompt": "Else",
+      "type": "prompt"
+    },
+    "default": true,
+    "reads": [],
+    "normal_transitions": [
+      {
+        "destination_node_id": "node_guard_patient",
+        "id": "edge_node_guard_patient_clear_result",
+        "transition_condition": {
+          "equations": [
+            {
+              "left": "{{stage_ok}}",
+              "operator": "==",
+              "right": "false"
+            }
+          ],
+          "operator": "&&",
+          "type": "equation"
+        }
+      }
+    ],
+    "writes": {
+      "stage_ok": "stage_ok"
+    },
+    "tool": null,
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_guard_book_clear_result",
+    "name": "Clear Stage Verification Result",
+    "edge": "edge_node_guard_book_clear_result_failure",
+    "condition": {
+      "prompt": "Else",
+      "type": "prompt"
+    },
+    "default": true,
+    "reads": [],
+    "normal_transitions": [
+      {
+        "destination_node_id": "node_guard_book",
+        "id": "edge_node_guard_book_clear_result",
+        "transition_condition": {
+          "equations": [
+            {
+              "left": "{{stage_ok}}",
+              "operator": "==",
+              "right": "false"
+            }
+          ],
+          "operator": "&&",
+          "type": "equation"
+        }
+      }
+    ],
+    "writes": {
+      "stage_ok": "stage_ok"
+    },
+    "tool": null,
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_clear_correction",
+    "name": "Clear Current Selection After Correction",
+    "edge": "edge_node_clear_correction_failure",
+    "condition": {
+      "prompt": "Else",
+      "type": "prompt"
+    },
+    "default": true,
+    "reads": [
+      "dv.active_booking_state",
+      "dv.practitioner_mode",
+      "dv.practitioner_id",
+      "dv.practitioner_name"
+    ],
+    "normal_transitions": [
+      {
+        "destination_node_id": "node_change_booking",
+        "id": "edge_correction_cleared",
+        "transition_condition": {
+          "prompt": "Always",
+          "type": "prompt"
+        }
+      }
+    ],
+    "writes": {
+      "active_booking_state": "active_booking_state",
+      "booking_readback": "booking_readback",
+      "consent_confirmed": "consent_confirmed",
+      "consent_cycle": "consent_cycle",
+      "consent_tuple": "consent_tuple",
+      "patient_cycle": "patient_cycle",
+      "practitioner_id": "practitioner_id",
+      "practitioner_name": "practitioner_name",
+      "selection_cycle": "selection_cycle",
+      "slot_id": "slot_id",
+      "slots": "slots"
+    },
+    "tool": null,
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_reset_invalidate_clear_ack",
+    "name": "Clear Invalidation Acknowledgements",
+    "edge": "edge_node_reset_invalidate_clear_ack_failure",
+    "condition": {
+      "prompt": "Else",
+      "type": "prompt"
+    },
+    "default": true,
+    "reads": [],
+    "normal_transitions": [
+      {
+        "destination_node_id": "node_downtime_prepare_node_reset_invalidate",
+        "id": "edge_node_reset_invalidate_clear_ack",
+        "transition_condition": {
+          "prompt": "Always",
+          "type": "prompt"
+        }
+      }
+    ],
+    "writes": {
+      "availability_invalidated": "availability_invalidated",
+      "invalidation_success": "invalidation_success"
+    },
+    "tool": null,
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_invalidate_booking_clear_ack",
+    "name": "Clear Invalidation Acknowledgements",
+    "edge": "edge_node_invalidate_booking_clear_ack_failure",
+    "condition": {
+      "prompt": "Else",
+      "type": "prompt"
+    },
+    "default": true,
+    "reads": [],
+    "normal_transitions": [
+      {
+        "destination_node_id": "node_downtime_prepare_node_invalidate_booking",
+        "id": "edge_node_invalidate_booking_clear_ack",
+        "transition_condition": {
+          "prompt": "Always",
+          "type": "prompt"
+        }
+      }
+    ],
+    "writes": {
+      "availability_invalidated": "availability_invalidated",
+      "invalidation_success": "invalidation_success"
+    },
+    "tool": null,
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_invalidate_reschedule_clear_ack",
+    "name": "Clear Invalidation Acknowledgements",
+    "edge": "edge_node_invalidate_reschedule_clear_ack_failure",
+    "condition": {
+      "prompt": "Else",
+      "type": "prompt"
+    },
+    "default": true,
+    "reads": [],
+    "normal_transitions": [
+      {
+        "destination_node_id": "node_downtime_prepare_node_invalidate_reschedule",
+        "id": "edge_node_invalidate_reschedule_clear_ack",
+        "transition_condition": {
+          "prompt": "Always",
+          "type": "prompt"
+        }
+      }
+    ],
+    "writes": {
+      "availability_invalidated": "availability_invalidated",
+      "invalidation_success": "invalidation_success"
+    },
+    "tool": null,
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_first_booking_provenance",
+    "name": "Prove Fresh First Booking",
+    "edge": "edge_node_first_booking_provenance_failure",
+    "condition": {
+      "prompt": "Else",
+      "type": "prompt"
+    },
+    "default": true,
+    "reads": [
+      "dv.call_id",
+      "dv.booking_cycle_seen",
+      "dv.reset_attempt",
+      "dv.historical_call_appointment_booked",
+      "dv.invalidation_success",
+      "dv.fresh_request_language",
+      "dv.historical_completed_appointments"
+    ],
+    "normal_transitions": [
+      {
+        "destination_node_id": "node_r18_new_booking_gate_clear",
+        "id": "edge_first_provenance_prepare",
+        "transition_condition": {
+          "prompt": "Always",
+          "type": "prompt"
+        }
+      }
+    ],
+    "writes": {
+      "first_cycle_call_id": "first_cycle_call_id",
+      "first_cycle_proof_reason": "first_cycle_proof_reason",
+      "first_cycle_proven": "first_cycle_proven"
+    },
+    "tool": null,
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_correction_clear_candidate",
+    "name": "Clear Correction Candidate",
+    "edge": "edge_node_correction_clear_candidate_failure",
+    "condition": {
+      "prompt": "Else",
+      "type": "prompt"
+    },
+    "default": true,
+    "reads": [],
+    "normal_transitions": [
+      {
+        "destination_node_id": "node_correction_capture",
+        "id": "edge_correction_candidate_cleared",
+        "transition_condition": {
+          "prompt": "Always",
+          "type": "prompt"
+        }
+      }
+    ],
+    "writes": {
+      "correction_ambiguous": "correction_ambiguous",
+      "correction_date": "correction_date",
+      "correction_doctor": "correction_doctor",
+      "correction_doctor_mode": "correction_doctor_mode",
+      "correction_other_doctor": "correction_other_doctor",
+      "correction_search_mode": "correction_search_mode",
+      "correction_service": "correction_service",
+      "correction_time": "correction_time",
+      "correction_window_end": "correction_window_end",
+      "correction_window_start": "correction_window_start"
+    },
+    "tool": null,
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_correction_capture",
+    "name": "Capture Explicit Correction Only",
+    "edge": "edge_node_correction_capture_failure",
+    "condition": {
+      "prompt": "Else",
+      "type": "prompt"
+    },
+    "default": true,
+    "reads": [],
+    "normal_transitions": [
+      {
+        "destination_node_id": "node_correction_guard",
+        "id": "edge_correction_captured",
+        "transition_condition": {
+          "prompt": "Always",
+          "type": "prompt"
+        }
+      }
+    ],
+    "writes": [
+      "correction_service",
+      "correction_doctor",
+      "correction_date",
+      "correction_time",
+      "correction_window_start",
+      "correction_window_end",
+      "correction_search_mode",
+      "correction_doctor_mode",
+      "correction_ambiguous",
+      "correction_other_doctor"
+    ],
+    "tool": null,
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_correction_guard",
+    "name": "Compare Correction With Valid Check",
+    "edge": "edge_node_correction_guard_failure",
+    "condition": {
+      "prompt": "Else",
+      "type": "prompt"
+    },
+    "default": true,
+    "reads": [
+      "dv.active_booking_state",
+      "dv.reset_ready",
+      "dv.boundary_verified",
+      "dv.reset_verified_attempt",
+      "dv.reset_attempt",
+      "dv.correction_ambiguous",
+      "dv.correction_other_doctor",
+      "dv.service_name",
+      "dv.practitioner_id",
+      "dv.practitioner_name",
+      "dv.practitioner_mode",
+      "dv.requested_date",
+      "dv.requested_time",
+      "dv.window_start",
+      "dv.window_end",
+      "dv.search_mode",
+      "dv.availability_success",
+      "dv.available",
+      "dv.availability_query_signature",
+      "dv.slot_id",
+      "dv.slots",
+      "dv.current_availability_check",
+      "dv.call_id"
+    ],
+    "normal_transitions": [
+      {
+        "destination_node_id": "node_offer",
+        "id": "edge_correction_same",
+        "transition_condition": {
+          "equations": [
+            {
+              "left": "{{correction_decision}}",
+              "operator": "==",
+              "right": "same"
+            }
+          ],
+          "operator": "&&",
+          "type": "equation"
+        }
+      },
+      {
+        "destination_node_id": "node_invalidate_booking_clear_ack",
+        "id": "edge_correction_changed",
+        "transition_condition": {
+          "equations": [
+            {
+              "left": "{{correction_decision}}",
+              "operator": "==",
+              "right": "changed"
+            }
+          ],
+          "operator": "&&",
+          "type": "equation"
+        }
+      },
+      {
+        "destination_node_id": "node_invalidate_booking_clear_ack",
+        "id": "edge_correction_refresh",
+        "transition_condition": {
+          "equations": [
+            {
+              "left": "{{correction_decision}}",
+              "operator": "==",
+              "right": "refresh"
+            }
+          ],
+          "operator": "&&",
+          "type": "equation"
+        }
+      },
+      {
+        "destination_node_id": "node_correction_clarify",
+        "id": "edge_correction_clarify",
+        "transition_condition": {
+          "equations": [
+            {
+              "left": "{{correction_decision}}",
+              "operator": "==",
+              "right": "clarify"
+            }
+          ],
+          "operator": "&&",
+          "type": "equation"
+        }
+      }
+    ],
+    "writes": {
+      "correction_decision": "correction_decision",
+      "correction_reason": "correction_reason"
+    },
+    "tool": null,
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_match_slot",
+    "name": "Match Local Choice to Stored Slot",
+    "edge": "edge_slot_invalid_state",
+    "condition": {
+      "prompt": "Else",
+      "type": "prompt"
+    },
+    "default": true,
+    "reads": [
+      "dv.slot_choice_unclear",
+      "dv.slot_choice_index",
+      "dv.slot_choice_time",
+      "dv.slot_choice_date",
+      "dv.slot_choice_practitioner",
+      "dv.service_name",
+      "dv.practitioner_id",
+      "dv.practitioner_name",
+      "dv.practitioner_mode",
+      "dv.requested_date",
+      "dv.requested_time",
+      "dv.window_start",
+      "dv.window_end",
+      "dv.search_mode",
+      "dv.slots",
+      "dv.call_id",
+      "dv.existing_staff_id",
+      "dv.existing_service",
+      "dv.active_booking_state",
+      "dv.reset_ready",
+      "dv.boundary_verified",
+      "dv.reset_verified_attempt",
+      "dv.reset_attempt",
+      "dv.availability_success",
+      "dv.available",
+      "dv.current_availability_check",
+      "dv.current_availability_snapshot",
+      "dv.current_availability_signature",
+      "dv.availability_query_signature"
+    ],
+    "normal_transitions": [
+      {
+        "destination_node_id": "node_guard_slot_clear_result",
+        "id": "edge_slot_matched",
+        "transition_condition": {
+          "equations": [
+            {
+              "left": "{{slot_match_status}}",
+              "operator": "==",
+              "right": "matched"
+            }
+          ],
+          "operator": "&&",
+          "type": "equation"
+        }
+      },
+      {
+        "destination_node_id": "node_slot_clarify",
+        "id": "edge_slot_clarify",
+        "transition_condition": {
+          "equations": [
+            {
+              "left": "{{slot_match_status}}",
+              "operator": "==",
+              "right": "clarify"
+            }
+          ],
+          "operator": "&&",
+          "type": "equation"
+        }
+      },
+      {
+        "destination_node_id": "node_invalidate_booking_clear_ack",
+        "id": "edge_slot_expired",
+        "transition_condition": {
+          "equations": [
+            {
+              "left": "{{slot_match_status}}",
+              "operator": "==",
+              "right": "refresh"
+            }
+          ],
+          "operator": "&&",
+          "type": "equation"
+        }
+      }
+    ],
+    "writes": {
+      "slot_id": "slot_id",
+      "slot_match_reason": "slot_match_reason",
+      "slot_match_status": "slot_match_status"
+    },
+    "tool": null,
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_intake_name_capture",
+    "name": "Capture current patient name",
+    "edge": "node_intake_name_capture_failed",
+    "condition": {
+      "prompt": "Else",
+      "type": "prompt"
+    },
+    "default": true,
+    "reads": [],
+    "normal_transitions": [
+      {
+        "destination_node_id": "node_intake_name_gate_clear",
+        "id": "node_intake_name_capture_done",
+        "transition_condition": {
+          "prompt": "Always",
+          "type": "prompt"
+        }
+      }
+    ],
+    "writes": [
+      "client_name",
+      "intake_name_evidence"
+    ],
+    "tool": null,
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_intake_name_gate",
+    "name": "Require patient name before service",
+    "edge": "node_intake_name_gate_failed",
+    "condition": {
+      "prompt": "Else",
+      "type": "prompt"
+    },
+    "default": true,
+    "reads": [
+      "dv.active_booking_state",
+      "dv.reset_ready",
+      "dv.boundary_verified",
+      "dv.reset_attempt",
+      "dv.reset_verified_attempt",
+      "dv.client_name",
+      "dv.intake_name_cycle",
+      "dv.client_phone",
+      "dv.patient_evidence",
+      "dv.patient_confirmed",
+      "dv.qualified_practitioners",
+      "dv.resolve_success",
+      "dv.service_name",
+      "dv.practitioner_mode",
+      "dv.practitioner_id",
+      "dv.practitioner_name",
+      "dv.selection_cycle",
+      "dv.slot_id",
+      "dv.intake_name_evidence"
+    ],
+    "normal_transitions": [
+      {
+        "destination_node_id": "node_intake_name",
+        "id": "intake_name_missing",
+        "transition_condition": {
+          "equations": [
+            {
+              "left": "{{intake_route}}",
+              "operator": "==",
+              "right": "name"
+            }
+          ],
+          "operator": "&&",
+          "type": "equation"
+        }
+      },
+      {
+        "destination_node_id": "node_service",
+        "id": "intake_name_present",
+        "transition_condition": {
+          "equations": [
+            {
+              "left": "{{intake_route}}",
+              "operator": "==",
+              "right": "service"
+            }
+          ],
+          "operator": "&&",
+          "type": "equation"
+        }
+      }
+    ],
+    "writes": {
+      "intake_name_cycle": "intake_name_cycle",
+      "intake_route": "intake_route"
+    },
+    "tool": null,
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_intake_doctor_capture",
+    "name": "Capture required practitioner preference",
+    "edge": "node_intake_doctor_capture_failed",
+    "condition": {
+      "prompt": "Else",
+      "type": "prompt"
+    },
+    "default": true,
+    "reads": [],
+    "normal_transitions": [
+      {
+        "destination_node_id": "node_intake_before_time_clear",
+        "id": "node_intake_doctor_capture_done",
+        "transition_condition": {
+          "prompt": "Always",
+          "type": "prompt"
+        }
+      }
+    ],
+    "writes": [
+      "practitioner_name",
+      "practitioner_id",
+      "practitioner_mode"
+    ],
+    "tool": null,
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_intake_before_time",
+    "name": "Require all non-time intake before date",
+    "edge": "node_intake_before_time_failed",
+    "condition": {
+      "prompt": "Else",
+      "type": "prompt"
+    },
+    "default": true,
+    "reads": [
+      "dv.active_booking_state",
+      "dv.reset_ready",
+      "dv.boundary_verified",
+      "dv.reset_attempt",
+      "dv.reset_verified_attempt",
+      "dv.client_name",
+      "dv.intake_name_cycle",
+      "dv.client_phone",
+      "dv.patient_evidence",
+      "dv.patient_confirmed",
+      "dv.qualified_practitioners",
+      "dv.resolve_success",
+      "dv.service_name",
+      "dv.practitioner_mode",
+      "dv.practitioner_id",
+      "dv.practitioner_name",
+      "dv.selection_cycle",
+      "dv.slot_id"
+    ],
+    "normal_transitions": [
+      {
+        "destination_node_id": "node_intake_name_capture",
+        "id": "intake_need_name",
+        "transition_condition": {
+          "equations": [
+            {
+              "left": "{{intake_route}}",
+              "operator": "==",
+              "right": "name"
+            }
+          ],
+          "operator": "&&",
+          "type": "equation"
+        }
+      },
+      {
+        "destination_node_id": "node_service",
+        "id": "intake_need_service",
+        "transition_condition": {
+          "equations": [
+            {
+              "left": "{{intake_route}}",
+              "operator": "==",
+              "right": "service"
+            }
+          ],
+          "operator": "&&",
+          "type": "equation"
+        }
+      },
+      {
+        "destination_node_id": "node_doctor_preference",
+        "id": "intake_need_doctor",
+        "transition_condition": {
+          "equations": [
+            {
+              "left": "{{intake_route}}",
+              "operator": "==",
+              "right": "doctor"
+            }
+          ],
+          "operator": "&&",
+          "type": "equation"
+        }
+      },
+      {
+        "destination_node_id": "node_patient",
+        "id": "intake_need_contact",
+        "transition_condition": {
+          "equations": [
+            {
+              "left": "{{intake_route}}",
+              "operator": "==",
+              "right": "contact"
+            }
+          ],
+          "operator": "&&",
+          "type": "equation"
+        }
+      },
+      {
+        "destination_node_id": "node_date_time",
+        "id": "intake_ready_for_date",
+        "transition_condition": {
+          "equations": [
+            {
+              "left": "{{intake_route}}",
+              "operator": "==",
+              "right": "date"
+            }
+          ],
+          "operator": "&&",
+          "type": "equation"
+        }
+      }
+    ],
+    "writes": {
+      "intake_route": "intake_route",
+      "practitioner_id": "practitioner_id",
+      "practitioner_mode": "practitioner_mode",
+      "practitioner_name": "practitioner_name"
+    },
+    "tool": null,
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_intake_contact_capture",
+    "name": "Capture patient contact before date",
+    "edge": "node_intake_contact_capture_failed",
+    "condition": {
+      "prompt": "Else",
+      "type": "prompt"
+    },
+    "default": true,
+    "reads": [],
+    "normal_transitions": [
+      {
+        "destination_node_id": "node_intake_before_time_clear",
+        "id": "node_intake_contact_capture_done",
+        "transition_condition": {
+          "prompt": "Always",
+          "type": "prompt"
+        }
+      }
+    ],
+    "writes": [
+      "client_name",
+      "client_phone",
+      "patient_confirmed",
+      "patient_evidence"
+    ],
+    "tool": null,
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_intake_entry_node_check",
+    "name": "Guard required booking fields at tool entry",
+    "edge": "node_intake_entry_node_check_failed",
+    "condition": {
+      "prompt": "Else",
+      "type": "prompt"
+    },
+    "default": true,
+    "reads": [
+      "dv.practitioner_mode",
+      "dv.practitioner_scope",
+      "dv.practitioner_id",
+      "dv.practitioner_name",
+      "dv.active_booking_state",
+      "dv.reset_ready",
+      "dv.boundary_verified",
+      "dv.reset_attempt",
+      "dv.reset_verified_attempt",
+      "dv.client_name",
+      "dv.intake_name_cycle",
+      "dv.client_phone",
+      "dv.patient_evidence",
+      "dv.patient_confirmed",
+      "dv.qualified_practitioners",
+      "dv.resolve_success",
+      "dv.service_name",
+      "dv.selection_cycle",
+      "dv.slot_id"
+    ],
+    "normal_transitions": [
+      {
+        "destination_node_id": "node_downtime_prepare_node_check",
+        "id": "node_intake_entry_node_check_ready",
+        "transition_condition": {
+          "equations": [
+            {
+              "left": "{{intake_entry_ok}}",
+              "operator": "==",
+              "right": "true"
+            }
+          ],
+          "operator": "&&",
+          "type": "equation"
+        }
+      }
+    ],
+    "writes": {
+      "intake_entry_ok": "intake_entry_ok"
+    },
+    "tool": null,
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_intake_entry_node_check_arabic_wait",
+    "name": "Guard required booking fields at tool entry",
+    "edge": "node_intake_entry_node_check_arabic_wait_failed",
+    "condition": {
+      "prompt": "Else",
+      "type": "prompt"
+    },
+    "default": true,
+    "reads": [
+      "dv.practitioner_mode",
+      "dv.practitioner_scope",
+      "dv.practitioner_id",
+      "dv.practitioner_name",
+      "dv.active_booking_state",
+      "dv.reset_ready",
+      "dv.boundary_verified",
+      "dv.reset_attempt",
+      "dv.reset_verified_attempt",
+      "dv.client_name",
+      "dv.intake_name_cycle",
+      "dv.client_phone",
+      "dv.patient_evidence",
+      "dv.patient_confirmed",
+      "dv.qualified_practitioners",
+      "dv.resolve_success",
+      "dv.service_name",
+      "dv.selection_cycle",
+      "dv.slot_id"
+    ],
+    "normal_transitions": [
+      {
+        "destination_node_id": "node_downtime_prepare_node_check_arabic_wait",
+        "id": "node_intake_entry_node_check_arabic_wait_ready",
+        "transition_condition": {
+          "equations": [
+            {
+              "left": "{{intake_entry_ok}}",
+              "operator": "==",
+              "right": "true"
+            }
+          ],
+          "operator": "&&",
+          "type": "equation"
+        }
+      }
+    ],
+    "writes": {
+      "intake_entry_ok": "intake_entry_ok"
+    },
+    "tool": null,
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_intake_entry_node_check_silent",
+    "name": "Guard required booking fields at tool entry",
+    "edge": "node_intake_entry_node_check_silent_failed",
+    "condition": {
+      "prompt": "Else",
+      "type": "prompt"
+    },
+    "default": true,
+    "reads": [
+      "dv.practitioner_mode",
+      "dv.practitioner_scope",
+      "dv.practitioner_id",
+      "dv.practitioner_name",
+      "dv.active_booking_state",
+      "dv.reset_ready",
+      "dv.boundary_verified",
+      "dv.reset_attempt",
+      "dv.reset_verified_attempt",
+      "dv.client_name",
+      "dv.intake_name_cycle",
+      "dv.client_phone",
+      "dv.patient_evidence",
+      "dv.patient_confirmed",
+      "dv.qualified_practitioners",
+      "dv.resolve_success",
+      "dv.service_name",
+      "dv.selection_cycle",
+      "dv.slot_id"
+    ],
+    "normal_transitions": [
+      {
+        "destination_node_id": "node_downtime_prepare_node_check_silent",
+        "id": "node_intake_entry_node_check_silent_ready",
+        "transition_condition": {
+          "equations": [
+            {
+              "left": "{{intake_entry_ok}}",
+              "operator": "==",
+              "right": "true"
+            }
+          ],
+          "operator": "&&",
+          "type": "equation"
+        }
+      }
+    ],
+    "writes": {
+      "intake_entry_ok": "intake_entry_ok"
+    },
+    "tool": null,
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_intake_entry_node_book",
+    "name": "Guard required booking fields at tool entry",
+    "edge": "node_intake_entry_node_book_failed",
+    "condition": {
+      "prompt": "Else",
+      "type": "prompt"
+    },
+    "default": true,
+    "reads": [
+      "dv.reset_attempt",
+      "dv.slot_id",
+      "dv.client_name",
+      "dv.client_phone",
+      "dv.service_name",
+      "dv.practitioner_id",
+      "dv.appointment_date",
+      "dv.appointment_time",
+      "dv.active_booking_state",
+      "dv.current_availability_snapshot",
+      "dv.booking_reconciliation_required",
+      "dv.reset_ready",
+      "dv.boundary_verified",
+      "dv.reset_verified_attempt",
+      "dv.intake_name_cycle",
+      "dv.current_availability_check",
+      "dv.call_id",
+      "dv.selection_cycle",
+      "dv.patient_cycle",
+      "dv.consent_cycle",
+      "dv.patient_confirmed",
+      "dv.consent_confirmed",
+      "dv.booking_readback",
+      "dv.consent_tuple"
+    ],
+    "normal_transitions": [
+      {
+        "destination_node_id": "node_downtime_prepare_node_book",
+        "id": "node_intake_entry_node_book_ready",
+        "transition_condition": {
+          "equations": [
+            {
+              "left": "{{intake_entry_ok}}",
+              "operator": "==",
+              "right": "true"
+            }
+          ],
+          "operator": "&&",
+          "type": "equation"
+        }
+      }
+    ],
+    "writes": {
+      "intake_entry_ok": "intake_entry_ok",
+      "booking_reconciliation_required": "booking_reconciliation_required",
+      "booking_attempt_tuple": "booking_attempt_tuple",
+      "booking_attempt_cycle": "booking_attempt_cycle"
+    },
+    "tool": null,
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_intake_entry_node_book_arabic_wait",
+    "name": "Guard required booking fields at tool entry",
+    "edge": "node_intake_entry_node_book_arabic_wait_failed",
+    "condition": {
+      "prompt": "Else",
+      "type": "prompt"
+    },
+    "default": true,
+    "reads": [
+      "dv.reset_attempt",
+      "dv.slot_id",
+      "dv.client_name",
+      "dv.client_phone",
+      "dv.service_name",
+      "dv.practitioner_id",
+      "dv.appointment_date",
+      "dv.appointment_time",
+      "dv.active_booking_state",
+      "dv.current_availability_snapshot",
+      "dv.booking_reconciliation_required",
+      "dv.reset_ready",
+      "dv.boundary_verified",
+      "dv.reset_verified_attempt",
+      "dv.intake_name_cycle",
+      "dv.current_availability_check",
+      "dv.call_id",
+      "dv.selection_cycle",
+      "dv.patient_cycle",
+      "dv.consent_cycle",
+      "dv.patient_confirmed",
+      "dv.consent_confirmed",
+      "dv.booking_readback",
+      "dv.consent_tuple"
+    ],
+    "normal_transitions": [
+      {
+        "destination_node_id": "node_downtime_prepare_node_book_arabic_wait",
+        "id": "node_intake_entry_node_book_arabic_wait_ready",
+        "transition_condition": {
+          "equations": [
+            {
+              "left": "{{intake_entry_ok}}",
+              "operator": "==",
+              "right": "true"
+            }
+          ],
+          "operator": "&&",
+          "type": "equation"
+        }
+      }
+    ],
+    "writes": {
+      "intake_entry_ok": "intake_entry_ok",
+      "booking_reconciliation_required": "booking_reconciliation_required",
+      "booking_attempt_tuple": "booking_attempt_tuple",
+      "booking_attempt_cycle": "booking_attempt_cycle"
+    },
+    "tool": null,
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_intake_name_gate_clear",
+    "name": "Clear intake routing acknowledgement",
+    "edge": "node_intake_name_gate_clear_failed",
+    "condition": {
+      "prompt": "Else",
+      "type": "prompt"
+    },
+    "default": true,
+    "reads": [],
+    "normal_transitions": [
+      {
+        "destination_node_id": "node_intake_name_gate",
+        "id": "node_intake_name_gate_clear_done",
+        "transition_condition": {
+          "equations": [
+            {
+              "left": "{{intake_route}}",
+              "operator": "==",
+              "right": ""
+            }
+          ],
+          "operator": "&&",
+          "type": "equation"
+        }
+      }
+    ],
+    "writes": {
+      "intake_route": "intake_route"
+    },
+    "tool": null,
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_intake_before_time_clear",
+    "name": "Clear intake routing acknowledgement",
+    "edge": "node_intake_before_time_clear_failed",
+    "condition": {
+      "prompt": "Else",
+      "type": "prompt"
+    },
+    "default": true,
+    "reads": [],
+    "normal_transitions": [
+      {
+        "destination_node_id": "node_intake_before_time",
+        "id": "node_intake_before_time_clear_done",
+        "transition_condition": {
+          "equations": [
+            {
+              "left": "{{intake_route}}",
+              "operator": "==",
+              "right": ""
+            }
+          ],
+          "operator": "&&",
+          "type": "equation"
+        }
+      }
+    ],
+    "writes": {
+      "intake_route": "intake_route"
+    },
+    "tool": null,
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_intake_entry_node_check_clear",
+    "name": "Clear intake routing acknowledgement",
+    "edge": "node_intake_entry_node_check_clear_failed",
+    "condition": {
+      "prompt": "Else",
+      "type": "prompt"
+    },
+    "default": true,
+    "reads": [],
+    "normal_transitions": [
+      {
+        "destination_node_id": "node_intake_entry_node_check",
+        "id": "node_intake_entry_node_check_clear_done",
+        "transition_condition": {
+          "equations": [
+            {
+              "left": "{{intake_entry_ok}}",
+              "operator": "==",
+              "right": "false"
+            }
+          ],
+          "operator": "&&",
+          "type": "equation"
+        }
+      }
+    ],
+    "writes": {
+      "intake_entry_ok": "intake_entry_ok"
+    },
+    "tool": null,
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_intake_entry_node_check_arabic_wait_clear",
+    "name": "Clear intake routing acknowledgement",
+    "edge": "node_intake_entry_node_check_arabic_wait_clear_failed",
+    "condition": {
+      "prompt": "Else",
+      "type": "prompt"
+    },
+    "default": true,
+    "reads": [],
+    "normal_transitions": [
+      {
+        "destination_node_id": "node_intake_entry_node_check_arabic_wait",
+        "id": "node_intake_entry_node_check_arabic_wait_clear_done",
+        "transition_condition": {
+          "equations": [
+            {
+              "left": "{{intake_entry_ok}}",
+              "operator": "==",
+              "right": "false"
+            }
+          ],
+          "operator": "&&",
+          "type": "equation"
+        }
+      }
+    ],
+    "writes": {
+      "intake_entry_ok": "intake_entry_ok"
+    },
+    "tool": null,
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_intake_entry_node_check_silent_clear",
+    "name": "Clear intake routing acknowledgement",
+    "edge": "node_intake_entry_node_check_silent_clear_failed",
+    "condition": {
+      "prompt": "Else",
+      "type": "prompt"
+    },
+    "default": true,
+    "reads": [],
+    "normal_transitions": [
+      {
+        "destination_node_id": "node_intake_entry_node_check_silent",
+        "id": "node_intake_entry_node_check_silent_clear_done",
+        "transition_condition": {
+          "equations": [
+            {
+              "left": "{{intake_entry_ok}}",
+              "operator": "==",
+              "right": "false"
+            }
+          ],
+          "operator": "&&",
+          "type": "equation"
+        }
+      }
+    ],
+    "writes": {
+      "intake_entry_ok": "intake_entry_ok"
+    },
+    "tool": null,
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_intake_entry_node_book_clear",
+    "name": "Clear intake routing acknowledgement",
+    "edge": "node_intake_entry_node_book_clear_failed",
+    "condition": {
+      "prompt": "Else",
+      "type": "prompt"
+    },
+    "default": true,
+    "reads": [],
+    "normal_transitions": [
+      {
+        "destination_node_id": "node_intake_entry_node_book",
+        "id": "node_intake_entry_node_book_clear_done",
+        "transition_condition": {
+          "equations": [
+            {
+              "left": "{{intake_entry_ok}}",
+              "operator": "==",
+              "right": "false"
+            }
+          ],
+          "operator": "&&",
+          "type": "equation"
+        }
+      }
+    ],
+    "writes": {
+      "intake_entry_ok": "intake_entry_ok"
+    },
+    "tool": null,
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_intake_entry_node_book_arabic_wait_clear",
+    "name": "Clear intake routing acknowledgement",
+    "edge": "node_intake_entry_node_book_arabic_wait_clear_failed",
+    "condition": {
+      "prompt": "Else",
+      "type": "prompt"
+    },
+    "default": true,
+    "reads": [],
+    "normal_transitions": [
+      {
+        "destination_node_id": "node_intake_entry_node_book_arabic_wait",
+        "id": "node_intake_entry_node_book_arabic_wait_clear_done",
+        "transition_condition": {
+          "equations": [
+            {
+              "left": "{{intake_entry_ok}}",
+              "operator": "==",
+              "right": "false"
+            }
+          ],
+          "operator": "&&",
+          "type": "equation"
+        }
+      }
+    ],
+    "writes": {
+      "intake_entry_ok": "intake_entry_ok"
+    },
+    "tool": null,
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_r18_identity_capture",
+    "name": "Capture only explicitly corrected patient fields",
+    "edge": "node_r18_identity_capture_error",
+    "condition": {
+      "type": "prompt",
+      "prompt": "Else"
+    },
+    "default": true,
+    "reads": [],
+    "normal_transitions": [
+      {
+        "id": "node_r18_identity_capture_next",
+        "destination_node_id": "node_r18_identity_apply_clear",
+        "transition_condition": {
+          "type": "prompt",
+          "prompt": "Always"
+        }
+      }
+    ],
+    "writes": [
+      "corrected_patient_name",
+      "corrected_patient_phone",
+      "identity_correction_evidence",
+      "identity_also_changes_schedule"
+    ],
+    "tool": null,
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_r18_identity_apply",
+    "name": "Apply identity edits and invalidate prior consent only",
+    "edge": "node_r18_identity_apply_error",
+    "condition": {
+      "type": "prompt",
+      "prompt": "Else"
+    },
+    "default": true,
+    "reads": [
+      "dv.booking_reconciliation_required",
+      "dv.active_booking_state",
+      "dv.corrected_patient_name",
+      "dv.corrected_patient_phone",
+      "dv.identity_correction_evidence",
+      "dv.reset_attempt",
+      "dv.client_name",
+      "dv.client_phone",
+      "dv.patient_confirmed",
+      "dv.slot_id",
+      "dv.selection_cycle",
+      "dv.identity_also_changes_schedule"
+    ],
+    "normal_transitions": [
+      {
+        "id": "r18_identity_readback",
+        "destination_node_id": "node_guard_patient_clear_result",
+        "transition_condition": {
+          "type": "equation",
+          "operator": "&&",
+          "equations": [
+            {
+              "left": "{{r18_route}}",
+              "operator": "==",
+              "right": "readback"
+            }
+          ]
+        }
+      },
+      {
+        "id": "r18_identity_offer",
+        "destination_node_id": "node_offer",
+        "transition_condition": {
+          "type": "equation",
+          "operator": "&&",
+          "equations": [
+            {
+              "left": "{{r18_route}}",
+              "operator": "==",
+              "right": "offer"
+            }
+          ]
+        }
+      },
+      {
+        "id": "r18_identity_intake",
+        "destination_node_id": "node_intake_before_time_clear",
+        "transition_condition": {
+          "type": "equation",
+          "operator": "&&",
+          "equations": [
+            {
+              "left": "{{r18_route}}",
+              "operator": "==",
+              "right": "intake"
+            }
+          ]
+        }
+      },
+      {
+        "id": "r18_identity_schedule",
+        "destination_node_id": "node_invalidate_booking_clear_ack",
+        "transition_condition": {
+          "type": "equation",
+          "operator": "&&",
+          "equations": [
+            {
+              "left": "{{r18_route}}",
+              "operator": "==",
+              "right": "schedule"
+            }
+          ]
+        }
+      },
+      {
+        "id": "r18_identity_clarify",
+        "destination_node_id": "node_r18_identity_clarify",
+        "transition_condition": {
+          "type": "equation",
+          "operator": "&&",
+          "equations": [
+            {
+              "left": "{{r18_route}}",
+              "operator": "==",
+              "right": "clarify"
+            }
+          ]
+        }
+      },
+      {
+        "id": "r18_identity_locked",
+        "destination_node_id": "node_book_failed",
+        "transition_condition": {
+          "type": "equation",
+          "operator": "&&",
+          "equations": [
+            {
+              "left": "{{r18_route}}",
+              "operator": "==",
+              "right": "locked"
+            }
+          ]
+        }
+      }
+    ],
+    "writes": {
+      "client_name": "client_name",
+      "client_phone": "client_phone",
+      "patient_confirmed": "patient_confirmed",
+      "patient_evidence": "patient_evidence",
+      "intake_name_cycle": "intake_name_cycle",
+      "intake_name_evidence": "intake_name_evidence",
+      "consent_confirmed": "consent_confirmed",
+      "consent_cycle": "consent_cycle",
+      "consent_tuple": "consent_tuple",
+      "booking_readback": "booking_readback",
+      "patient_cycle": "patient_cycle",
+      "active_booking_state": "active_booking_state",
+      "r18_route": "r18_route"
+    },
+    "tool": null,
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_r18_identity_prepare",
+    "name": "Clear prior explicit edit/choice candidates",
+    "edge": "node_r18_identity_prepare_error",
+    "condition": {
+      "type": "prompt",
+      "prompt": "Else"
+    },
+    "default": true,
+    "reads": [],
+    "normal_transitions": [
+      {
+        "id": "node_r18_identity_prepare_next",
+        "destination_node_id": "node_r18_identity_capture",
+        "transition_condition": {
+          "type": "prompt",
+          "prompt": "Always"
+        }
+      }
+    ],
+    "writes": {
+      "corrected_patient_name": "corrected_patient_name",
+      "corrected_patient_phone": "corrected_patient_phone",
+      "identity_correction_evidence": "identity_correction_evidence",
+      "identity_also_changes_schedule": "identity_also_changes_schedule"
+    },
+    "tool": null,
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_r18_choice_prepare",
+    "name": "Clear prior explicit edit/choice candidates",
+    "edge": "node_r18_choice_prepare_error",
+    "condition": {
+      "type": "prompt",
+      "prompt": "Else"
+    },
+    "default": true,
+    "reads": [],
+    "normal_transitions": [
+      {
+        "id": "node_r18_choice_prepare_next",
+        "destination_node_id": "node_r18_existing_choice",
+        "transition_condition": {
+          "type": "prompt",
+          "prompt": "Always"
+        }
+      }
+    ],
+    "writes": {
+      "existing_choice_index": "existing_choice_index",
+      "existing_choice_action": "existing_choice_action",
+      "existing_choice_unclear": "existing_choice_unclear"
+    },
+    "tool": null,
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  },
+  {
+    "source": "node_r18_identity_apply_clear",
+    "name": "Clear current remediation routing result",
+    "edge": "node_r18_identity_apply_clear_error",
+    "condition": {
+      "type": "prompt",
+      "prompt": "Else"
+    },
+    "default": true,
+    "reads": [],
+    "normal_transitions": [
+      {
+        "id": "node_r18_identity_apply_clear_next",
+        "destination_node_id": "node_r18_identity_apply",
+        "transition_condition": {
+          "type": "equation",
+          "operator": "&&",
+          "equations": [
+            {
+              "left": "{{r18_route}}",
+              "operator": "==",
+              "right": ""
+            }
+          ]
+        }
+      }
+    ],
+    "writes": {
+      "r18_route": "r18_route"
+    },
+    "tool": null,
+    "failure_reason": "No normal outgoing condition matched; code throws/timeouts or missing mapped outputs can also leave normal acknowledgement conditions unsatisfied. See exact sibling conditions and source code."
+  }
+]
