@@ -1,0 +1,45 @@
+{
+  "published_version": 19,
+  "agent_id": "agent_b84b2766efeb85afc809147d7a",
+  "flow_id": "conversation_flow_43f53e5e8531",
+  "published": true,
+  "readback_matches": true,
+  "nodes": 238,
+  "explicit_transitions": 602,
+  "backend": {
+    "function": "clinic-operations",
+    "version": 17,
+    "sha256": "fa75558859db3dfe0b08e357534e2cbe66f351710d954787f300585c96a13a97",
+    "changed": false
+  },
+  "agent_voice_recording_security_webhook_settings_preserved": true,
+  "findings": {
+    "C01": "RESOLVED",
+    "C02": "RESOLVED",
+    "C03": "RESOLVED",
+    "H01": "RESOLVED",
+    "H02": "RESOLVED",
+    "H03": "RESOLVED",
+    "H04": "RESOLVED"
+  },
+  "tests": {
+    "focused_remediation": 76,
+    "booking_fallback": 15,
+    "handler_and_clinic_isolation": 32,
+    "calendar_fallback": 17,
+    "unknown_answer": 10,
+    "human_escalation": 16,
+    "call_transfer": 18,
+    "system_downtime": 12,
+    "original_intake": 17,
+    "total_passed": 213,
+    "failed": 0
+  },
+  "static_graph_audit": "PASS",
+  "retell_schema_validation": "PASS",
+  "live_calls": 0,
+  "try_a_call_used": false,
+  "ai_simulated_conversations": 0,
+  "manual_calls": 0,
+  "paid_testing": false
+}
