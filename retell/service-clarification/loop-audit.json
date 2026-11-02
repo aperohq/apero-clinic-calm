@@ -1,0 +1,723 @@
+{
+  "baseline": 21,
+  "clarification_state_existed": false,
+  "service_id_used": false,
+  "canonical_service": "service_name",
+  "resolver_receipt_cleared": [
+    "resolve_success"
+  ],
+  "resolver_receipt_did_not_clear": [
+    "service_name",
+    "service_candidates",
+    "qualified_practitioners"
+  ],
+  "nodes": [
+    {
+      "id": "node_service",
+      "name": "Understand Service",
+      "type": "conversation",
+      "transitions": [
+        {
+          "source": "node_service",
+          "condition": {
+            "prompt": "Caller explicitly CORRECTS the current patient name or phone/contact. This is not an ordinary answer to a missing-field question, another patient/new booking, FAQ, consent or original existing-appointment operation. Handle before scheduling-only correction.",
+            "type": "prompt"
+          },
+          "destination": "node_r18_identity_prepare"
+        },
+        {
+          "source": "node_service",
+          "condition": {
+            "prompt": "The requested service is clear enough to send to service resolver",
+            "type": "prompt"
+          },
+          "destination": "node_capture_service"
+        }
+      ],
+      "code_reads": [],
+      "mapped_writes": [],
+      "extracted_variables": []
+    },
+    {
+      "id": "node_resolve",
+      "name": "Resolve Service",
+      "type": "function",
+      "transitions": [
+        {
+          "source": "node_resolve",
+          "condition": {
+            "equations": [
+              {
+                "left": "{{apero_response_received}}",
+                "operator": "!=",
+                "right": "true"
+              },
+              {
+                "left": "{{apero_system_unavailable}}",
+                "operator": "==",
+                "right": "true"
+              }
+            ],
+            "operator": "||",
+            "type": "equation"
+          },
+          "destination": "node_downtime_clear"
+        },
+        {
+          "source": "node_resolve",
+          "condition": {
+            "equations": [
+              {
+                "left": "{{resolve_success}}",
+                "operator": "==",
+                "right": "true"
+              }
+            ],
+            "operator": "&&",
+            "type": "equation"
+          },
+          "destination": "node_doctor_preference"
+        },
+        {
+          "source": "node_resolve",
+          "condition": {
+            "prompt": "Else",
+            "type": "prompt"
+          },
+          "destination": "node_service_clarify"
+        }
+      ],
+      "code_reads": [],
+      "mapped_writes": [],
+      "extracted_variables": []
+    },
+    {
+      "id": "node_service_clarify",
+      "name": "Clarify Service",
+      "type": "conversation",
+      "transitions": [
+        {
+          "source": "node_service_clarify",
+          "condition": {
+            "prompt": "Caller explicitly CORRECTS the current patient name or phone/contact. This is not an ordinary answer to a missing-field question, another patient/new booking, FAQ, consent or original existing-appointment operation. Handle before scheduling-only correction.",
+            "type": "prompt"
+          },
+          "destination": "node_r18_identity_prepare"
+        },
+        {
+          "source": "node_service_clarify",
+          "condition": {
+            "prompt": "Caller clarifies the service",
+            "type": "prompt"
+          },
+          "destination": "node_intake_name_capture"
+        }
+      ],
+      "code_reads": [],
+      "mapped_writes": [],
+      "extracted_variables": []
+    },
+    {
+      "id": "node_change_booking",
+      "name": "Collect Correction",
+      "type": "conversation",
+      "transitions": [
+        {
+          "source": "node_change_booking",
+          "condition": {
+            "prompt": "Caller explicitly CORRECTS the current patient name or phone/contact. This is not an ordinary answer to a missing-field question, another patient/new booking, FAQ, consent or original existing-appointment operation. Handle before scheduling-only correction.",
+            "type": "prompt"
+          },
+          "destination": "node_r18_identity_prepare"
+        },
+        {
+          "source": "node_change_booking",
+          "condition": {
+            "prompt": "The SERVICE changed, so resolve the new service and reassess doctor qualification",
+            "type": "prompt"
+          },
+          "destination": "node_capture_service"
+        },
+        {
+          "source": "node_change_booking",
+          "condition": {
+            "prompt": "Doctor preference was changed or is missing or ambiguous and must be clarified",
+            "type": "prompt"
+          },
+          "destination": "node_doctor_preference"
+        },
+        {
+          "source": "node_change_booking",
+          "condition": {
+            "prompt": "Only date or time changed, but the new date or time preference is still incomplete; preserve the same canonical service and doctor",
+            "type": "prompt"
+          },
+          "destination": "node_intake_before_time_clear"
+        },
+        {
+          "source": "node_change_booking",
+          "condition": {
+            "prompt": "Only date/time/window changed and final values are clear, or a new specific doctor was clearly named; preserve the service and established doctor mode, use the new doctor only when explicitly changed, and check fresh availability",
+            "type": "prompt"
+          },
+          "destination": "node_capture_search"
+        }
+      ],
+      "code_reads": [],
+      "mapped_writes": [],
+      "extracted_variables": []
+    },
+    {
+      "id": "node_capture_service",
+      "name": "Capture Current Cycle Service",
+      "type": "extract_dynamic_variables",
+      "transitions": [
+        {
+          "source": "node_capture_service",
+          "condition": {
+            "prompt": "Always",
+            "type": "prompt"
+          },
+          "destination": "node_guard_service_clear_result"
+        },
+        {
+          "source": "node_capture_service",
+          "condition": {
+            "prompt": "Else",
+            "type": "prompt"
+          },
+          "destination": "node_reset_failed"
+        }
+      ],
+      "code_reads": [],
+      "mapped_writes": [],
+      "extracted_variables": [
+        "service_query"
+      ]
+    },
+    {
+      "id": "node_guard_service",
+      "name": "Verify Current Service Input",
+      "type": "code",
+      "transitions": [
+        {
+          "source": "node_guard_service",
+          "condition": {
+            "equations": [
+              {
+                "left": "{{stage_ok}}",
+                "operator": "==",
+                "right": "true"
+              }
+            ],
+            "operator": "&&",
+            "type": "equation"
+          },
+          "destination": "node_downtime_prepare_node_resolve"
+        },
+        {
+          "source": "node_guard_service",
+          "condition": {
+            "prompt": "Else",
+            "type": "prompt"
+          },
+          "destination": "node_reset_failed"
+        }
+      ],
+      "code_reads": [
+        "active_booking_state",
+        "reset_ready",
+        "boundary_verified",
+        "reset_attempt",
+        "reset_verified_attempt",
+        "client_name",
+        "intake_name_cycle",
+        "client_phone",
+        "patient_evidence",
+        "patient_confirmed",
+        "qualified_practitioners",
+        "resolve_success",
+        "service_name",
+        "practitioner_mode",
+        "practitioner_id",
+        "practitioner_name",
+        "selection_cycle",
+        "slot_id",
+        "service_query"
+      ],
+      "mapped_writes": [
+        "reset_error",
+        "reset_ready",
+        "service_query",
+        "stage_ok"
+      ],
+      "extracted_variables": []
+    },
+    {
+      "id": "node_guard_service_clear_result",
+      "name": "Clear Stage Verification Result",
+      "type": "code",
+      "transitions": [
+        {
+          "source": "node_guard_service_clear_result",
+          "condition": {
+            "equations": [
+              {
+                "left": "{{stage_ok}}",
+                "operator": "==",
+                "right": "false"
+              }
+            ],
+            "operator": "&&",
+            "type": "equation"
+          },
+          "destination": "node_guard_service"
+        },
+        {
+          "source": "node_guard_service_clear_result",
+          "condition": {
+            "prompt": "Else",
+            "type": "prompt"
+          },
+          "destination": "node_reset_failed"
+        }
+      ],
+      "code_reads": [],
+      "mapped_writes": [
+        "stage_ok"
+      ],
+      "extracted_variables": []
+    },
+    {
+      "id": "node_clear_correction",
+      "name": "Clear Current Selection After Correction",
+      "type": "code",
+      "transitions": [
+        {
+          "source": "node_clear_correction",
+          "condition": {
+            "prompt": "Always",
+            "type": "prompt"
+          },
+          "destination": "node_change_booking"
+        },
+        {
+          "source": "node_clear_correction",
+          "condition": {
+            "prompt": "Else",
+            "type": "prompt"
+          },
+          "destination": "node_reset_failed"
+        }
+      ],
+      "code_reads": [
+        "active_booking_state",
+        "practitioner_mode",
+        "practitioner_id",
+        "practitioner_name"
+      ],
+      "mapped_writes": [
+        "active_booking_state",
+        "booking_readback",
+        "consent_confirmed",
+        "consent_cycle",
+        "consent_tuple",
+        "patient_cycle",
+        "practitioner_id",
+        "practitioner_name",
+        "selection_cycle",
+        "slot_id",
+        "slots"
+      ],
+      "extracted_variables": []
+    },
+    {
+      "id": "node_correction_guard",
+      "name": "Compare Correction With Valid Check",
+      "type": "code",
+      "transitions": [
+        {
+          "source": "node_correction_guard",
+          "condition": {
+            "equations": [
+              {
+                "left": "{{correction_decision}}",
+                "operator": "==",
+                "right": "same"
+              }
+            ],
+            "operator": "&&",
+            "type": "equation"
+          },
+          "destination": "node_offer"
+        },
+        {
+          "source": "node_correction_guard",
+          "condition": {
+            "equations": [
+              {
+                "left": "{{correction_decision}}",
+                "operator": "==",
+                "right": "changed"
+              }
+            ],
+            "operator": "&&",
+            "type": "equation"
+          },
+          "destination": "node_invalidate_booking_clear_ack"
+        },
+        {
+          "source": "node_correction_guard",
+          "condition": {
+            "equations": [
+              {
+                "left": "{{correction_decision}}",
+                "operator": "==",
+                "right": "refresh"
+              }
+            ],
+            "operator": "&&",
+            "type": "equation"
+          },
+          "destination": "node_invalidate_booking_clear_ack"
+        },
+        {
+          "source": "node_correction_guard",
+          "condition": {
+            "equations": [
+              {
+                "left": "{{correction_decision}}",
+                "operator": "==",
+                "right": "clarify"
+              }
+            ],
+            "operator": "&&",
+            "type": "equation"
+          },
+          "destination": "node_correction_clarify"
+        },
+        {
+          "source": "node_correction_guard",
+          "condition": {
+            "prompt": "Else",
+            "type": "prompt"
+          },
+          "destination": "node_reset_failed"
+        }
+      ],
+      "code_reads": [
+        "active_booking_state",
+        "reset_ready",
+        "boundary_verified",
+        "reset_verified_attempt",
+        "reset_attempt",
+        "correction_ambiguous",
+        "correction_other_doctor",
+        "service_name",
+        "practitioner_id",
+        "practitioner_name",
+        "practitioner_mode",
+        "requested_date",
+        "requested_time",
+        "window_start",
+        "window_end",
+        "search_mode",
+        "availability_success",
+        "available",
+        "availability_query_signature",
+        "slot_id",
+        "slots",
+        "current_availability_check",
+        "call_id"
+      ],
+      "mapped_writes": [
+        "correction_decision",
+        "correction_reason"
+      ],
+      "extracted_variables": []
+    },
+    {
+      "id": "node_downtime_prepare_node_resolve",
+      "name": "Clear current tool receipt",
+      "type": "code",
+      "transitions": [
+        {
+          "source": "node_downtime_prepare_node_resolve",
+          "condition": {
+            "prompt": "Always",
+            "type": "prompt"
+          },
+          "destination": "node_resolve"
+        },
+        {
+          "source": "node_downtime_prepare_node_resolve",
+          "condition": {
+            "prompt": "Else",
+            "type": "prompt"
+          },
+          "destination": "node_downtime_clear"
+        }
+      ],
+      "code_reads": [],
+      "mapped_writes": [
+        "apero_downtime_message",
+        "apero_response_received",
+        "apero_system_unavailable",
+        "resolve_success"
+      ],
+      "extracted_variables": []
+    },
+    {
+      "id": "node_intake_name_capture",
+      "name": "Capture current patient name",
+      "type": "extract_dynamic_variables",
+      "transitions": [
+        {
+          "source": "node_intake_name_capture",
+          "condition": {
+            "prompt": "Always",
+            "type": "prompt"
+          },
+          "destination": "node_intake_name_gate_clear"
+        },
+        {
+          "source": "node_intake_name_capture",
+          "condition": {
+            "prompt": "Else",
+            "type": "prompt"
+          },
+          "destination": "node_reset_failed"
+        }
+      ],
+      "code_reads": [],
+      "mapped_writes": [],
+      "extracted_variables": [
+        "client_name",
+        "intake_name_evidence"
+      ]
+    },
+    {
+      "id": "node_intake_name_gate",
+      "name": "Require patient name before service",
+      "type": "code",
+      "transitions": [
+        {
+          "source": "node_intake_name_gate",
+          "condition": {
+            "equations": [
+              {
+                "left": "{{intake_route}}",
+                "operator": "==",
+                "right": "name"
+              }
+            ],
+            "operator": "&&",
+            "type": "equation"
+          },
+          "destination": "node_intake_name"
+        },
+        {
+          "source": "node_intake_name_gate",
+          "condition": {
+            "equations": [
+              {
+                "left": "{{intake_route}}",
+                "operator": "==",
+                "right": "service"
+              }
+            ],
+            "operator": "&&",
+            "type": "equation"
+          },
+          "destination": "node_service"
+        },
+        {
+          "source": "node_intake_name_gate",
+          "condition": {
+            "prompt": "Else",
+            "type": "prompt"
+          },
+          "destination": "node_reset_failed"
+        }
+      ],
+      "code_reads": [
+        "active_booking_state",
+        "reset_ready",
+        "boundary_verified",
+        "reset_attempt",
+        "reset_verified_attempt",
+        "client_name",
+        "intake_name_cycle",
+        "client_phone",
+        "patient_evidence",
+        "patient_confirmed",
+        "qualified_practitioners",
+        "resolve_success",
+        "service_name",
+        "practitioner_mode",
+        "practitioner_id",
+        "practitioner_name",
+        "selection_cycle",
+        "slot_id",
+        "intake_name_evidence"
+      ],
+      "mapped_writes": [
+        "intake_name_cycle",
+        "intake_route"
+      ],
+      "extracted_variables": []
+    },
+    {
+      "id": "node_intake_before_time",
+      "name": "Require all non-time intake before date",
+      "type": "code",
+      "transitions": [
+        {
+          "source": "node_intake_before_time",
+          "condition": {
+            "equations": [
+              {
+                "left": "{{intake_route}}",
+                "operator": "==",
+                "right": "name"
+              }
+            ],
+            "operator": "&&",
+            "type": "equation"
+          },
+          "destination": "node_intake_name_capture"
+        },
+        {
+          "source": "node_intake_before_time",
+          "condition": {
+            "equations": [
+              {
+                "left": "{{intake_route}}",
+                "operator": "==",
+                "right": "service"
+              }
+            ],
+            "operator": "&&",
+            "type": "equation"
+          },
+          "destination": "node_service"
+        },
+        {
+          "source": "node_intake_before_time",
+          "condition": {
+            "equations": [
+              {
+                "left": "{{intake_route}}",
+                "operator": "==",
+                "right": "doctor"
+              }
+            ],
+            "operator": "&&",
+            "type": "equation"
+          },
+          "destination": "node_doctor_preference"
+        },
+        {
+          "source": "node_intake_before_time",
+          "condition": {
+            "equations": [
+              {
+                "left": "{{intake_route}}",
+                "operator": "==",
+                "right": "contact"
+              }
+            ],
+            "operator": "&&",
+            "type": "equation"
+          },
+          "destination": "node_patient"
+        },
+        {
+          "source": "node_intake_before_time",
+          "condition": {
+            "equations": [
+              {
+                "left": "{{intake_route}}",
+                "operator": "==",
+                "right": "date"
+              }
+            ],
+            "operator": "&&",
+            "type": "equation"
+          },
+          "destination": "node_date_time"
+        },
+        {
+          "source": "node_intake_before_time",
+          "condition": {
+            "prompt": "Else",
+            "type": "prompt"
+          },
+          "destination": "node_reset_failed"
+        }
+      ],
+      "code_reads": [
+        "active_booking_state",
+        "reset_ready",
+        "boundary_verified",
+        "reset_attempt",
+        "reset_verified_attempt",
+        "client_name",
+        "intake_name_cycle",
+        "client_phone",
+        "patient_evidence",
+        "patient_confirmed",
+        "qualified_practitioners",
+        "resolve_success",
+        "service_name",
+        "practitioner_mode",
+        "practitioner_id",
+        "practitioner_name",
+        "selection_cycle",
+        "slot_id"
+      ],
+      "mapped_writes": [
+        "intake_route",
+        "practitioner_id",
+        "practitioner_mode",
+        "practitioner_name"
+      ],
+      "extracted_variables": []
+    },
+    {
+      "id": "node_intake_name_gate_clear",
+      "name": "Clear intake routing acknowledgement",
+      "type": "code",
+      "transitions": [
+        {
+          "source": "node_intake_name_gate_clear",
+          "condition": {
+            "equations": [
+              {
+                "left": "{{intake_route}}",
+                "operator": "==",
+                "right": ""
+              }
+            ],
+            "operator": "&&",
+            "type": "equation"
+          },
+          "destination": "node_intake_name_gate"
+        },
+        {
+          "source": "node_intake_name_gate_clear",
+          "condition": {
+            "prompt": "Else",
+            "type": "prompt"
+          },
+          "destination": "node_reset_failed"
+        }
+      ],
+      "code_reads": [],
+      "mapped_writes": [
+        "intake_route"
+      ],
+      "extracted_variables": []
+    }
+  ]
+}

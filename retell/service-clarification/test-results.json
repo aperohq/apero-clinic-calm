@@ -1,0 +1,9 @@
+{
+  "passed": 23,
+  "failed": 0,
+  "validation": "offline deterministic configuration/code fixtures only",
+  "live_calls": 0,
+  "try_a_call": false,
+  "simulated_conversations": 0,
+  "paid_testing": false
+}

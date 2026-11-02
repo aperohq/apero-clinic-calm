@@ -1,0 +1,35 @@
+{
+  "agent_id": "agent_b84b2766efeb85afc809147d7a",
+  "conversation_flow_id": "conversation_flow_43f53e5e8531",
+  "baseline_published_version": 21,
+  "published_version": 22,
+  "published": true,
+  "published_readback_matches": true,
+  "agent_settings_preserved": true,
+  "changed_nodes": [
+    "node_service",
+    "node_resolve",
+    "node_service_clarify",
+    "node_capture_service",
+    "node_guard_service",
+    "node_guard_service_clear_result",
+    "node_intake_name_gate",
+    "node_intake_before_time"
+  ],
+  "added_nodes": [
+    "node_service_result_gate"
+  ],
+  "maximum_spoken_service_clarifications_per_booking_cycle": 1,
+  "unresolved_after_clarification": "Existing node_human_prepare -> node_human_collect staff-assistance path",
+  "backend_or_alias_changes": false,
+  "tests": {
+    "focused": 23,
+    "existing_safety": 76,
+    "passed": 99,
+    "failed": 0
+  },
+  "live_calls": 0,
+  "try_a_call": false,
+  "simulated_conversations": 0,
+  "paid_testing": false
+}
