@@ -4,6 +4,9 @@
   "sideEffects": false,
   "type": "module",
   "scripts": {
+    "test:monitoring": "node tests/operational-monitoring.test.mjs",
+    "test:booking-fallback": "node --max-old-space-size=384 tests/booking-fallback.test.mjs && node retell/master/tests/edge-isolation.test.mjs && python3 -m unittest discover -s retell/master/tests -p test_master.py",
+    "test:recordings": "node --max-old-space-size=384 tests/recording-access.test.mjs && node tests/recording-player.test.mjs",
     "dev": "vite dev",
     "build": "vite build",
     "build:dev": "vite build --mode development",
@@ -25,8 +28,14 @@
     "typecheck:clinic-users-edge": "tsc --noEmit -p tests/tsconfig.clinic-users-edge.json",
     "test:team": "node --max-old-space-size=384 tests/team-management.test.mjs && node --max-old-space-size=384 tests/team-invitations.test.mjs && node --max-old-space-size=384 tests/team-invitation-hardening.test.mjs && node tests/run-clinic-permission-tests.mjs --team",
     "test:settings": "node --max-old-space-size=384 tests/clinic-settings.test.mjs && node tests/run-clinic-permission-tests.mjs --settings",
-    "test:recordings": "node --max-old-space-size=384 tests/recording-access.test.mjs && node tests/recording-player.test.mjs",
-    "test:booking-fallback": "node --max-old-space-size=384 tests/booking-fallback.test.mjs && node retell/master/tests/edge-isolation.test.mjs && python3 -m unittest discover -s retell/master/tests -p test_master.py"
+    "test:calendar-unavailable": "node --max-old-space-size=384 tests/calendar-fallback.test.mjs && node retell/master/tests/edge-isolation.test.mjs && python3 -m unittest discover -s tests -p test_calendar_flow.py",
+    "test:unknown-answer": "node --max-old-space-size=384 tests/unknown-answer.test.mjs && node retell/master/tests/edge-isolation.test.mjs && python3 -m unittest discover -s tests -p test_unknown_flow.py",
+    "test:human-escalation": "node --max-old-space-size=384 tests/human-escalation.test.mjs && node retell/master/tests/edge-isolation.test.mjs && python3 -m unittest discover -s tests -p test_human_flow.py",
+    "test:call-transfer": "node --max-old-space-size=384 tests/call-transfer.test.mjs && node retell/master/tests/edge-isolation.test.mjs && python3 -m unittest discover -s tests -p test_transfer_flow.py",
+    "test:system-downtime": "node --max-old-space-size=384 tests/system-downtime.test.mjs && node retell/master/tests/edge-isolation.test.mjs && python3 -m unittest discover -s tests -p test_downtime_flow.py",
+    "test:retention": "node --max-old-space-size=512 tests/data-retention.test.mjs && python3 -m unittest discover -s tests -p test_retention_custody.py",
+    "test:demo": "node --experimental-transform-types tests/demo-call.test.mjs",
+    "typecheck:demo": "tsc --noEmit -p tests/tsconfig.demo.json"
   },
   "overrides": {
     "rolldown": "1.2.1"
@@ -78,6 +87,7 @@
     "react-hook-form": "^7.71.2",
     "react-resizable-panels": "^4.6.5",
     "recharts": "^2.15.4",
+    "retell-client-js-sdk": "3.0.3",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.5.0",
     "tailwindcss": "^4.2.1",
