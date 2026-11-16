@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 import { createClinicDatabase, tenants, uuid, asUser } from "./helpers/clinic-database.mjs";
 import { processProviderJob, runProviderBatch, fingerprint } from "../supabase/functions/retention-worker/core.mjs";
 const [a,b]=tenants;
-const migrations=["20261006160000_data_retention.sql","20261006161000_retention_lifecycle.sql"];
+const migrations=["20261006160000_data_retention.sql","20261006161000_retention_lifecycle.sql","20261116120000_retention_guard_fixes.sql"];
 const value=async(db,sql,args=[]) => (await db.query(sql,args)).rows[0];
 const run=async(db,clinic=a.clinic,dry=false,batch=100) => (await value(db,"select public.retention_run_clinic($1,$2,$3) as result",[clinic,dry,batch])).result;
 async function fixture() {
@@ -276,4 +276,32 @@ test("Auth hard deletion preserves patient data and verifies a missing user",asy
  const result=await processProviderJob(db,env,a.clinic,{...job,provider:'supabase_auth',target_key:uuid(930)});
  assert.equal(result.success,true);assert.equal(hardDelete,true);assert.equal(gets,2);
  assert.equal(db.calls[0].name,'retention_verify_provider');
+});
+test("trusted no-JWT paths: Auth deletion keeps notes, retention revokes profiles, guards still hold",async()=>{
+ const db=await fixture();
+ try {
+  await approve(db);
+  // A note author cannot be cleared while the profile still exists.
+  await assert.rejects(db.query("update client_notes set author_profile_id=null where id=$1",[a.note]),/cannot be changed/);
+  // GoTrue deletion (no JWT) cascades to the note author and keeps the note.
+  await db.query("delete from auth.users where id=$1",[a.user]);
+  assert.deepEqual(await value(db,"select author_profile_id,note from client_notes where id=$1",[a.note]),{author_profile_id:null,note:"Private note"});
+  // Without the retention flag, a no-JWT revocation is still rejected.
+  await assert.rejects(db.query("update profiles set revoked_at=now() where id=$1",[b.profile]),/Not authorized/);
+  // Administrator-run offboarding (no JWT) revokes the clinic profiles.
+  await db.exec("begin");
+  await db.query("select retention_begin_offboarding($1)",[b.clinic]);
+  assert.ok((await value(db,"select revoked_at from profiles where id=$1",[b.profile])).revoked_at);
+  // The flag is scoped to the function call and does not leak into the transaction.
+  assert.equal((await value(db,"select current_setting($$apero.retention_revocation$$,true) as v")).v||"","");
+  await db.exec("rollback");
+  // Replay re-revokes a restored Auth user; the flag never permits other changes.
+  await db.query("insert into retention_deletion_ledger(clinic_id,resource_table,resource_key,action,durable_at) values($1,$2,$3,$4,now())",[b.clinic,"auth.users",b.user,"delete"]);
+  await db.query("select retention_replay_ledger($1)",[b.clinic]);
+  assert.ok((await value(db,"select revoked_at from profiles where id=$1",[b.profile])).revoked_at);
+  await db.exec("begin");
+  await db.exec("select set_config($$apero.retention_revocation$$,$$on$$,true)");
+  await assert.rejects(db.query("update profiles set role=$1 where id=$2",["staff",b.profile]),/Not authorized/);
+  await db.exec("rollback");
+ }finally{await db.close();}
 });
