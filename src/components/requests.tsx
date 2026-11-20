@@ -8,7 +8,11 @@ import { useAuth } from "@/lib/auth";
 import { hasPermission } from "@/lib/permissions";
 import { formatDate, formatTime } from "@/lib/apero-store";
 import type { VoiceRequestRow } from "@/lib/db-types";
-import { useCloseVoiceRequest, useVoiceRequests, type VoiceRequestDisplay } from "@/lib/voice-requests";
+import {
+  useCloseVoiceRequest,
+  useVoiceRequests,
+  type VoiceRequestDisplay,
+} from "@/lib/voice-requests";
 import { cn } from "@/lib/utils";
 
 const kindLabel: Record<VoiceRequestRow["kind"], string> = {
@@ -21,7 +25,13 @@ function priority(row: VoiceRequestDisplay) {
   return row.status === "Closed" ? 2 : row.kind === "urgent" ? 0 : 1;
 }
 
-function RequestCard({ row, timeZone }: { row: VoiceRequestDisplay; timeZone: string | undefined }) {
+function RequestCard({
+  row,
+  timeZone,
+}: {
+  row: VoiceRequestDisplay;
+  timeZone: string | undefined;
+}) {
   const close = useCloseVoiceRequest();
   const [error, setError] = useState(false);
   const isUrgent = row.kind === "urgent" && row.status !== "Closed";
@@ -37,9 +47,16 @@ function RequestCard({ row, timeZone }: { row: VoiceRequestDisplay; timeZone: st
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           {isUrgent && <AlertCircle className="size-4 text-warning-strong" aria-hidden="true" />}
           <h3 className="font-semibold">
-            {row.kind === "message" && row.reason.startsWith("Booking not confirmed —")
-              ? "Failed booking — follow-up"
-              : kindLabel[row.kind]}
+            {row.kind === "message" &&
+            row.reason.startsWith("Human assistance required\nCategory: ")
+              ? "Human assistance required"
+              : row.kind === "message" && row.reason.startsWith("AI couldn’t answer —")
+                ? "AI couldn’t answer — follow-up"
+                : row.kind === "message" && row.reason.startsWith("Calendar unavailable —")
+                  ? "Calendar unavailable — follow-up"
+                  : row.kind === "message" && row.reason.startsWith("Booking not confirmed —")
+                    ? "Failed booking — follow-up"
+                    : kindLabel[row.kind]}
           </h3>
           <span className="rounded-full border border-border bg-background px-2 py-0.5 text-xs text-muted-foreground">
             {row.status}
@@ -63,12 +80,18 @@ function RequestCard({ row, timeZone }: { row: VoiceRequestDisplay; timeZone: st
         )}
         <p className="mt-1 flex min-w-0 items-center gap-1 text-muted-foreground">
           <Phone className="size-3.5" aria-hidden="true" />
-          <a href={`tel:${row.phone}`} className="min-w-0 break-all hover:underline">
-            {row.phone}
-          </a>
+          {row.phone ? (
+            <a href={`tel:${row.phone}`} className="min-w-0 break-all hover:underline">
+              {row.phone}
+            </a>
+          ) : (
+            <span>No contact number supplied</span>
+          )}
         </p>
       </div>
-      <p className="mt-3 whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-sm">{row.reason}</p>
+      <p className="mt-3 whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-sm">
+        {row.reason}
+      </p>
       {row.status !== "Closed" && (
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <Button

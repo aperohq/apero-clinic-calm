@@ -19,13 +19,8 @@ export function RecordingPlayer({ conversationId }: { conversationId: string }) 
       pending.current = null;
     };
   }, [identity]);
-  useEffect(() => {
-    if (!access) return;
-    // Keep credentials in component memory only; renew by another authorized
-    // request before the configured five-minute provider expiry.
-    const timer = window.setTimeout(() => setAccess(null), 4 * 60_000);
-    return () => window.clearTimeout(timer);
-  }, [access]);
+  // Signed URL expiry gates new provider requests; it must not unmount an
+  // already playing recording. Provider errors return to authorized reload.
   async function load() {
     if (pending.current || !session || !clinicId) return;
     const controller = new AbortController();

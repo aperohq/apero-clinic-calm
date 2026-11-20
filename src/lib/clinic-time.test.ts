@@ -13,7 +13,8 @@ test("invalid calendar date does not silently become another day", () => {
 
 test("appointment hours and duration use clinic time", () => {
   assert.deepEqual(appointmentRange("2026-10-14", "14:00", 45, "Asia/Kuwait"), {
-    start: "2026-10-14T11:00:00.000Z", end: "2026-10-14T11:45:00.000Z",
+    start: "2026-10-14T11:00:00.000Z",
+    end: "2026-10-14T11:45:00.000Z",
   });
   assert.throws(() => appointmentRange("2026-10-14", "14:00", 0, "Asia/Kuwait"));
 });
