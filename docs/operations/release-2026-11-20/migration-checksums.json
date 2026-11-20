@@ -1,0 +1,47 @@
+[
+  {
+    "file": "supabase/migrations/20260930000000_schema_baseline.sql",
+    "sha256": "7b1e793e1e85bdb03b5ada42a00db589f16e33c0499802a91186b1cbd016a4cd",
+    "unchanged_in_batch2": true
+  },
+  {
+    "file": "supabase/migrations/20261120100000_note_author_deletion.sql",
+    "sha256": "08febc74bb24532f8eeed70b6de1a62574ebcfec3afb84921c1cbb6d71074bc4",
+    "unchanged_in_batch2": true
+  },
+  {
+    "file": "supabase/migrations/20261120101000_voice_requests_status_policy.sql",
+    "sha256": "9ae939af56e9bfce3ee5039887179b59dfbcccf3babc4eb57da12dfb7f5d6f8b",
+    "unchanged_in_batch2": true
+  },
+  {
+    "file": "supabase/migrations/20261120102000_sessionless_retention_revocation.sql",
+    "sha256": "a23d49bf1f672f4f98dfbcaa8cac13a34d5cd04713ab3450c6e6234b961f54fb",
+    "unchanged_in_batch2": true
+  },
+  {
+    "file": "supabase/migrations/20261120103000_demo_offboarding.sql",
+    "sha256": "11ed6eae9f1d5f6c3d2d6715228444d050b384e4b32879135d0998a112c45beb",
+    "unchanged_in_batch2": true
+  },
+  {
+    "file": "supabase/migrations/20261120104000_voice_practitioner_reschedule.sql",
+    "sha256": "101eb937e88b9438bf3003dc8dcf673bbb57fca3903fd000b2a25cd0197392da",
+    "unchanged_in_batch2": true
+  },
+  {
+    "file": "supabase/migrations/20261120105000_bounded_availability_search.sql",
+    "sha256": "de47c7965a6fdeab0e1b69f0a7096f8a55aa5153f04b9caeb01922f1286e9a7e",
+    "unchanged_in_batch2": true
+  },
+  {
+    "file": "supabase/migrations/20261120110000_phone_lookup.sql",
+    "sha256": "5f88c1f721e9afeb1c0c84fc5aca24e2b9758f6c71ed345f1662ba7e9f270529",
+    "unchanged_in_batch2": true
+  },
+  {
+    "file": "supabase/migrations/20261120111000_stale_appointment_retention.sql",
+    "sha256": "e0f707a53b716b9a1a8a069f701580e158001763cfb9b7bb84a62718cf388566",
+    "unchanged_in_batch2": true
+  }
+]

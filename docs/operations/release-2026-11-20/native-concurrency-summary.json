@@ -1,0 +1,100 @@
+{
+  "native_postgresql": true,
+  "version": "16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)",
+  "races": 80,
+  "all_database_protection_pass": true,
+  "all_application_contract_pass": true,
+  "deadlocks_reproduced": {
+    "dashboard": 9,
+    "voice": 10
+  },
+  "roles": [
+    {
+      "role": "owner",
+      "load_create_reschedule_cancel": "PASS"
+    },
+    {
+      "role": "manager",
+      "load_create_reschedule_cancel": "PASS"
+    },
+    {
+      "role": "staff",
+      "load_create_reschedule_cancel": "PASS"
+    }
+  ],
+  "isolation": [
+    {
+      "role": "owner",
+      "cross_clinic_read_write_cancel_reschedule_references_rpc": "PASS"
+    },
+    {
+      "role": "manager",
+      "cross_clinic_read_write_cancel_reschedule_references_rpc": "PASS"
+    },
+    {
+      "role": "staff",
+      "cross_clinic_read_write_cancel_reschedule_references_rpc": "PASS"
+    }
+  ],
+  "adjacent": [
+    {
+      "mode": "both-constraints",
+      "success_count": 2,
+      "result": [
+        {
+          "success": true,
+          "appointment_id": "00000000-0000-4000-8000-000000005175"
+        },
+        {
+          "success": true,
+          "staff_id": "00000000-0000-4000-8000-000000000104",
+          "start_time": "2040-02-10T12:45:00+03:00",
+          "service_name": "Consultation",
+          "appointment_id": "dfff9e4a-1e4a-41b9-a372-bb848b53bb1e",
+          "appointment_booked": true,
+          "appointment_rescheduled": false
+        }
+      ]
+    },
+    {
+      "mode": "new-only",
+      "success_count": 2,
+      "result": [
+        {
+          "success": true,
+          "appointment_id": "00000000-0000-4000-8000-000000005359"
+        },
+        {
+          "success": true,
+          "staff_id": "00000000-0000-4000-8000-000000000104",
+          "start_time": "2040-03-23T12:45:00+03:00",
+          "service_name": "Consultation",
+          "appointment_id": "8e5ad074-50ba-4003-bde1-17f4b8fb8492",
+          "appointment_booked": true,
+          "appointment_rescheduled": false
+        }
+      ]
+    }
+  ],
+  "cancellation": [
+    {
+      "mode": "both-constraints",
+      "preserved_history": true,
+      "availability_reopened": true,
+      "voice_rebook_success": true
+    },
+    {
+      "mode": "new-only",
+      "preserved_history": true,
+      "availability_reopened": true,
+      "voice_rebook_success": true
+    }
+  ],
+  "cleanup": {
+    "instrumentation_removed": true,
+    "idle_or_aborted_transactions": 0,
+    "clients_closed": true
+  },
+  "verdict": "PASS",
+  "raw_evidence_sha256": "89b38f50f291bc64ae5825e92dcc75a697ed2cd8e3264d43be3e0a3bc5286a4b"
+}

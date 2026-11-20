@@ -1,0 +1,68 @@
+{
+  "tested_runtime_sha": "5aed7e5e677a81333a6e0835d4a4ffe76700eaa4",
+  "candidate_worktree": "/tmp/apero-release-candidate-20261120",
+  "dependency_install": "Candidate node_modules is an ignored symlink to the existing local installation. CI performs a fresh npm ci. Candidate source files are independent.",
+  "checks": [
+    {
+      "gate": "Full lint",
+      "status": "PASS",
+      "command": "npm run lint -- --max-warnings=0",
+      "local_log": "/tmp/apero-batch3-final-lint.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "gate": "Application TypeScript",
+      "status": "PASS",
+      "command": "npm run typecheck",
+      "local_log": "/tmp/apero-batch3-final-typecheck.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "gate": "Demo TypeScript",
+      "status": "PASS",
+      "command": "npm run typecheck:demo",
+      "local_log": "/tmp/apero-batch3-final-typecheck-demo.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "gate": "Clinic-user Edge TypeScript",
+      "status": "PASS",
+      "command": "npm run typecheck:clinic-users-edge",
+      "local_log": "/tmp/apero-batch3-final-typecheck-edge.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "gate": "Production build",
+      "status": "PASS",
+      "command": "npm run build (placeholder Supabase environment)",
+      "local_log": "/tmp/apero-batch3-candidate-build.log",
+      "log_sha256": "35e8d5307c6d58a266d9f955e893df2f2a410bcce117c48150afed623c7cbe71"
+    },
+    {
+      "gate": "Application/Python suites",
+      "status": "PASS",
+      "command": "node scripts/test-release.mjs",
+      "local_log": "/tmp/apero-batch3-final-tests.log",
+      "log_sha256": "300f9c5f2799349264af0c17051926ad03c6020c0280ba3c351cb68afd6dd3bc"
+    },
+    {
+      "gate": "Native concurrency",
+      "status": "PASS",
+      "command": "node scripts/test-concurrency.mjs",
+      "local_log": "/tmp/apero-batch3-candidate-concurrency.log",
+      "log_sha256": "c87a23bb46836c1a916667c92aa7ab798869eb9a01530f1a8a379762d688387d"
+    },
+    {
+      "gate": "Native migrations/cron/restore",
+      "status": "PASS",
+      "command": "node scripts/test-native-migrations.mjs",
+      "local_log": "/tmp/apero-batch3-candidate-native-migrations.log",
+      "log_sha256": "0148b3704778e02332b14cc06cdc08e537c97e49122e23472fd551e2dee4d18f"
+    }
+  ],
+  "unexecuted": [
+    "Native Windows job",
+    "Docker-backed Supabase bootstrap job"
+  ],
+  "failures": []
+}
