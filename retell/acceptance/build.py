@@ -25,7 +25,7 @@ def code_node(nid, name, code, mappings, edges, x, y):
 def apply_booking_fallback(flow):
     # Apply the reviewed fallback to generators based on historical snapshots,
     # preserving their consent/reset and normal appointment behavior.
-    reference = json.loads((ROOT.parent / "master/reference/golden.json").read_text())["conversationFlow"]
+    reference = json.loads((ROOT.parent / "master/reference/golden.json").read_text(encoding="utf-8"))["conversationFlow"]
     source = {node["id"]: node for node in reference["nodes"]}
     target = {node["id"]: node for node in flow["nodes"]}
     target["node_book_failed"]["instruction"] = copy.deepcopy(source["node_book_failed"]["instruction"])
@@ -45,7 +45,7 @@ def apply_booking_fallback(flow):
         flow["nodes"].append(copy.deepcopy(source["node_prepare_booking_result"]))
 
 def build():
-    original = json.loads((ROOT / "published-v2.json").read_text())
+    original = json.loads((ROOT / "published-v2.json").read_text(encoding="utf-8"))
     flow = copy.deepcopy(original)
     nodes = {n["id"]: n for n in flow["nodes"]}
     flow["global_prompt"] += "\n\n" + GROUNDING + "\n\n" + """The opening greeting is for call start only. Never replay it when the caller changes tasks. Continue in the caller's established language until they ask to switch. A new appointment or new availability request must use the fresh booking reset path. Old booking details and consent are history, never defaults for the next appointment. After reset use ONLY fresh_request_summary for the new request, plus subsequent caller answers. Preserve confirmed caller identity separately from patient identity. Ask only the next missing question. A brief factual interruption is not a new booking or consent and must resume the actual active task. Appointment availability is not a clinic FAQ: resolve service/practitioner and call check_availability. If reset_ready is false, never resolve/check/book a new appointment; explain the problem and offer staff follow-up. Completed appointments remain in history even when active result fields are cleared."""
@@ -138,6 +138,6 @@ return {reset_ready: !error, reset_prepared: false,
 
 if __name__ == "__main__":
     result = build()
-    (ROOT / "draft-flow.json").write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n")
-    (ROOT / "reset-values.json").write_text(json.dumps(EMPTY, indent=2) + "\n")
+    (ROOT / "draft-flow.json").write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    (ROOT / "reset-values.json").write_text(json.dumps(EMPTY, indent=2) + "\n", encoding="utf-8")
     print("Built unpublished acceptance payload:", len(result["nodes"]), "nodes;", len(EMPTY), "cleared variables")

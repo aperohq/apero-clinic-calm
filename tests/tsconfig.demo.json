@@ -1,0 +1,4 @@
+{
+  "extends": "../tsconfig.json",
+  "include": ["../src/lib/demo-call.ts", "../supabase/functions/demo-call/function.ts"]
+}

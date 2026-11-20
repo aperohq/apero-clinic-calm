@@ -11,7 +11,8 @@ import {
   Outlet,
   RouterProvider,
 } from "@tanstack/react-router";
-import { AuthProvider, useAuth } from "@/lib/auth";
+import { useAuth } from "@/lib/auth";
+import { AuthProvider } from "@/lib/auth-provider";
 import { supabase } from "@/integrations/supabase/client";
 import { ClinicSettingsPanel } from "@/components/clinic-settings-panel";
 import { RouteShell } from "@/components/route-shell";
@@ -124,7 +125,7 @@ test("Settings UI uses canonical clinic values, real Auth/SDK, partial RPC saves
     await waitFor(() => !!document.getElementById("settings-name"), "loaded settings");
     fixture.settingsDelay = 0;
     for (const [key, val] of Object.entries(fixture.clinicValues)) {
-      if (key === "opening_hours") continue;
+      if (key === "opening_hours" || key === "live_transfer_enabled") continue;
       assert.equal((document.getElementById("settings-" + key) as HTMLInputElement).value, val);
     }
     assert.equal(document.querySelector('nav a[href="/account/settings"]'), null);
@@ -267,6 +268,25 @@ test("Settings UI uses canonical clinic values, real Auth/SDK, partial RPC saves
       await submitSettings();
       await waitFor(() => fixture.clinicValues.opening_hours === null, "hours cleared");
       await waitFor(() => text().includes("Clinic settings saved."), "clear settled");
+    },
+  );
+  await t.test(
+    "Owner controls the default-off transfer flag without changing destination or hours",
+    async () => {
+      const destination = fixture.clinicValues.fallback_phone;
+      const hours = structuredClone(fixture.clinicValues.opening_hours);
+      const checkbox = document.getElementById("settings-live-transfer") as HTMLInputElement;
+      assert.equal(checkbox.checked, false);
+      for (const enabled of [true, false]) {
+        await act(async () => checkbox.click());
+        await submitSettings();
+        await waitFor(() => text().includes("Clinic settings saved."), "transfer flag save");
+        assert.deepEqual(fixture.settingsUpdates.at(-1).p_patch, {
+          live_transfer_enabled: enabled,
+        });
+        assert.equal(fixture.clinicValues.fallback_phone, destination);
+        assert.deepEqual(fixture.clinicValues.opening_hours, hours);
+      }
     },
   );
   await t.test("Server failure is generic and preserves unsaved edits for retry", async () => {

@@ -37,7 +37,7 @@ def golden():
 def validate(config):
     # jsonschema is developer-only; never shipped to the frontend or Edge runtime.
     import jsonschema
-    jsonschema.Draft202012Validator(json.loads((ROOT / "config.schema.json").read_text())).validate(config)
+    jsonschema.Draft202012Validator(json.loads((ROOT / "config.schema.json").read_text(encoding="utf-8"))).validate(config)
     ZoneInfo(config["clinic"]["timezone"])
     if config["speech"]["default_language"] not in config["speech"]["supported_languages"]:
         raise ValueError("Default language must be a supported language")
@@ -226,16 +226,16 @@ def main():
     parser.add_argument("--output-dir", required=True)
     parser.add_argument("--backend-snapshot", help="Read-only clinics/staff/staff_availability JSON; required for real clinics")
     args = parser.parse_args()
-    config = validate(json.loads(Path(args.config).read_text()))
+    config = validate(json.loads(Path(args.config).read_text(encoding="utf-8")))
     if config["mode"] == "clinic" and not args.backend_snapshot:
         parser.error("Real clinic generation requires --backend-snapshot from prepare.py")
     if args.backend_snapshot:
-        print("Backend validation:", validate_backend(config, json.loads(Path(args.backend_snapshot).read_text())))
+        print("Backend validation:", validate_backend(config, json.loads(Path(args.backend_snapshot).read_text(encoding="utf-8"))))
     flow, agent = build(config)
     target = Path(args.output_dir)
     target.mkdir(parents=True, exist_ok=True)
     for name, value in (("flow", flow), ("agent", agent)):
-        (target / f"{name}.json").write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n")
+        (target / f"{name}.json").write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(f"Prepared {len(flow['nodes'])} nodes / {len(flow['tools'])} tools in {target}. No external writes.")
     print("Next: create a NEW flow and agent in the intended workspace; verify voice and KB ownership; record new IDs; register inactive integration; test; activate and connect telephony.")
 

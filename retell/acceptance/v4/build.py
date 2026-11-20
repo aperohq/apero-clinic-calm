@@ -4,10 +4,10 @@ from pathlib import Path
 R=Path(__file__).parent
 sys.path.insert(0,str(R.parent))
 from build import code_node,equation_edge,prompt_edge,fallback,apply_booking_fallback
-f=json.loads((R/'base-v3.json').read_text()); base=copy.deepcopy(f)
+f=json.loads((R/'base-v3.json').read_text(encoding="utf-8")); base=copy.deepcopy(f)
 n={x['id']:x for x in f['nodes']}
-legacy=json.loads((R.parent/'reset-values.json').read_text())
-audit=json.loads((R.parent/'prepublish-reset-audit/audit.json').read_text())
+legacy=json.loads((R.parent/'reset-values.json').read_text(encoding="utf-8"))
+audit=json.loads((R.parent/'prepublish-reset-audit/audit.json').read_text(encoding="utf-8"))
 rows=[]
 FACT_FIELDS=set('service_name selected_practitioner_id selected_practitioner_name booking_id rescheduled_id cancelled_id fresh_request_summary fresh_request_language slots service_candidates qualified_practitioners appointments'.split())
 for row in audit['rows']:
@@ -161,7 +161,7 @@ n['node_final']['instruction']['text']+='\nIf the caller affirms THIS exact tupl
 f['default_dynamic_variables'].update({k:json.dumps(v,separators=(',',':')) if isinstance(v,(bool,list,dict)) else str(v) for k,v in empty.items()})
 for k in ['conversation_flow_id','version','last_modification_timestamp','is_published','is_transfer_cf']:f.pop(k,None)
 apply_booking_fallback(f)
-(R/'draft-flow.json').write_text(json.dumps(f,ensure_ascii=False,indent=2)+'\n')
-(R/'reset-values.json').write_text(json.dumps(empty,indent=2)+'\n')
-(R/'inventory.json').write_text(json.dumps({'legacy_total':76,'counts':{c:sum(r['category']==c for r in rows) for c in ['A','B','C','D']},'conversation_memory_concepts':['prior service','prior practitioner','prior date/time/slot','prior patient/contact association','prior consent/readback'],'rows':rows,'v4_reset_mapping_count':len(n['node_reset_prepare']['response_variables']),'v4_cleared_values_count':len(empty),'preserved':['fresh_request_language','call_id','caller_name','caller_phone','caller_phone_confirmed','historical_completed_appointments'],'limitations':'Transcript remains visible; evidence extraction is model-mediated. Tool arguments are const-bound to guarded stored current-cycle state.'},indent=2)+'\n')
+(R/'draft-flow.json').write_text(json.dumps(f,ensure_ascii=False,indent=2)+'\n', encoding="utf-8")
+(R/'reset-values.json').write_text(json.dumps(empty,indent=2)+'\n', encoding="utf-8")
+(R/'inventory.json').write_text(json.dumps({'legacy_total':76,'counts':{c:sum(r['category']==c for r in rows) for c in ['A','B','C','D']},'conversation_memory_concepts':['prior service','prior practitioner','prior date/time/slot','prior patient/contact association','prior consent/readback'],'rows':rows,'v4_reset_mapping_count':len(n['node_reset_prepare']['response_variables']),'v4_cleared_values_count':len(empty),'preserved':['fresh_request_language','call_id','caller_name','caller_phone','caller_phone_confirmed','historical_completed_appointments'],'limitations':'Transcript remains visible; evidence extraction is model-mediated. Tool arguments are const-bound to guarded stored current-cycle state.'},indent=2)+'\n', encoding="utf-8")
 print('Built v4:',len(f['nodes']),'nodes;',len(empty),'explicit cleared fields;',len(n['node_reset_prepare']['response_variables']),'prepare mappings')

@@ -7,9 +7,24 @@ import test from "node:test";
 import { transpileModule } from "typescript";
 import * as routing from "../../../supabase/functions/_shared/voice-routing.ts";
 import * as security from "../../../supabase/functions/_shared/request-security.ts";
+import * as monitoring from "../../../supabase/functions/_shared/operational-log.ts";
+import * as downtime from "../../../supabase/functions/_shared/system-downtime.ts";
+import * as transfer from "../../../supabase/functions/_shared/call-transfer.ts";
+import * as human from "../../../supabase/functions/_shared/human-escalation.ts";
+import * as unknown from "../../../supabase/functions/_shared/unknown-answer.ts";
+import * as calendar from "../../../supabase/functions/_shared/calendar-fallback.ts";
+import { hasLiveBooking } from "../../../supabase/functions/_shared/call-outcome.ts";
 import { bookingWithFallback } from "../../../supabase/functions/_shared/booking-fallback.ts";
 import * as logic from "../../../supabase/functions/clinic-operations/logic.ts";
 
+import { createPerformanceTiming } from "../../../supabase/functions/clinic-operations/performance-timing.ts";
+import { checkCallOwnership } from "../../../supabase/functions/clinic-operations/call-ownership.ts";
+import { loadResolutionInputs } from "../../../supabase/functions/clinic-operations/resolution-inputs.ts";
+import {
+  build as compactBookingFlow,
+  AGENT_ID as compactBookingAgent,
+} from "../../booking-payload/build.mjs";
+import { renderBookingRequest } from "../../booking-payload/fixture.mjs";
 
 const A = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const B = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
@@ -64,7 +79,11 @@ function compile(path, bindings, extra = "") {
 }
 
 function abortable(value) {
-  return Object.assign(Promise.resolve(value), { abortSignal() { return this; } });
+  return Object.assign(Promise.resolve(value), {
+    abortSignal() {
+      return this;
+    },
+  });
 }
 
 class Database {
@@ -138,6 +157,14 @@ class Database {
         filters.push((r) => r[k] === v);
         return q;
       },
+      lt: (k, v) => {
+        filters.push((r) => r[k] < v);
+        return q;
+      },
+      gt: (k, v) => {
+        filters.push((r) => r[k] > v);
+        return q;
+      },
       neq: (k, v) => {
         filters.push((r) => r[k] !== v);
         return q;
@@ -202,10 +229,52 @@ class Database {
   }
   rpc(name, args) {
     this.rpcCalls.push({ name, args });
-    if (name === "appointment_available_slots")
+    if (name === "voice_claim_transfer") {
+      const old = this.tables.voice_call_state.find((r) => r.call_id === args.p_call_id);
+      if (old && (old.clinic_id !== args.p_clinic_id || old.transfer_attempt_reserved))
+        return abortable({ data: false, error: null });
+      const row = old ?? { clinic_id: args.p_clinic_id, call_id: args.p_call_id };
+      Object.assign(row, {
+        transfer_attempt_reserved: true,
+        transfer_result: "ready",
+        transfer_category: args.p_category,
+      });
+      if (!old) this.tables.voice_call_state.push(row);
+      return abortable({ data: true, error: null });
+    }
+    if (name === "voice_record_transfer") {
+      let row = this.tables.voice_call_state.find((r) => r.call_id === args.p_call_id);
+      if (!row && !args.p_attempted) {
+        row = { clinic_id: args.p_clinic_id, call_id: args.p_call_id };
+        this.tables.voice_call_state.push(row);
+      }
+      if (
+        row?.clinic_id !== args.p_clinic_id ||
+        (args.p_attempted && !row?.transfer_attempt_reserved)
+      )
+        return abortable({ data: { accepted: false }, error: null });
+      if (row.transfer_result === "success" && args.p_result !== "success")
+        return abortable({ data: { accepted: false, result: "success" }, error: null });
+      row.transfer_result = args.p_result;
+      row.transfer_fallback_saved ||= args.p_fallback_saved;
+      return abortable({ data: { accepted: true, result: row.transfer_result }, error: null });
+    }
+    if (name === "clinic_clients_by_phone")
+      return abortable({
+        data: this.tables.clients
+          .filter(
+            (c) =>
+              c.clinic_id === args.p_clinic_id &&
+              logic.phone(c.phone, args.p_prefix, args.p_length) === args.p_phone,
+          )
+          .slice(0, 2),
+        error: null,
+      });
+    if (name === "appointment_search_slots")
       return abortable({
         data: [
           {
+            staff_id: args.p_staff_ids[0],
             start_time: `${args.p_date}T10:00:00Z`,
             end_time: `${args.p_date}T10:45:00Z`,
             duration_minutes: 45,
@@ -214,7 +283,10 @@ class Database {
         error: null,
       });
     // Deliberately never implement appointment mutation in this adapter.
-    return abortable({ data: { success: false, error_type: "local_rpc_not_executed" }, error: null });
+    return abortable({
+      data: { success: false, error_type: "local_rpc_not_executed" },
+      error: null,
+    });
   }
 }
 
@@ -225,7 +297,10 @@ function utcTime(iso) {
   return {
     isValid: Number.isFinite(millis),
     valueOf: () => millis,
-    toUTC: () => ({ toISO: () => new Date(millis).toISOString() }),
+    weekday: new Date(millis).getUTCDay() || 7,
+    toMillis: () => millis,
+    endOf: () => utcTime(new Date(millis).toISOString().slice(0, 10) + "T23:59:59Z"),
+    toUTC: () => ({ toISO: () => new Date(millis).toISOString(), toMillis: () => millis }),
     toFormat: (pattern) =>
       pattern === "yyyy-MM-dd"
         ? new Date(millis).toISOString().slice(0, 10)
@@ -253,6 +328,18 @@ function environment() {
     ...security,
     ...logic,
     bookingWithFallback,
+    hasLiveBooking,
+    sharedPhone: logic.phone,
+    normalizeClinicPhone: logic.phone,
+    ...calendar,
+    ...unknown,
+    ...human,
+    ...transfer,
+    ...downtime,
+    ...monitoring,
+    createPerformanceTiming: () => createPerformanceTiming(undefined, () => {}),
+    checkCallOwnership,
+    loadResolutionInputs,
     // Only a UTC formatting shim for the RPC/checked-slot contract test.
     // Actual clinic timezone and duration math are covered in PostgreSQL tests.
     DateTime: {
@@ -271,6 +358,16 @@ function environment() {
   );
   const webhook = compile(
     "../../../supabase/functions/retell-webhook/index.ts",
+    common,
+    "\nreturn handler;",
+  );
+  const legacyBooking = compile(
+    "../../../supabase/functions/book-appointment/index.ts",
+    common,
+    "\nreturn handler;",
+  );
+  const legacyAvailability = compile(
+    "../../../supabase/functions/check-availability/index.ts",
     common,
     "\nreturn handler;",
   );
@@ -294,7 +391,7 @@ function environment() {
       }),
     );
   }
-  return { db, localKeys, operations, webhook, send };
+  return { db, localKeys, operations, webhook, send, legacyBooking, legacyAvailability };
 }
 
 test("real handler scopes same-name practitioners, aliases and services to signed clinic", async () => {
@@ -457,11 +554,16 @@ test("actual voice slot adapter queries the same clinic availability RPC and sig
     "call-b",
     "check-b",
     undefined,
+    createPerformanceTiming(undefined, () => {}),
   );
-  assert.equal(db.rpcCalls[0].name, "appointment_available_slots");
+  assert.equal(db.rpcCalls[0].name, "appointment_search_slots");
   assert.deepEqual(db.rpcCalls[0].args, {
     p_clinic_id: B,
-    p_staff_id: SB,
+    p_staff_ids: [SB],
+    p_days: 1,
+    p_window_start: null,
+    p_window_end: null,
+    p_requested_time: null,
     p_service: "Consultation",
     p_date: "2099-01-01",
     p_exclude_id: null,
@@ -502,7 +604,11 @@ test("AI reschedule availability preserves the existing practitioner even with a
 
 for (const [label, rpcResult, expected] of [
   ["missing RPC response", { data: null, error: null }, "booking_invalid_response"],
-  ["unconfirmed RPC response", { data: { success: true }, error: null }, "booking_invalid_response"],
+  [
+    "unconfirmed RPC response",
+    { data: { success: true }, error: null },
+    "booking_invalid_response",
+  ],
   [
     "canonical protected-write conflict",
     { data: { success: false, error_type: "slot_conflict" }, error: null },
@@ -557,24 +663,773 @@ for (const [label, rpcResult, expected] of [
   });
 }
 
-
 test("real Edge booking accepts confirmed RPC success unchanged and creates no failed request", async () => {
   const { operations, send, db } = environment();
-  const available = await (await send(operations.handler, "agent-b", {
-    action: "availability", service_name: "Consultation", practitioner_id: SB,
-    practitioner_mode: "specific", requested_date: "2099-01-01",
-  })).json();
+  const available = await (
+    await send(operations.handler, "agent-b", {
+      action: "availability",
+      service_name: "Consultation",
+      practitioner_id: SB,
+      practitioner_mode: "specific",
+      requested_date: "2099-01-01",
+    })
+  ).json();
   const slot = available.slots[0];
-  const confirmed = { success: true, appointment_booked: true, appointment_id: APPB,
-    staff_id: SB, service_name: "Consultation", start_time: "2099-01-01T10:00:00Z" };
+  const confirmed = {
+    success: true,
+    appointment_booked: true,
+    appointment_id: APPB,
+    staff_id: SB,
+    service_name: "Consultation",
+    start_time: "2099-01-01T10:00:00Z",
+  };
   const original = db.rpc.bind(db);
-  db.rpc = (name, args) => name === "voice_apply_appointment"
-    ? abortable({ data: confirmed, error: null }) : original(name, args);
-  const result = await (await send(operations.handler, "agent-b", {
-    action: "book", slot_id: slot.slot_id, client_name: "Alex Test",
-    client_phone: "+12025550101", practitioner_id: SB, service_name: "Consultation",
-    appointment_date: slot.date, appointment_time: slot.time,
-  })).json();
-  assert.deepEqual(result, confirmed);
+  db.rpc = (name, args) =>
+    name === "voice_apply_appointment"
+      ? abortable({ data: confirmed, error: null })
+      : original(name, args);
+  const result = await (
+    await send(operations.handler, "agent-b", {
+      action: "book",
+      slot_id: slot.slot_id,
+      client_name: "Alex Test",
+      client_phone: "+12025550101",
+      practitioner_id: SB,
+      service_name: "Consultation",
+      appointment_date: slot.date,
+      appointment_time: slot.time,
+    })
+  ).json();
+  assert.deepEqual(result, {
+    ...confirmed,
+    apero_response_received: true,
+    system_unavailable: false,
+  });
   assert.equal(db.tables.voice_requests.length, 0);
+});
+
+test("compact Retell booking authenticates and retains patient, slot, tenant and signature validation", async () => {
+  const { operations, send, db } = environment();
+  const available = await (
+    await send(operations.handler, "agent-b", {
+      action: "availability",
+      service_name: "Consultation",
+      practitioner_id: SB,
+      practitioner_mode: "specific",
+      requested_date: "2099-01-01",
+    })
+  ).json();
+  const slot = available.slots[0];
+  const flow = compactBookingFlow(
+    JSON.parse(readFileSync(new URL("../../booking-payload/baseline-v22.json", import.meta.url))),
+  );
+  const payload = renderBookingRequest(
+    flow.tools.find((t) => t.name === "book_appointment"),
+    {
+      call_id: "local-agent-b",
+      client_name: "Alex Test",
+      client_phone: "+12025550101",
+      service_name: "Consultation",
+      practitioner_id: SB,
+      appointment_date: slot.date,
+      appointment_time: slot.time,
+      slot_id: slot.slot_id,
+      full_call: { transcript: "unused".repeat(100000) },
+    },
+  );
+  db.tables.voice_integrations.find((i) => i.clinic_id === B).agent_id = compactBookingAgent;
+  const invoke = (body, key = keys.RETELL_B) =>
+    send(operations.handler, "agent-b", undefined, { ...body, args: undefined }, key);
+  assert.equal(
+    (await (await invoke({ ...payload, client_phone: "bad" })).json()).error_type,
+    "invalid_patient_or_phone",
+  );
+  for (const patch of [
+    { practitioner_id: SA },
+    { service_name: "Vaccination" },
+    { appointment_time: "11:00" },
+  ])
+    assert.equal(
+      (await (await invoke({ ...payload, ...patch })).json()).error_type,
+      "slot_mismatch",
+    );
+  assert.equal(
+    (await (await invoke({ ...payload, slot_id: slot.slot_id + "x" })).json()).error_type,
+    "stale_or_invalid_slot",
+  );
+  assert.equal((await invoke(payload, keys.RETELL_A)).status, 401);
+  assert.equal(
+    (await invoke({ ...payload, call: { ...payload.call, agent_id: "unregistered" } })).status,
+    401,
+  );
+  db.tables.voice_call_state.find((s) => s.call_id === "local-agent-b").clinic_id = A;
+  assert.equal((await invoke(payload)).status, 403);
+  db.tables.voice_call_state.find((s) => s.call_id === "local-agent-b").clinic_id = B;
+  const confirmed = { success: true, appointment_booked: true, appointment_id: APPB };
+  const original = db.rpc.bind(db);
+  db.rpc = (name, args) =>
+    name === "voice_apply_appointment"
+      ? (assert.equal(args.p_clinic_id, B), abortable({ data: confirmed, error: null }))
+      : original(name, args);
+  assert.deepEqual(await (await invoke(payload)).json(), {
+    ...confirmed,
+    apero_response_received: true,
+    system_unavailable: false,
+  });
+  assert.equal(db.tables.voice_requests.length, 0);
+});
+
+for (const bad of [
+  { data: null, error: { code: "XX000", message: "secret-token" } },
+  { data: null, error: null },
+  { data: [{ start_time: "bad", end_time: "bad", duration_minutes: 45 }], error: null },
+]) {
+  test("calendar error in real handler blocks booking and retries, retains follow-up without slots", async () => {
+    const { operations, send, db } = environment();
+    const original = db.rpc.bind(db);
+    let mutations = 0,
+      checks = 0;
+    db.rpc = (name, args) => {
+      if (name === "appointment_search_slots") {
+        checks++;
+        return abortable(bad);
+      }
+      mutations++;
+      return original(name, args);
+    };
+    const args = {
+      action: "availability",
+      service_name: "Consultation",
+      practitioner_mode: "specific",
+      practitioner_id: SB,
+      requested_date: "2099-01-01",
+      requested_time: "10:00",
+      client_name: "Secret Patient",
+      client_phone: "+12025550101",
+    };
+    const result = await (await send(operations.handler, "agent-b", args)).json();
+    assert.equal(result.error_type, "calendar_unavailable");
+    assert.deepEqual(result.slots, []);
+    assert.equal(result.follow_up_saved, true);
+    const booking = await (
+      await send(operations.handler, "agent-b", { ...args, action: "book", slot_id: "stale-token" })
+    ).json();
+    assert.equal(booking.error_type, "calendar_unavailable");
+    assert.equal(booking.appointment_confirmed, false);
+    assert.equal(mutations, 0);
+    await send(operations.handler, "agent-b", { action: "invalidate" });
+    const replay = await (await send(operations.handler, "agent-b", args)).json();
+    assert.equal(replay.error_type, "calendar_unavailable");
+    assert.equal(checks, 1);
+    const foreign = await send(
+      operations.handler,
+      "agent-a",
+      { ...args, action: "calendar_follow_up" },
+      { call: { agent_id: "agent-a", call_id: "local-agent-b" } },
+    );
+    assert.equal(foreign.status, 403);
+    assert.equal(db.tables.voice_requests.length, 1);
+  });
+}
+
+test("unknown-answer follow-up uses signed clinic and explicit opt-in; foreign call ownership is blocked", async () => {
+  const { db, operations, send } = environment();
+  const args = {
+    action: "unknown_answer_follow_up",
+    question: "Unknown price",
+    patient_name: "Private Patient",
+    caller_phone: "2025550109",
+    clinic_id: B,
+  };
+  const declined = await (await send(operations.handler, "agent-a", args)).json();
+  assert.equal(declined.follow_up_status, "not_requested");
+  assert.equal(db.tables.voice_requests.length, 0);
+  const saved = await (
+    await send(operations.handler, "agent-a", { ...args, follow_up_requested: true })
+  ).json();
+  assert.equal(saved.follow_up_saved, true);
+  assert.equal(saved.answer, null);
+  assert.equal(db.tables.voice_requests.length, 1);
+  assert.equal(db.tables.voice_requests[0].clinic_id, A);
+  assert.equal(db.tables.voice_requests[0].status, "Open");
+  db.tables.voice_call_state.push({ clinic_id: B, call_id: "foreign-unknown" });
+  const denied = await send(
+    operations.handler,
+    "agent-a",
+    { ...args, follow_up_requested: true },
+    { call: { agent_id: "agent-a", call_id: "foreign-unknown" } },
+  );
+  assert.equal(denied.status, 403);
+  assert.equal(db.tables.voice_requests.length, 1);
+});
+
+test("unknown follow-up ownership dependency error returns safe wording and safe logs", async () => {
+  const { db, operations, send } = environment(),
+    from = db.from.bind(db);
+  db.from = (table) => {
+    const q = from(table);
+    if (table === "voice_call_state")
+      q.then = (yes, no) =>
+        Promise.resolve({
+          data: null,
+          error: { message: "private-question-phone-secret-token" },
+        }).then(yes, no);
+    return q;
+  };
+  const logs = [],
+    old = console.info,
+    oldError = console.error;
+  console.info = console.error = (...args) => {
+    if (JSON.parse(args[0]).category) logs.push(args.join(" "));
+  };
+  try {
+    const response = await send(operations.handler, "agent-a", {
+      action: "unknown_answer_follow_up",
+      follow_up_requested: true,
+      question: "private-question",
+      caller_phone: "2025550109",
+    });
+    const body = await response.json();
+    assert.equal(body.follow_up_saved, false);
+    assert.equal(body.follow_up_status, "not_saved");
+    assert.equal(body.message, unknown.UNKNOWN_SAVE_FAILED);
+    assert.equal(db.tables.voice_requests.length, 0);
+    assert.equal(logs.length, 1);
+    assert.equal(logs.join().includes("private-question"), false);
+    assert.equal(logs.join().includes("2025550109"), false);
+    assert.equal(logs.join().includes("secret-token"), false);
+  } finally {
+    console.info = old;
+    console.error = oldError;
+  }
+});
+
+test("human escalation is signed, clinic scoped, and rejects foreign call ownership", async () => {
+  const { db, operations, send } = environment();
+  const args = {
+    action: "human_escalation",
+    escalation_required: true,
+    escalation_category: "explicit_human_request",
+    reason: "Wants receptionist assistance",
+    clinic_id: B,
+  };
+  const result = await (await send(operations.handler, "agent-a", args)).json();
+  assert.equal(result.follow_up_saved, true);
+  assert.equal(db.tables.voice_requests[0].clinic_id, A);
+  assert.equal((await send(operations.handler, "agent-a", args, {}, keys.RETELL_B)).status, 401);
+  db.tables.voice_call_state.push({ clinic_id: B, call_id: "foreign-human" });
+  assert.equal(
+    (
+      await send(operations.handler, "agent-a", args, {
+        call: { agent_id: "agent-a", call_id: "foreign-human" },
+      })
+    ).status,
+    403,
+  );
+  assert.equal(db.tables.voice_requests.length, 1);
+});
+test("supported requests and specific fallback categories cannot create general escalation", async () => {
+  const { db, operations, send } = environment();
+  for (const category of [
+    "supported_request",
+    "booking_failed",
+    "calendar_unavailable",
+    "unknown_answer",
+  ]) {
+    const result = await (
+      await send(operations.handler, "agent-a", {
+        action: "human_escalation",
+        escalation_required: true,
+        escalation_category: category,
+        reason: "test",
+      })
+    ).json();
+    assert.equal(result.follow_up_saved, false);
+  }
+  assert.equal(db.tables.voice_requests.length, 0);
+});
+test("human ownership dependency failure gives safe unsaved wording and metadata only", async () => {
+  const { db, operations, send } = environment(),
+    from = db.from.bind(db);
+  db.from = (table) => {
+    const q = from(table);
+    if (table === "voice_call_state")
+      q.then = (yes, no) =>
+        Promise.resolve({ data: null, error: { message: "private-secret-token" } }).then(yes, no);
+    return q;
+  };
+  const logs = [],
+    old = console.info,
+    oldError = console.error;
+  console.info = console.error = (...args) => {
+    if (JSON.parse(args[0]).category) logs.push(args.join(" "));
+  };
+  try {
+    const body = await (
+      await send(operations.handler, "agent-a", {
+        action: "human_escalation",
+        escalation_required: true,
+        escalation_category: "explicit_human_request",
+        reason: "private-reason",
+      })
+    ).json();
+    assert.equal(body.follow_up_saved, false);
+    assert.equal(body.message, human.HUMAN_SAVE_FAILED);
+    assert.equal(db.tables.voice_requests.length, 0);
+    assert.equal(logs.length, 1);
+    assert.deepEqual(Object.keys(JSON.parse(logs[0])).sort(), [
+      "category",
+      "clinic_id",
+      "component",
+      "dependency_category",
+      "follow_up_saved",
+      "state",
+      "timestamp",
+    ]);
+    assert.equal(logs.join().includes("private-"), false);
+  } finally {
+    console.info = old;
+    console.error = oldError;
+  }
+});
+
+test("human escalation requires provider call identity rather than tool-supplied call ID", async () => {
+  const { db, operations, send } = environment();
+  const response = await send(
+    operations.handler,
+    "agent-a",
+    {
+      action: "human_escalation",
+      escalation_required: true,
+      escalation_category: "explicit_human_request",
+      reason: "Staff please",
+      call_id: "claimed-call",
+    },
+    { call: { agent_id: "agent-a" } },
+  );
+  assert.equal((await response.json()).error_type, "missing_call_id");
+  assert.equal(db.tables.voice_requests.length, 0);
+});
+
+test("transfer guard ignores caller destinations and clinic IDs; signed call ownership is required", async () => {
+  const { db, operations, send } = environment();
+  const clinic = db.tables.clinics.find((c) => c.id === A);
+  Object.assign(clinic, {
+    live_transfer_enabled: true,
+    fallback_phone: "+12025550123",
+    opening_hours: {
+      days: Array.from({ length: 7 }, (_, day) => ({
+        day,
+        periods: [{ start: "00:00", end: "23:59" }],
+      })),
+    },
+  });
+  const args = {
+    action: "transfer_gate",
+    escalation_category: "explicit_human_request",
+    explicit_human_request: true,
+    live_transfer_appropriate: false,
+    clinic_id: B,
+    transfer_destination: "+12025550999",
+  };
+  const call = { agent_id: "agent-a", call_id: "transfer-signed-call", call_type: "phone_call" };
+  const result = await (await send(operations.handler, "agent-a", args, { call })).json();
+  assert.equal(result.transfer_allowed, true);
+  assert.equal(result.transfer_destination, clinic.fallback_phone);
+  assert.equal(db.tables.voice_requests.length, 0);
+  assert.equal(
+    (await send(operations.handler, "agent-a", args, { call }, keys.RETELL_B)).status,
+    401,
+  );
+  db.tables.conversations.push({ clinic_id: B, retell_call_id: "foreign-record" });
+  assert.equal(
+    (
+      await send(operations.handler, "agent-a", args, {
+        call: { ...call, call_id: "foreign-record" },
+      })
+    ).status,
+    403,
+  );
+  const missing = await send(
+    operations.handler,
+    "agent-a",
+    { ...args, call_id: "supplied-call" },
+    { call: { agent_id: "agent-a" } },
+  );
+  assert.equal((await missing.json()).error_type, "missing_call_id");
+});
+test("transfer success requires signed provider event; caller success/destination arguments are ignored", async () => {
+  const { db, operations, webhook, send } = environment();
+  const call = { agent_id: "agent-a", call_id: "provider-transfer-call", call_type: "phone_call" };
+  db.tables.voice_call_state.push({
+    clinic_id: A,
+    call_id: call.call_id,
+    transfer_attempt_reserved: true,
+    transfer_result: "ready",
+    transfer_category: "explicit_human_request",
+  });
+  assert.equal(
+    (await send(webhook, "agent-a", {}, { event: "transfer_bridged", call }, keys.RETELL_B)).status,
+    401,
+  );
+  assert.equal(
+    (await send(webhook, "agent-a", {}, { event: "transfer_bridged", call })).status,
+    204,
+  );
+  assert.equal(db.tables.voice_call_state[0].transfer_result, "success");
+  assert.equal(
+    (
+      await send(
+        webhook,
+        "agent-a",
+        {},
+        { event: "transfer_cancelled", call: { ...call, disconnection_reason: "dial_busy" } },
+      )
+    ).status,
+    204,
+  );
+  assert.equal(db.tables.voice_requests.length, 0);
+  const result = await (
+    await send(
+      operations.handler,
+      "agent-a",
+      {
+        action: "transfer_fallback",
+        transfer_result: "provider_error",
+        destination: "+12025550999",
+      },
+      { call },
+    )
+  ).json();
+  assert.equal(result.transfer_result, "success");
+  assert.equal(result.follow_up_saved, false);
+});
+test("signed transfer cancellation retains human escalation and foreign transfer events fail closed", async () => {
+  const { db, webhook, send } = environment();
+  const call = {
+    agent_id: "agent-a",
+    call_id: "cancel-transfer-call",
+    disconnection_reason: "dial_no_answer",
+    from_number: "+12025550144",
+    direction: "inbound",
+  };
+  db.tables.voice_call_state.push({
+    clinic_id: A,
+    call_id: call.call_id,
+    transfer_attempt_reserved: true,
+    transfer_result: "ready",
+    transfer_category: "explicit_human_request",
+  });
+  assert.equal(
+    (await send(webhook, "agent-a", {}, { event: "transfer_cancelled", call })).status,
+    204,
+  );
+  assert.equal(db.tables.voice_requests.length, 1);
+  assert.equal(db.tables.voice_requests[0].clinic_id, A);
+  assert.equal(db.tables.voice_requests[0].phone, call.from_number);
+  db.tables.voice_call_state.push({
+    clinic_id: B,
+    call_id: "foreign-transfer-event",
+    transfer_attempt_reserved: true,
+  });
+  assert.equal(
+    (
+      await send(
+        webhook,
+        "agent-a",
+        {},
+        { event: "transfer_bridged", call: { ...call, call_id: "foreign-transfer-event" } },
+      )
+    ).status,
+    403,
+  );
+});
+
+test("downtime: early database outage clears success, does not repeat failing dependency", async () => {
+  const { operations, send, db } = environment();
+  const original = db.from.bind(db);
+  let failures = 0;
+  const logs = [];
+  const old = console.error;
+  console.error = (x) => logs.push(x);
+  db.from = (table) => {
+    if (table === "voice_call_state") {
+      failures++;
+      const q = {
+        select() {
+          return q;
+        },
+        eq() {
+          return q;
+        },
+        maybeSingle() {
+          return Promise.resolve({
+            data: null,
+            error: { code: "08006", message: "SECRET transcript patient" },
+          });
+        },
+      };
+      return q;
+    }
+    return original(table);
+  };
+  try {
+    const r = await send(operations.handler, "agent-a", {
+      action: "lookup",
+      client_name: "Private",
+      client_phone: "+12025550101",
+      clinic_id: B,
+      phone: "+12025550999",
+    });
+    const b = await r.json();
+    assert.equal(b.error_type, "system_unavailable");
+    assert.equal(b.follow_up_saved, false);
+    assert.equal(b.appointment_id, null);
+    assert.equal(failures, 1);
+    assert.equal(db.tables.voice_requests.length, 0);
+    const event = JSON.parse(logs[0]);
+    assert.equal(event.clinic_id, A);
+    assert.equal(event.category, "system_unavailable");
+    assert.equal(event.dependency_category, "database_unavailable");
+    assert.equal(event.fallback_response_returned, true);
+    assert.equal(event.call_id, undefined);
+    assert.ok(!JSON.stringify(logs).includes("SECRET"));
+  } finally {
+    console.error = old;
+  }
+});
+test("downtime: configuration unavailable before booking does not imply appointment", async () => {
+  const { operations, send, db } = environment();
+  const available = await (
+    await send(operations.handler, "agent-a", {
+      action: "availability",
+      service_name: "Consultation",
+      practitioner_id: SA,
+      practitioner_mode: "specific",
+      requested_date: "2099-01-01",
+    })
+  ).json();
+  db.tables.clinics = [];
+  const result = await (
+    await send(operations.handler, "agent-a", {
+      action: "book",
+      slot_id: available.slots[0].slot_id,
+      client_name: "Alex Test",
+      client_phone: "+12025550101",
+    })
+  ).json();
+  assert.equal(result.system_unavailable, true);
+  assert.equal(result.appointment_booked, false);
+  assert.equal(result.follow_up_saved, false);
+  assert.equal(db.tables.voice_requests.length, 0);
+  assert.equal(db.rpcCalls.filter((x) => x.name === "voice_apply_appointment").length, 0);
+});
+test("downtime: unexpected internal error uses only signed clinic config, no caller contact", async () => {
+  const { operations, send, db } = environment();
+  db.tables.clinics[0].fallback_phone = "+12025550888";
+  db.tables.clinics[1].fallback_phone = "+12025550777";
+  const original = db.from.bind(db);
+  db.from = (table) => {
+    if (table === "clients") throw new Error("SECRET raw provider payload");
+    return original(table);
+  };
+  const result = await (
+    await send(operations.handler, "agent-a", {
+      action: "lookup",
+      client_name: "Alex Test",
+      client_phone: "+12025550101",
+      clinic_id: B,
+      fallback_phone: "+12025550999",
+    })
+  ).json();
+  assert.equal(result.system_unavailable, true);
+  assert.ok(result.message.includes("+12025550888"));
+  assert.ok(!result.message.includes("+12025550777"));
+  assert.ok(!result.message.includes("+12025550999"));
+  assert.ok(!JSON.stringify(result).includes("SECRET"));
+});
+test("downtime: failed message persistence never confirms follow-up", async () => {
+  const { operations, send, db } = environment();
+  const original = db.from.bind(db);
+  let writes = 0;
+  db.from = (table) => {
+    const q = original(table);
+    if (table === "voice_requests") {
+      q.insert = () => {
+        writes++;
+        return q;
+      };
+      q.then = (yes, no) =>
+        Promise.resolve({ data: null, error: { code: "08006", message: "private" } }).then(yes, no);
+    }
+    return q;
+  };
+  const result = await (
+    await send(operations.handler, "agent-a", {
+      action: "message",
+      caller_phone: "+12025550101",
+      reason: "Private request",
+    })
+  ).json();
+  assert.equal(result.success, false);
+  assert.equal(result.follow_up_saved, false);
+  assert.equal(result.request_id, null);
+  assert.equal(result.system_unavailable, true);
+  assert.equal(writes, 1);
+});
+test("downtime: cancellation dependency failure is uncertain and never confirmed", async () => {
+  const { operations, send, db } = environment();
+  const original = db.rpc.bind(db);
+  db.rpc = (name, args) =>
+    name === "voice_apply_appointment"
+      ? abortable({ data: null, error: { code: "08006", message: "secret-token" } })
+      : original(name, args);
+  const b = await (
+    await send(operations.handler, "agent-a", {
+      action: "cancel",
+      appointment_id: APPA,
+      client_name: "Alex Test",
+      client_phone: "+12025550101",
+      confirmed: true,
+    })
+  ).json();
+  assert.equal(b.system_unavailable, true);
+  assert.equal(b.success, false);
+  assert.equal(b.appointment_id, null);
+  assert.ok(b.patient_instruction.includes("do not claim it failed or succeeded"));
+  assert.equal(db.tables.voice_requests.length, 0);
+});
+
+test("signed webhook database failure logs a correlated safe webhook category", async () => {
+  const { db, webhook, send } = environment(),
+    from = db.from.bind(db);
+  db.from = (table) => {
+    const q = from(table);
+    if (table === "conversations")
+      q.then = (yes, no) =>
+        Promise.resolve({
+          data: null,
+          error: { code: "08006", message: "PRIVATE transcript token body" },
+        }).then(yes, no);
+    return q;
+  };
+  const logs = [],
+    old = console.error;
+  console.error = (v) => logs.push(JSON.parse(v));
+  try {
+    const response = await send(
+      webhook,
+      "agent-a",
+      {},
+      {
+        event: "call_analyzed",
+        call: {
+          agent_id: "agent-a",
+          call_id: "call_probe",
+          transcript: "PRIVATE transcript token body",
+        },
+      },
+    );
+    assert.equal(response.status, 500);
+    const failure = logs.find((v) => v.category === "webhook_failed");
+    assert.ok(failure);
+    assert.equal(failure.clinic_id, A);
+    assert.equal(failure.dependency_category, "database_error");
+    assert.match(failure.request_id, /^[a-f0-9-]{36}$/);
+    assert.ok(!JSON.stringify(logs).includes("PRIVATE"));
+  } finally {
+    console.error = old;
+  }
+});
+
+test("legacy booking rejects practitioner/service mismatch before patient creation", async () => {
+  const { legacyBooking, send, db } = environment();
+  const response = await send(legacyBooking, "agent-a", {
+    client_name: "Alex Test",
+    client_phone: "+12025550101",
+    practitioner_name: "Same Name",
+    service_name: "Vaccination",
+    appointment_date: "2099-01-01",
+    appointment_time: "14:30",
+  });
+  assert.equal((await response.json()).error_type, "service_mismatch");
+  assert.equal(db.tables.clients.length, 2);
+});
+test("legacy availability uses configured duration and 24-hour times; DB errors remain errors", async () => {
+  const { legacyAvailability, send, db } = environment();
+  const dow = new Date("2099-01-01T00:00Z").getUTCDay();
+  db.tables.staff_availability = [
+    {
+      clinic_id: A,
+      staff_id: SA,
+      day_of_week: dow,
+      is_available: true,
+      start_time: "09:00",
+      end_time: "17:00",
+    },
+  ];
+  db.tables.staff_time_off = [];
+  const args = {
+    requested_date: "2099-01-01",
+    practitioner_name: "Same Name",
+    service_name: "Consultation",
+  };
+  const result = await (await send(legacyAvailability, "agent-a", args)).json();
+  assert.equal(result.slot_duration_minutes, 45);
+  assert.match(result.practitioners[0].available_slots[0], /^\d{2}:\d{2}$/);
+  const original = db.from.bind(db);
+  db.from = (table) => {
+    if (table !== "staff_availability") return original(table);
+    const q = {
+      select: () => q,
+      eq: () => q,
+      order: () => Promise.resolve({ data: null, error: { code: "XX000" } }),
+    };
+    return q;
+  };
+  const failed = await send(legacyAvailability, "agent-a", args);
+  assert.equal(failed.status, 503);
+  assert.equal((await failed.json()).error_type, "database_error");
+});
+test("signed webhook reports cancellation after booking and retains operation history", async () => {
+  const { webhook, send, db } = environment();
+  const call = {
+    agent_id: "agent-a",
+    call_id: "book-then-cancel",
+    from_number: "+12025550101",
+    direction: "inbound",
+  };
+  db.tables.voice_operations = [
+    {
+      clinic_id: A,
+      call_id: call.call_id,
+      action: "cancel",
+      result: { success: true, appointment_id: APPA },
+    },
+    {
+      clinic_id: A,
+      call_id: call.call_id,
+      action: "book",
+      result: { success: true, appointment_id: APPA },
+    },
+  ];
+  assert.equal((await send(webhook, "agent-a", {}, { event: "call_analyzed", call })).status, 204);
+  assert.equal(db.tables.conversations.at(-1).status, "Completed");
+  assert.equal(db.tables.conversations.at(-1).outcome, "Appointment Cancelled");
+  assert.equal(db.tables.voice_operations.length, 2);
+});
+test("earliest search performs one bounded RPC across practitioners", async () => {
+  const { operations, send, db } = environment();
+  const response = await send(operations.handler, "agent-a", {
+    action: "availability",
+    service_name: "Consultation",
+    practitioner_mode: "any",
+    search_mode: "earliest",
+  });
+  const result = await response.json();
+  assert.equal(result.success, true, JSON.stringify(result));
+  const reads = db.rpcCalls.filter((r) => r.name === "appointment_search_slots");
+  assert.equal(reads.length, 1);
+  assert.equal(reads[0].args.p_days, 30);
+  assert.deepEqual(reads[0].args.p_staff_ids, [SA]);
 });

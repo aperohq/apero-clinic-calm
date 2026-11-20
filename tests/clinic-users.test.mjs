@@ -157,7 +157,7 @@ after(async () => {
 
 test("operator-assisted multi-user provisioning with actual PostgreSQL and mocked Auth", async (t) => {
   db = await createClinicDatabase({ team: true });
-  await loadSql(db, "../tests/fixtures/10_clinic_access_privileges.sql");
+  await loadSql(db, "10_clinic_access_privileges.sql");
   for (const tenant of tenants)
     users.set(tenant.user, {
       id: tenant.user,
