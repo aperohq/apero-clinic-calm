@@ -15,7 +15,7 @@
     "format": "prettier --write .",
     "test:appointment-migration": "node --max-old-space-size=384 tests/appointment-migration-safety.test.mjs",
     "test:appointment-conflicts": "node --max-old-space-size=384 tests/appointment-conflicts.test.mjs",
-    "test:appointment-concurrency": "node tests/appointments-concurrency.test.mjs",
+    "test:appointment-concurrency": "node scripts/test-concurrency.mjs",
     "test:appointments": "node --max-old-space-size=384 tests/appointments.test.mjs && node tests/run-calendar-tests.mjs",
     "test:analytics": "node --max-old-space-size=384 tests/analytics.test.mjs && node tests/analytics-ui.test.mjs",
     "test:auth": "node tests/run-clinic-auth-tests.mjs",
@@ -35,7 +35,13 @@
     "test:system-downtime": "node --max-old-space-size=384 tests/system-downtime.test.mjs && node retell/master/tests/edge-isolation.test.mjs && python3 -m unittest discover -s tests -p test_downtime_flow.py",
     "test:retention": "node --max-old-space-size=512 tests/data-retention.test.mjs && python3 -m unittest discover -s tests -p test_retention_custody.py",
     "test:demo": "node --experimental-transform-types tests/demo-call.test.mjs",
-    "typecheck:demo": "tsc --noEmit -p tests/tsconfig.demo.json"
+    "typecheck:demo": "tsc --noEmit -p tests/tsconfig.demo.json",
+    "typecheck": "tsc --noEmit",
+    "test:stabilization": "node --max-old-space-size=512 tests/stabilization-database.test.mjs && node --max-old-space-size=512 tests/migration-bootstrap.test.mjs && node tests/voice-outcome.test.mjs && node tests/dashboard-lifecycle.test.mjs",
+    "test:navigation": "node tests/run-clinic-permission-tests.mjs --navigation",
+    "lint:code": "eslint . --rule \"prettier/prettier: off\"",
+    "test:native-migrations": "node scripts/test-native-migrations.mjs",
+    "test:supabase-bootstrap": "node scripts/test-supabase-bootstrap.mjs"
   },
   "overrides": {
     "rolldown": "1.2.1"
