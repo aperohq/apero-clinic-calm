@@ -14,3 +14,11 @@ verify_jwt = false
 # The handler independently validates the bearer with Auth getUser and reads
 # membership/conversations using that user's JWT and existing database RLS.
 verify_jwt = false
+
+[functions.retention-worker]
+# SDK validates backend project secret. Browser/user tokens do not authorize it.
+verify_jwt = false
+
+[functions.demo-call]
+# Handler validates Auth bearer and live clinic Owner membership itself.
+verify_jwt = false

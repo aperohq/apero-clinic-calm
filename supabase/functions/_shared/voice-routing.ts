@@ -9,6 +9,13 @@ export type VoiceIntegration = {
   slot_minutes?: number;
 };
 
+export type IdentityPhase = "integration_lookup" | "signature_verification";
+export type IdentityTiming = (
+  phase: IdentityPhase,
+  elapsedMs: number,
+  category: "success" | "failure",
+) => void;
+
 export function hasDuplicateWorkspaceSecret(
   integration: VoiceIntegration,
   others: VoiceIntegration[],
@@ -32,6 +39,7 @@ export async function resolveTrustedIdentity(
   lookup: (agentId: string) => Promise<VoiceIntegration | null>,
   secretFor: (name: string) => string | undefined,
   verify: (raw: string, secret: string, signature: string) => Promise<boolean>,
+  timing?: IdentityTiming,
 ): Promise<{ integration: VoiceIntegration; secret: string } | null> {
   let agentId: unknown;
   try {
@@ -40,7 +48,19 @@ export async function resolveTrustedIdentity(
     return null;
   }
   if (typeof agentId !== "string" || !agentId || !signature) return null;
-  const integration = await lookup(agentId);
+  const lookupStart = performance.now();
+  let integration: VoiceIntegration | null;
+  try {
+    integration = await lookup(agentId);
+  } catch (error) {
+    timing?.("integration_lookup", performance.now() - lookupStart, "failure");
+    throw error;
+  }
+  timing?.(
+    "integration_lookup",
+    performance.now() - lookupStart,
+    integration ? "success" : "failure",
+  );
   if (
     !integration?.active ||
     integration.agent_id !== agentId ||
@@ -48,6 +68,20 @@ export async function resolveTrustedIdentity(
   )
     return null;
   const secret = secretFor(integration.secret_env_name);
-  if (!secret || !(await verify(raw, secret, signature))) return null;
+  if (!secret) return null;
+  const verifyStart = performance.now();
+  let verified: boolean;
+  try {
+    verified = await verify(raw, secret, signature);
+  } catch (error) {
+    timing?.("signature_verification", performance.now() - verifyStart, "failure");
+    throw error;
+  }
+  timing?.(
+    "signature_verification",
+    performance.now() - verifyStart,
+    verified ? "success" : "failure",
+  );
+  if (!verified) return null;
   return { integration, secret };
 }

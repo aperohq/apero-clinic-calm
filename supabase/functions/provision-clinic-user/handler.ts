@@ -1,3 +1,4 @@
+import { operationalLog } from "../_shared/operational-log.ts";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   parseClinicUserRequest,
@@ -57,7 +58,7 @@ export function createProvisionClinicUserHandler(getPortalOrigin: () => string |
         // These messages are curated by provisioning; never relay provider errors.
         return json({ error: error.message, authUserId: error.authUserId }, 409);
       }
-      console.error("clinic user provisioning failed");
+      operationalLog("internal_error", "provision-clinic-user");
       return json({ error: "Provisioning failed; inspect the account before retrying" }, 500);
     }
   };

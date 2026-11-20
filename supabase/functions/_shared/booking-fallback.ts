@@ -1,3 +1,4 @@
+import { operationalLog } from "./operational-log.ts";
 export type FailedBookingDetails = {
   clinicId: string;
   callId: string;
@@ -16,12 +17,18 @@ const reasons = new Set([
   "booking_invalid_response",
   "follow_up_lookup_failed",
   "slot_conflict",
+  "slot_unavailable",
+  "operation_mismatch",
+  "integration_inactive",
+  "clinic_not_found",
+  "appointment_not_found",
   "stale_or_invalid_slot",
   "slot_not_checked",
   "past_or_invalid_slot",
   "patient_mismatch",
   "invalid_request",
   "staff_not_found",
+  "practitioner_not_found",
   "outside_working_hours",
   "staff_time_off",
   "service_mismatch",
@@ -187,13 +194,20 @@ export async function bookingWithFallback(
   }
   // Only fixed categories and an opaque follow-up ID, not patient data, slot
   // credentials, raw errors, transcripts, workspace secrets or bearer tokens.
-  console.error(
-    JSON.stringify({
-      event: "booking_failed",
-      reason,
-      follow_up_saved: !!requestId,
-      request_id: requestId,
-    }),
-  );
+  operationalLog("booking_failed", "book-appointment", {
+    clinic_id: details.clinicId,
+    call_id: details.callId,
+    reason,
+    dependency_category:
+      reason === "booking_timeout"
+        ? "timeout"
+        : reason === "booking_exception"
+          ? "internal_error"
+          : reason === "booking_invalid_response"
+            ? "invalid_response"
+            : "database_error",
+    follow_up_saved: !!requestId,
+    follow_up_request_id: requestId,
+  });
   return failed(reason, !!requestId, requestId, status);
 }

@@ -15,6 +15,11 @@ export async function resolveVoiceIntegration(
   db: any,
   raw: string,
   signature: string | null,
+  timing?: (
+    phase: "integration_lookup" | "signature_verification" | "duplicate_secret_check",
+    elapsedMs: number,
+    category: "success" | "failure",
+  ) => void,
 ): Promise<{ integration: VoiceIntegration; secret: string } | null> {
   const identity = await resolveTrustedIdentity(
     raw,
@@ -32,17 +37,25 @@ export async function resolveVoiceIntegration(
     },
     (name) => Deno.env.get(name),
     (body, key, sig) => Retell.verify(body, key, sig),
+    timing,
   );
   if (!identity) return null;
-  const { data: active, error } = await db
-    .from("voice_integrations")
-    .select("clinic_id,agent_id,workspace_id,secret_env_name,active")
-    .eq("active", true);
-  if (
-    error ||
-    !active ||
-    hasDuplicateWorkspaceSecret(identity.integration, active, (name) => Deno.env.get(name))
-  )
-    return null;
-  return identity;
+  const began = performance.now();
+  let active;
+  let error;
+  try {
+    ({ data: active, error } = await db
+      .from("voice_integrations")
+      .select("clinic_id,agent_id,workspace_id,secret_env_name,active")
+      .eq("active", true));
+  } catch (caught) {
+    timing?.("duplicate_secret_check", performance.now() - began, "failure");
+    throw caught;
+  }
+  const valid =
+    !error &&
+    !!active &&
+    !hasDuplicateWorkspaceSecret(identity.integration, active, (name) => Deno.env.get(name));
+  timing?.("duplicate_secret_check", performance.now() - began, valid ? "success" : "failure");
+  return valid ? identity : null;
 }

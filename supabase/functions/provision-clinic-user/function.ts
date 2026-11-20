@@ -1,3 +1,4 @@
+import { monitorHandler, setOperationalContext } from "../_shared/operational-log.ts";
 import { withSupabase } from "@supabase/server";
 import { createProvisionClinicUserHandler } from "./handler.ts";
 import { readLimitedBody, RequestBodyTooLargeError } from "../_shared/request-security.ts";
@@ -13,7 +14,7 @@ export function createProvisionClinicUserFunction(getEnv: (name: string) => stri
     },
     handler,
   );
-  return async (req: Request) => {
+  return monitorHandler("provision-clinic-user", async (req: Request) => {
     // Bound the stream before middleware can buffer it. No JSON parsing or
     // provider operations occur here; operator authentication remains in SDK.
     let bounded = req;
@@ -36,5 +37,5 @@ export function createProvisionClinicUserFunction(getEnv: (name: string) => stri
     headers.set("cache-control", "no-store");
     headers.set("x-content-type-options", "nosniff");
     return new Response(response.body, { status: response.status, headers });
-  };
+  });
 }
