@@ -52,6 +52,7 @@ const evidence = {
   roles: [],
   isolation: [],
   cleanup: {},
+  forced_deadlocks: [],
 };
 let day = 0;
 const date = () => new Date(Date.UTC(2040, 0, ++day)).toISOString().slice(0, 10);
@@ -187,7 +188,11 @@ async function setup() {
   await admin`insert into auth.users(id,email) values(${other.user}::uuid,'other@concurrency.test')`;
   await admin`insert into public.profiles(auth_user_id,clinic_id,full_name,email,role) values(${other.user}::uuid,${other.clinic}::uuid,'Other clinic user','other@concurrency.test','owner')`;
   await admin.unsafe(`create function public.apero_test_concurrency_gate() returns trigger language plpgsql security invoker set search_path=pg_catalog,public,pg_temp as $$begin
-    if current_setting('apero_test.gate_enabled',true)='on' then perform pg_advisory_xact_lock_shared(${gate}); end if; return new; end$$;
+    if current_setting('apero_test.deadlock_enabled',true)='on' then
+      perform pg_advisory_xact_lock(${gate + 2});
+    elsif current_setting('apero_test.gate_enabled',true)='on' then
+      perform pg_advisory_xact_lock_shared(${gate});
+    end if; return new; end$$;
     create trigger zz_apero_test_concurrency_gate before insert or update on public.appointments for each row execute function public.apero_test_concurrency_gate();`);
   const [a] = await connections[0]`select pg_backend_pid() as pid`;
   const [b] = await connections[1]`select pg_backend_pid() as pid`;
@@ -393,6 +398,96 @@ async function collide(mode, label, channels, pids, role = "owner", moving = fal
     for (const c of connections) await c.unsafe("rollback");
   }
 }
+// A real lock-manager cycle during the real appointment write. Ordinary
+// exclusion races remain unchanged; deadlock victim coverage must not depend on
+// the scheduler choosing each channel as a victim in only ten random races.
+async function forceDeadlock(mode, channel, pids) {
+  const app = connections[0],
+    blocker = connections[1],
+    target = range(date());
+  const checked = channel === "voice" ? await prepareVoice(target, patients[0]) : null;
+  let blocked;
+  try {
+    // Set the detector timing before assuming an application role. The test-only
+    // blocking backend waits longer, so the application detects the actual cycle.
+    await app.unsafe("set deadlock_timeout='100ms'");
+    await begin(app, channel);
+    assert.equal(await available(app, target), true);
+    await app`select pg_advisory_xact_lock(${gate + 1})`;
+    await app`select set_config('apero_test.deadlock_enabled','on',true)`;
+    await blocker.unsafe(
+      "begin;set local statement_timeout='20s';set local deadlock_timeout='10s'",
+    );
+    await blocker`select pg_advisory_xact_lock(${gate + 2})`;
+    blocked = blocker`select pg_advisory_xact_lock(${gate + 1})`.then(
+      (value) => ({ value }),
+      (error) => ({ error }),
+    );
+    const waiting = await until(
+      () =>
+        admin`select pid,wait_event,pg_blocking_pids(pid) blockers from pg_stat_activity where pid=${pids[1]}`,
+      (rows) => rows[0]?.wait_event === "advisory" && rows[0].blockers.includes(pids[0]),
+      "deadlock peer waiting on application transaction",
+    );
+    let result, error;
+    try {
+      result = channel === "voice" ? await voice(app, checked) : await dashboard(app, target);
+    } catch (caught) {
+      error = caught;
+    }
+    if (channel === "voice") {
+      assert.equal(error, undefined);
+      assert.deepEqual(result, { success: false, error_type: "slot_conflict" });
+      assert.equal(
+        (
+          await admin`select count(*)::int n from voice_operations where operation_key=${checked.operation}`
+        )[0].n,
+        0,
+      );
+      assert.equal(
+        (
+          await admin`select current_check_id from voice_call_state where call_id=${checked.call}`
+        )[0].current_check_id,
+        checked.check,
+      );
+    } else {
+      assert.equal(error?.code, "40P01", "real dashboard transaction must be the deadlock victim");
+      assert.equal(appointmentWriteError(error).message, appointmentSlotConflictMessage);
+    }
+    await app.unsafe("rollback");
+    const peer = await blocked;
+    assert.equal(peer.error, undefined, "test peer must survive while application is the victim");
+    await blocker.unsafe("rollback");
+    assert.equal(
+      (
+        await admin`select count(*)::int n from appointments where clinic_id=${tenant.clinic}::uuid and start_time=${target.start}::timestamptz`
+      )[0].n,
+      0,
+    );
+    assert.equal((await app`select 1 usable`)[0].usable, 1);
+    const serverLog = await readFile(`${cluster}/server.log`, "utf8");
+    if (channel === "voice")
+      assert.ok(
+        serverLog.includes("Appointment slot acquisition failed (code: 40P01)"),
+        "voice must log and translate the genuine SQL deadlock",
+      );
+    evidence.forced_deadlocks.push({
+      mode,
+      channel,
+      code: "40P01",
+      real_lock_cycle: true,
+      peer_wait: waiting,
+      translated: true,
+      rollback_clean: true,
+    });
+    console.log(`PASS ${mode}: deterministic ${channel} deadlock, translated and rolled back`);
+  } finally {
+    await app.unsafe("rollback");
+    if (blocked) await blocked;
+    await blocker.unsafe("rollback");
+    await app.unsafe("reset deadlock_timeout");
+  }
+}
 async function adjacent(mode, pids) {
   const d = date(),
     slots = [range(d), range(d, 585)],
@@ -563,6 +658,8 @@ try {
       await collide(mode, "voice-vs-voice", ["voice", "voice"], pids);
       await collide(mode, "reschedule-vs-booking", ["dashboard", "dashboard"], pids, "staff", true);
     }
+    await forceDeadlock(mode, "dashboard", pids);
+    await forceDeadlock(mode, "voice", pids);
     await adjacent(mode, pids);
     await cancellation(mode);
   }
@@ -578,7 +675,9 @@ try {
   evidence.cleanup.idle_or_aborted_transactions = 0;
   const serverLog = await readFile(`${cluster}/server.log`, "utf8");
   evidence.deadlocks_reproduced = {
-    dashboard: evidence.races.filter((r) => r.failure.code === "40P01").length,
+    dashboard:
+      evidence.races.filter((r) => r.failure.code === "40P01").length +
+      evidence.forced_deadlocks.filter((r) => r.channel === "dashboard").length,
     voice: serverLog
       .split("\n")
       .filter((line) => line.includes("Appointment slot acquisition failed (code: 40P01)")).length,
