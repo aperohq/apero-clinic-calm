@@ -9,7 +9,7 @@ spec=importlib.util.spec_from_file_location('unknown_fallback',ROOT/'retell/unkn
 module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
 class UnknownFlowTests(unittest.TestCase):
     def setUp(self):
-        source=json.loads(Path(os.environ.get('UNKNOWN_FLOW_PATH',ROOT/'retell/master/reference/golden.json')).read_text())
+        source=json.loads(Path(os.environ.get('UNKNOWN_FLOW_PATH',ROOT/'retell/master/reference/golden.json')).read_text(encoding="utf-8"))
         self.before=source.get('conversationFlow',source)
         self.flow=module.apply_unknown_fallback(copy.deepcopy(self.before))
         self.nodes={n['id']:n for n in self.flow['nodes']}
@@ -45,7 +45,7 @@ class UnknownFlowTests(unittest.TestCase):
                 after=copy.deepcopy(after);after['global_node_setting']['condition']=n['global_node_setting']['condition']
             self.assertEqual(after,n)
     def test_display_uses_existing_queue(self):
-        ui=(ROOT/'src/components/requests.tsx').read_text()
+        ui=(ROOT/'src/components/requests.tsx').read_text(encoding="utf-8")
         self.assertIn('row.reason.startsWith("AI couldn’t answer —")',ui)
         self.assertIn('"AI couldn’t answer — follow-up"',ui)
     def test_unknown_follow_up_interrupt_requires_specific_explicit_opt_in(self):

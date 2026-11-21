@@ -1,0 +1,27 @@
+{
+  "original_branch": "main",
+  "original_head": "8b47787ce607ee156b94cbbe8e16039b2ed5a404",
+  "original_status_unchanged": true,
+  "original_checkpoint_files_unchanged": 588,
+  "local_env_unchanged": true,
+  "archives": [
+    {
+      "checkpoint": ".local-recovery/batch2-20261120T221746",
+      "files_verified": 560,
+      "archive_sha256": "086109012e3a1be1aec9c3873fc06e50940446575e099dad58fd076e43f8fb28"
+    },
+    {
+      "checkpoint": ".local-recovery/batch2-complete-20261120T225637",
+      "files_verified": 588,
+      "archive_sha256": "8d2cbcd812af8aef6a7e2c160192924c0fdad4cdedfe20393f55adfdd3f13a75"
+    }
+  ],
+  "selected_source_files": 294,
+  "intentional_candidate_deviations": {
+    ".github/workflows/application-checks.yml": {
+      "expected": "17a062ce360f39f9a6c6cf58299fa1166ff62aeb828345b3f00a9e0f80693c55",
+      "candidate": "de842c1ee24138e9885a972f0bf0b217791ee0d85e40a578636c23a0e8f23708"
+    }
+  },
+  "candidate_env_tracked": false
+}

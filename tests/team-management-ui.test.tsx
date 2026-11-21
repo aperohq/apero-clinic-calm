@@ -11,7 +11,8 @@ import {
   Outlet,
   RouterProvider,
 } from "@tanstack/react-router";
-import { AuthProvider, useAuth } from "@/lib/auth";
+import { useAuth } from "@/lib/auth";
+import { AuthProvider } from "@/lib/auth-provider";
 import { supabase } from "@/integrations/supabase/client";
 import { AccountAccessPanel } from "@/components/account-access-panel";
 import { RouteShell } from "@/components/route-shell";

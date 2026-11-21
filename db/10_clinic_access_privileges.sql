@@ -1,4 +1,3 @@
--- Test-only snapshot of the already-deployed prerequisite schema.
 -- Apply after 01 through 09, after review. This does not modify product rows,
 -- clinic membership, existing RLS policies, or service-role privileges.
 -- GRANT is additive: legacy/default grants must be removed explicitly.

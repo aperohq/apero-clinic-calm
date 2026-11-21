@@ -344,3 +344,15 @@ test("flow clears previous success before creation, so a transport timeout canno
     false,
   );
 });
+
+test("slot_unavailable remains structured in the response and staff follow-up", async () => {
+  const { result } = await attempt(async () => ({
+    success: false,
+    error_type: "slot_unavailable",
+  }));
+  assertFailure(result, "slot_unavailable");
+  const row = (
+    await db.query("select reason from voice_requests where id=$1", [result.follow_up_request_id])
+  ).rows[0];
+  assert.match(row.reason, /slot_unavailable/);
+});

@@ -30,20 +30,20 @@ def log(category,state,**fields):
 
 def setup(stage):
     recipients=stage/'recipients'
-    recipients.write_text(os.environ['AGE_RECIPIENTS'].strip()+'\n')
+    recipients.write_text(os.environ['AGE_RECIPIENTS'].strip()+'\n', encoding="utf-8")
     identity=stage/'ephemeral-age-key'
     result=subprocess.run(['age-keygen','-o',str(identity)],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
     if result.returncode: raise ValueError('ephemeral_key_failed')
     identity.chmod(0o600)
     result=subprocess.run(['age-keygen','-y',str(identity)],stdout=subprocess.PIPE,stderr=subprocess.DEVNULL)
     if result.returncode: raise ValueError('ephemeral_recipient_failed')
-    with recipients.open('a') as file: file.write(result.stdout.decode().strip()+'\n')
-    cert=stage/'db-ca.crt'; cert.write_text(os.environ['BACKUP_DB_CA_CERT'])
+    with recipients.open('a', encoding="utf-8") as file: file.write(result.stdout.decode().strip()+'\n')
+    cert=stage/'db-ca.crt'; cert.write_text(os.environ['BACKUP_DB_CA_CERT'], encoding="utf-8")
     password=os.environ.pop('BACKUP_DB_PASSWORD')
     if '\n' in password or '\r' in password: raise ValueError('invalid_pgpass_password')
     def escape(s):return s.replace('\\','\\\\').replace(':','\\:')
     values=[os.environ['PGHOST'],os.environ.get('PGPORT','5432'),os.environ['PGDATABASE'],os.environ['PGUSER'],password]
-    pgpass=stage/'pgpass'; pgpass.write_text(':'.join(map(escape,values))+'\n');pgpass.chmod(0o600)
+    pgpass=stage/'pgpass'; pgpass.write_text(':'.join(map(escape,values))+'\n', encoding="utf-8");pgpass.chmod(0o600)
     os.environ.update({'PGPASSFILE':str(pgpass),'PGSSLROOTCERT':str(cert),'PGSSLMODE':'verify-full',
         'PGCONNECT_TIMEOUT':'20','PGOPTIONS':'-c default_transaction_read_only=on -c statement_timeout=1800000',
         'BACKUP_DESTINATION_APPROVED':'yes'})
@@ -93,7 +93,7 @@ def run(mode):
                 bundle=db.backup(output,recipients,snapshot,catalog)
                 STAGE='archive_integrity'
                 db.verify(bundle,identity)
-                manifest=json.loads((bundle/'manifest.json').read_text());manifest['archive_validated']=True
+                manifest=json.loads((bundle/'manifest.json').read_text(encoding="utf-8"));manifest['archive_validated']=True
                 manifest['source_commit']=os.environ.get('GITHUB_SHA');manifest['ci_private_key_persisted']=False
                 encrypted_manifest=output/'manifest.json.age'
                 storage.encrypt_json(manifest,encrypted_manifest,recipients)
@@ -116,7 +116,7 @@ def run(mode):
             retention_classes=receipt['retention_classes'],checksum_readback_verified=True)
         summary=os.environ.get('GITHUB_STEP_SUMMARY')
         if summary:
-            with open(summary,'a') as file:
+            with open(summary,'a', encoding="utf-8") as file:
                 file.write(f'Backup verified: {mode}; UTC {started.isoformat()}; set `{run_id}`; classes {", ".join(receipt["retention_classes"])}. Encrypted S3 upload/read-back passed. No GitHub artifact.\n')
     # No files/ephemeral private key/pgpass survive either TemporaryDirectory.
 

@@ -65,5 +65,5 @@ def apply_system_downtime(flow):
     flow['global_prompt']+='\n'+POLICY
     return flow
 if __name__=='__main__':
-    data=json.loads(Path(sys.argv[1]).read_text());apply_system_downtime(data.get('conversationFlow',data))
-    Path(sys.argv[2]).write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n')
+    data=json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"));apply_system_downtime(data.get('conversationFlow',data))
+    Path(sys.argv[2]).write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n', encoding="utf-8")

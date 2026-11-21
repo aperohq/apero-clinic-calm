@@ -3,15 +3,60 @@ import test from "node:test";
 import { phone, resolveService, resolveStaff, type Staff } from "./logic.ts";
 
 const staff: Staff[] = [
-  { id: "21111111-1111-4111-8111-111111111111", full_name: "Dr. Ahmed Qandil", specialty: "General Dentistry", services: ["Dental Cleaning", "Consultation", "Root Canal"], aliases: ["أحمد قنديل", "أحمد أنديل", "Ahmed Kandil", "Ahmed Qandeel", "Dr Qandil", "د احمد قنديل", "احمد قنديل", "أحمد كنديل"] },
-  { id: "21111111-1111-4111-8111-111111111112", full_name: "Dr. Mohammed Shuqeir", specialty: "Cosmetic Dentistry", services: ["Veneers Consultation", "Teeth Whitening"], aliases: ["محمد شقير"] },
-  { id: "21111111-1111-4111-8111-111111111113", full_name: "Dr. Fatima Hassan", specialty: "Orthodontics", services: ["Orthodontic Consultation", "Braces Review"], aliases: ["فاطمة حسن"] },
-  { id: "21111111-1111-4111-8111-111111111114", full_name: "Layla Salem", specialty: "Dental Hygiene", services: ["Dental Cleaning", "Preventive Care"], aliases: ["ليلى سالم"] },
+  {
+    id: "21111111-1111-4111-8111-111111111111",
+    full_name: "Dr. Ahmed Qandil",
+    specialty: "General Dentistry",
+    services: ["Dental Cleaning", "Consultation", "Root Canal"],
+    aliases: [
+      "أحمد قنديل",
+      "أحمد أنديل",
+      "Ahmed Kandil",
+      "Ahmed Qandeel",
+      "Dr Qandil",
+      "د احمد قنديل",
+      "احمد قنديل",
+      "أحمد كنديل",
+    ],
+  },
+  {
+    id: "21111111-1111-4111-8111-111111111112",
+    full_name: "Dr. Mohammed Shuqeir",
+    specialty: "Cosmetic Dentistry",
+    services: ["Veneers Consultation", "Teeth Whitening"],
+    aliases: ["محمد شقير"],
+  },
+  {
+    id: "21111111-1111-4111-8111-111111111113",
+    full_name: "Dr. Fatima Hassan",
+    specialty: "Orthodontics",
+    services: ["Orthodontic Consultation", "Braces Review"],
+    aliases: ["فاطمة حسن"],
+  },
+  {
+    id: "21111111-1111-4111-8111-111111111114",
+    full_name: "Layla Salem",
+    specialty: "Dental Hygiene",
+    services: ["Dental Cleaning", "Preventive Care"],
+    aliases: ["ليلى سالم"],
+  },
 ];
-const serviceAliases = { "Dental Cleaning": ["cleaning", "تنظيف الأسنان"], "Teeth Whitening": ["whitening"] };
+const serviceAliases = {
+  "Dental Cleaning": ["cleaning", "تنظيف الأسنان"],
+  "Teeth Whitening": ["whitening"],
+};
 
 test("doctor aliases resolve to canonical staff", () => {
-  for (const alias of ["Dr Ahmed", "Ahmed Kandil", "Ahmed Qandeel", "Dr Qandil", "دكتور أحمد قنديل", "د. أحمد قنديل", "احمد قنديل", "أحمد أنديل"]) {
+  for (const alias of [
+    "Dr Ahmed",
+    "Ahmed Kandil",
+    "Ahmed Qandeel",
+    "Dr Qandil",
+    "دكتور أحمد قنديل",
+    "د. أحمد قنديل",
+    "احمد قنديل",
+    "أحمد أنديل",
+  ]) {
     assert.equal(resolveStaff(staff, alias).practitioner?.id, staff[0].id, alias);
   }
   assert.equal(resolveStaff(staff, "محمد شقير").practitioner?.id, staff[1].id);
@@ -31,12 +76,23 @@ test("services resolve without inferring from specialty", () => {
   assert.equal(resolveService(staff, "Consultation").service, "Consultation");
   assert.equal(resolveService(staff, "implant surgery").status, "not_found");
   const cleaning = resolveService(staff, "cleaning", serviceAliases).service;
-  assert.deepEqual(staff.filter(s => s.services.includes(cleaning!)).map(s => s.id), [staff[0].id, staff[3].id]);
+  assert.deepEqual(
+    staff.filter((s) => s.services.includes(cleaning!)).map((s) => s.id),
+    [staff[0].id, staff[3].id],
+  );
   assert.equal(staff[1].services.includes("Dental Cleaning"), false);
 });
 
 test("same practitioner name and aliases stay inside the selected clinic staff set", () => {
-  const clinicB: Staff[] = [{ id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", full_name: "Dr. Ahmed Qandil", specialty: "General Dentistry", services: ["Consultation"], aliases: ["Ahmed"] }];
+  const clinicB: Staff[] = [
+    {
+      id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      full_name: "Dr. Ahmed Qandil",
+      specialty: "General Dentistry",
+      services: ["Consultation"],
+      aliases: ["Ahmed"],
+    },
+  ];
   assert.equal(resolveStaff(clinicB, "Ahmed").practitioner?.id, clinicB[0].id);
   assert.equal(resolveStaff(staff, "Ahmed").practitioner?.id, staff[0].id);
   assert.equal(resolveService(clinicB, "Dental Cleaning").status, "not_found");
@@ -56,8 +112,14 @@ test("saved weekly day and hours gate voice slots", async () => {
   const start = "2026-10-14T11:00:00.000Z";
   const end = "2026-10-14T11:45:00.000Z";
   const shift = { start_time: "09:00:00", end_time: "17:00:00", is_available: true };
-  assert.equal(slotIsOpen({ ...shift, is_available: false }, "14:00", "14:45", start, end, [], []), false);
-  assert.equal(slotIsOpen({ ...shift, end_time: "13:00:00" }, "14:00", "14:45", start, end, [], []), false);
+  assert.equal(
+    slotIsOpen({ ...shift, is_available: false }, "14:00", "14:45", start, end, [], []),
+    false,
+  );
+  assert.equal(
+    slotIsOpen({ ...shift, end_time: "13:00:00" }, "14:00", "14:45", start, end, [], []),
+    false,
+  );
   assert.equal(slotIsOpen(shift, "14:00", "14:45", start, end, [], []), true);
 });
 
@@ -66,7 +128,9 @@ test("time off blocks only the selected practitioner's slots", async () => {
   const shift = { start_time: "09:00:00", end_time: "17:00:00", is_available: true };
   const start = "2026-10-14T11:00:00.000Z";
   const end = "2026-10-14T11:45:00.000Z";
-  const ahmedTimeOff = [{ start_time: "2026-10-14T11:00:00.000Z", end_time: "2026-10-14T14:00:00.000Z" }];
+  const ahmedTimeOff = [
+    { start_time: "2026-10-14T11:00:00.000Z", end_time: "2026-10-14T14:00:00.000Z" },
+  ];
   assert.equal(slotIsOpen(shift, "14:00", "14:45", start, end, [], ahmedTimeOff), false);
   assert.equal(slotIsOpen(shift, "14:00", "14:45", start, end, [], []), true);
 });
@@ -74,7 +138,31 @@ test("time off blocks only the selected practitioner's slots", async () => {
 test("existing appointment overlap blocks the slot while adjacent times remain open", async () => {
   const { slotIsOpen } = await import("./logic.ts");
   const shift = { start_time: "09:00:00", end_time: "17:00:00", is_available: true };
-  const appointment = [{ start_time: "2026-10-14T11:30:00.000Z", end_time: "2026-10-14T12:15:00.000Z" }];
-  assert.equal(slotIsOpen(shift, "14:00", "14:45", "2026-10-14T11:00:00.000Z", "2026-10-14T11:45:00.000Z", appointment, []), false);
-  assert.equal(slotIsOpen(shift, "14:00", "14:45", "2026-10-14T12:15:00.000Z", "2026-10-14T13:00:00.000Z", appointment, []), true);
+  const appointment = [
+    { start_time: "2026-10-14T11:30:00.000Z", end_time: "2026-10-14T12:15:00.000Z" },
+  ];
+  assert.equal(
+    slotIsOpen(
+      shift,
+      "14:00",
+      "14:45",
+      "2026-10-14T11:00:00.000Z",
+      "2026-10-14T11:45:00.000Z",
+      appointment,
+      [],
+    ),
+    false,
+  );
+  assert.equal(
+    slotIsOpen(
+      shift,
+      "14:00",
+      "14:45",
+      "2026-10-14T12:15:00.000Z",
+      "2026-10-14T13:00:00.000Z",
+      appointment,
+      [],
+    ),
+    true,
+  );
 });

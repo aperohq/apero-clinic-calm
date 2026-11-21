@@ -30,9 +30,17 @@ export function reportLovableError(_error: unknown, _context: Record<string, unk
   const error = new Error("Unexpected application error");
   delete error.stack;
   try {
-    window.__lovableEvents?.captureException?.(error, {source: "react_error_boundary"}, {
-      mechanism: "react_error_boundary", handled: false, severity: "error",
-    });
-    window.__lovableReportRuntimeError?.({message: "Unexpected application error"});
-  } catch { /* Error reporting must not interrupt the error UI. */ }
+    window.__lovableEvents?.captureException?.(
+      error,
+      { source: "react_error_boundary" },
+      {
+        mechanism: "react_error_boundary",
+        handled: false,
+        severity: "error",
+      },
+    );
+    window.__lovableReportRuntimeError?.({ message: "Unexpected application error" });
+  } catch {
+    /* Error reporting must not interrupt the error UI. */
+  }
 }

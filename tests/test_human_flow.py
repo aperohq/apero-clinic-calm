@@ -9,7 +9,7 @@ spec=importlib.util.spec_from_file_location('human_escalation',ROOT/'retell/huma
 module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
 class HumanFlowTests(unittest.TestCase):
     def setUp(self):
-        data=json.loads(Path(os.environ.get('HUMAN_FLOW_PATH',ROOT/'retell/master/reference/golden.json')).read_text())
+        data=json.loads(Path(os.environ.get('HUMAN_FLOW_PATH',ROOT/'retell/master/reference/golden.json')).read_text(encoding="utf-8"))
         self.before=data.get('conversationFlow',data)
         self.flow=module.apply_human_escalation(copy.deepcopy(self.before))
         self.nodes={n['id']:n for n in self.flow['nodes']}

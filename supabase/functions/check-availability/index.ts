@@ -1,11 +1,17 @@
-import { operationalLog, monitorHandler, setOperationalContext } from "../_shared/operational-log.ts";
+import {
+  operationalLog,
+  monitorHandler,
+  setOperationalContext,
+} from "../_shared/operational-log.ts";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { withSupabase } from "jsr:@supabase/server@^1";
 import { resolveVoiceIntegration } from "../_shared/voice-integration.ts";
-import { logDatabaseFailure, readLimitedBody, RequestBodyTooLargeError } from "../_shared/request-security.ts";
+import {
+  logDatabaseFailure,
+  readLimitedBody,
+  RequestBodyTooLargeError,
+} from "../_shared/request-security.ts";
 import { DateTime } from "npm:luxon@3";
-
-const SLOT_MINUTES = 30;
 
 function normalizeName(value: string) {
   return (value ?? "")
@@ -23,165 +29,192 @@ function namesMatch(a: string, b: string) {
   return x === y || x.includes(y) || y.includes(x);
 }
 
-function matchesPractitioner(staff: any, requestedName: string) {
+function matchesPractitioner(
+  staff: { id: string; full_name: string; services: string[]; aliases?: string[] },
+  requestedName: string,
+) {
   if (namesMatch(staff.full_name, requestedName)) {
     return true;
   }
 
-  return (staff.aliases ?? []).some((alias: string) =>
-    namesMatch(alias, requestedName)
-  );
+  return (staff.aliases ?? []).some((alias: string) => namesMatch(alias, requestedName));
 }
 
 export default {
-  fetch: monitorHandler("check-availability", withSupabase({ auth: "none" }, async (req, ctx) => {
-    try {
-      if (req.method !== "POST") {
-        return new Response("Method not allowed", { status: 405 });
-      }
+  fetch: monitorHandler(
+    "check-availability",
+    withSupabase({ auth: "none" }, async (req, ctx) => {
+      try {
+        if (req.method !== "POST") {
+          return new Response("Method not allowed", { status: 405 });
+        }
 
-      let rawBody: string;
-      try { rawBody = await readLimitedBody(req, 128 * 1024); }
-      catch (error) { return new Response("Request body too large", { status: error instanceof RequestBodyTooLargeError ? 413 : 400 }); }
+        let rawBody: string;
+        try {
+          rawBody = await readLimitedBody(req, 128 * 1024);
+        } catch (error) {
+          return new Response("Request body too large", {
+            status: error instanceof RequestBodyTooLargeError ? 413 : 400,
+          });
+        }
 
-      const identity = await resolveVoiceIntegration(ctx.supabaseAdmin, rawBody, req.headers.get("x-retell-signature"));
-      if (!identity) return new Response("Unauthorized", { status: 401 });
-      const clinicId = identity.integration.clinic_id;
-      setOperationalContext(req, {clinic_id: clinicId});
+        const identity = await resolveVoiceIntegration(
+          ctx.supabaseAdmin,
+          rawBody,
+          req.headers.get("x-retell-signature"),
+        );
+        if (!identity) return new Response("Unauthorized", { status: 401 });
+        const clinicId = identity.integration.clinic_id;
+        const SLOT_MINUTES = identity.integration.slot_minutes;
+        setOperationalContext(req, { clinic_id: clinicId });
 
-      const payload = JSON.parse(rawBody);
-        setOperationalContext(req, {call_id: payload.call?.call_id});
-      const args = payload.args ?? payload;
+        const payload = JSON.parse(rawBody);
+        setOperationalContext(req, { call_id: payload.call?.call_id });
+        const args = payload.args ?? payload;
 
-      const requestedDate =
-        typeof args.requested_date === "string"
-          ? args.requested_date.trim()
-          : "";
+        const requestedDate =
+          typeof args.requested_date === "string" ? args.requested_date.trim() : "";
 
-      const practitionerName =
-        typeof args.practitioner_name === "string"
-          ? args.practitioner_name.trim()
-          : "";
+        const practitionerName =
+          typeof args.practitioner_name === "string" ? args.practitioner_name.trim() : "";
 
-      if (!requestedDate) {
-        return Response.json({
-          available: false,
-          message: "requested_date is required.",
-        });
-      }
+        if (!requestedDate) {
+          return Response.json({
+            available: false,
+            message: "requested_date is required.",
+          });
+        }
 
-      // ---------------------------
-      // CLINIC
-      // ---------------------------
+        // ---------------------------
+        // CLINIC
+        // ---------------------------
 
-      const { data: clinic, error: clinicError } =
-        await ctx.supabaseAdmin
+        const { data: clinic, error: clinicError } = await ctx.supabaseAdmin
           .from("clinics")
           .select("timezone")
           .eq("id", clinicId)
           .single();
 
-      if (clinicError || !clinic) {
-        logDatabaseFailure("Availability clinic lookup", clinicError);
+        if (clinicError || !clinic) {
+          logDatabaseFailure("Availability clinic lookup", clinicError);
 
-        return Response.json(
-          {
+          return Response.json(
+            {
+              available: false,
+              availability_checked: false,
+              error_type: "database_error",
+              message: "Clinic could not be loaded.",
+            },
+            { status: 500 },
+          );
+        }
+
+        const timezone = clinic.timezone;
+
+        const requestedDay = DateTime.fromISO(requestedDate, {
+          zone: timezone,
+        });
+
+        if (!requestedDay.isValid) {
+          return Response.json({
             available: false,
-            message: "Clinic could not be loaded.",
-          },
-          { status: 500 },
-        );
-      }
+            message: "Invalid requested date.",
+          });
+        }
 
-      const timezone = clinic.timezone;
+        const now = DateTime.now().setZone(timezone);
 
-      const requestedDay = DateTime.fromISO(requestedDate, {
-        zone: timezone,
-      });
+        if (requestedDay.endOf("day").toMillis() < now.toMillis()) {
+          return Response.json({
+            available: false,
+            date: requestedDate,
+            message: "The requested date is in the past.",
+          });
+        }
 
-      if (!requestedDay.isValid) {
-        return Response.json({
-          available: false,
-          message: "Invalid requested date.",
-        });
-      }
+        // Sunday = 0
+        // Monday = 1
+        // ...
+        // Saturday = 6
+        const dayOfWeek = requestedDay.weekday % 7;
 
-      const now = DateTime.now().setZone(timezone);
+        // ---------------------------
+        // STAFF
+        // ---------------------------
 
-      if (requestedDay.endOf("day").toMillis() < now.toMillis()) {
-        return Response.json({
-          available: false,
-          date: requestedDate,
-          message: "The requested date is in the past.",
-        });
-      }
-
-      // Sunday = 0
-      // Monday = 1
-      // ...
-      // Saturday = 6
-      const dayOfWeek = requestedDay.weekday % 7;
-
-      // ---------------------------
-      // STAFF
-      // ---------------------------
-
-      const { data: staffList, error: staffError } =
-        await ctx.supabaseAdmin
+        const { data: staffList, error: staffError } = await ctx.supabaseAdmin
           .from("staff")
-          .select(
-            "id, full_name, specialty, services, aliases"
-          )
+          .select("id, full_name, specialty, services, aliases")
           .eq("clinic_id", clinicId)
           .eq("active", true);
 
-      if (staffError || !staffList) {
-        logDatabaseFailure("Availability staff lookup", staffError);
+        if (staffError || !staffList) {
+          logDatabaseFailure("Availability staff lookup", staffError);
 
-        return Response.json(
-          {
-            available: false,
-            message: "Staff could not be loaded.",
-          },
-          { status: 500 },
-        );
-      }
-
-      let candidates = staffList;
-
-      if (practitionerName) {
-        candidates = staffList.filter((staff: any) =>
-          matchesPractitioner(staff, practitionerName)
-        );
-
-        if (candidates.length === 0) {
-          return Response.json({
-            available: false,
-            practitioner_found: false,
-            requested_practitioner: practitionerName,
-            message:
-              "The requested practitioner could not be matched.",
-          });
+          return Response.json(
+            {
+              available: false,
+              message: "Staff could not be loaded.",
+            },
+            { status: 500 },
+          );
         }
-      }
 
-      // ---------------------------
-      // DAY BOUNDARIES
-      // ---------------------------
+        let candidates = staffList;
 
-      const dayStart = requestedDay.startOf("day");
-      const dayEnd = requestedDay.endOf("day");
+        if (practitionerName) {
+          candidates = staffList.filter(
+            (staff: { id: string; full_name: string; services: string[]; aliases?: string[] }) =>
+              matchesPractitioner(staff, practitionerName),
+          );
 
-      const results: any[] = [];
-      const debug: any[] = [];
+          if (candidates.length === 0) {
+            return Response.json({
+              available: false,
+              practitioner_found: false,
+              requested_practitioner: practitionerName,
+              message: "The requested practitioner could not be matched.",
+            });
+          }
+        }
 
-      // ---------------------------
-      // EACH PRACTITIONER
-      // ---------------------------
+        // ---------------------------
+        // DAY BOUNDARIES
+        // ---------------------------
 
-      for (const staff of candidates) {
-        const { data: shifts, error: shiftsError } =
-          await ctx.supabaseAdmin
+        const dayStart = requestedDay.startOf("day");
+        const dayEnd = requestedDay.endOf("day");
+
+        const results: Array<{
+          practitioner_id: string;
+          practitioner_name: string;
+          specialty: string;
+          available_slots: string[];
+        }> = [];
+        const debug: Array<Record<string, unknown>> = [];
+
+        const serviceName = typeof args.service_name === "string" ? args.service_name.trim() : "";
+        if (!serviceName)
+          return Response.json(
+            { available: false, error_type: "service_not_found" },
+            { status: 400 },
+          );
+        if (
+          !candidates.some((person: { services: string[] }) =>
+            person.services?.includes(serviceName),
+          )
+        )
+          return Response.json(
+            { available: false, error_type: "service_mismatch" },
+            { status: 400 },
+          );
+        // ---------------------------
+        // EACH PRACTITIONER
+        // ---------------------------
+
+        for (const staff of candidates) {
+          if (!staff.services?.includes(serviceName)) continue;
+          const { data: shifts, error: shiftsError } = await ctx.supabaseAdmin
             .from("staff_availability")
             .select("start_time, end_time")
             .eq("clinic_id", clinicId)
@@ -190,27 +223,29 @@ export default {
             .eq("is_available", true)
             .order("start_time");
 
-        if (shiftsError) {
-          logDatabaseFailure("Availability shift lookup", shiftsError);
-          continue;
-        }
+          if (shiftsError) {
+            logDatabaseFailure("Availability shift lookup", shiftsError);
+            return Response.json(
+              { available: false, availability_checked: false, error_type: "database_error" },
+              { status: 503 },
+            );
+          }
 
-        if (!shifts || shifts.length === 0) {
-          debug.push({
-            practitioner: staff.full_name,
-            day_of_week: dayOfWeek,
-            shifts_found: 0,
-          });
+          if (!shifts || shifts.length === 0) {
+            debug.push({
+              practitioner: staff.full_name,
+              day_of_week: dayOfWeek,
+              shifts_found: 0,
+            });
 
-          continue;
-        }
+            continue;
+          }
 
-        // ---------------------------
-        // EXISTING APPOINTMENTS
-        // ---------------------------
+          // ---------------------------
+          // EXISTING APPOINTMENTS
+          // ---------------------------
 
-        const { data: appointments, error: appointmentError } =
-          await ctx.supabaseAdmin
+          const { data: appointments, error: appointmentError } = await ctx.supabaseAdmin
             .from("appointments")
             .select("start_time, end_time, status")
             .eq("clinic_id", clinicId)
@@ -219,17 +254,19 @@ export default {
             .gt("end_time", dayStart.toUTC().toISO())
             .neq("status", "Cancelled");
 
-        if (appointmentError) {
-          logDatabaseFailure("Availability appointment lookup", appointmentError);
-          continue;
-        }
+          if (appointmentError) {
+            logDatabaseFailure("Availability appointment lookup", appointmentError);
+            return Response.json(
+              { available: false, availability_checked: false, error_type: "database_error" },
+              { status: 503 },
+            );
+          }
 
-        // ---------------------------
-        // TIME OFF
-        // ---------------------------
+          // ---------------------------
+          // TIME OFF
+          // ---------------------------
 
-        const { data: timeOff, error: timeOffError } =
-          await ctx.supabaseAdmin
+          const { data: timeOff, error: timeOffError } = await ctx.supabaseAdmin
             .from("staff_time_off")
             .select("start_time, end_time")
             .eq("clinic_id", clinicId)
@@ -237,159 +274,148 @@ export default {
             .lt("start_time", dayEnd.toUTC().toISO())
             .gt("end_time", dayStart.toUTC().toISO());
 
-        if (timeOffError) {
-          logDatabaseFailure("Availability time-off lookup", timeOffError);
-          continue;
-        }
-
-        const freeSlots: string[] = [];
-
-        // ---------------------------
-        // GENERATE SLOTS
-        // ---------------------------
-
-        for (const shift of shifts) {
-          const shiftStart = DateTime.fromISO(
-            `${requestedDate}T${shift.start_time}`,
-            { zone: timezone },
-          );
-
-          const shiftEnd = DateTime.fromISO(
-            `${requestedDate}T${shift.end_time}`,
-            { zone: timezone },
-          );
-
-          if (!shiftStart.isValid || !shiftEnd.isValid) {
-            operationalLog("calendar_unavailable", "check-availability", {clinic_id: clinicId, dependency_category: "invalid_response"});
-            continue;
+          if (timeOffError) {
+            logDatabaseFailure("Availability time-off lookup", timeOffError);
+            return Response.json(
+              { available: false, availability_checked: false, error_type: "database_error" },
+              { status: 503 },
+            );
           }
 
-          let slotStart = shiftStart;
+          const freeSlots: string[] = [];
 
-          while (
-            slotStart.plus({ minutes: SLOT_MINUTES }).toMillis() <=
-            shiftEnd.toMillis()
-          ) {
-            const slotEnd = slotStart.plus({
-              minutes: SLOT_MINUTES,
+          // ---------------------------
+          // GENERATE SLOTS
+          // ---------------------------
+
+          for (const shift of shifts) {
+            const shiftStart = DateTime.fromISO(`${requestedDate}T${shift.start_time}`, {
+              zone: timezone,
             });
 
-            // Don't return times already passed
-            if (slotStart.toMillis() <= now.toMillis()) {
-              slotStart = slotEnd;
+            const shiftEnd = DateTime.fromISO(`${requestedDate}T${shift.end_time}`, {
+              zone: timezone,
+            });
+
+            if (!shiftStart.isValid || !shiftEnd.isValid) {
+              operationalLog("calendar_unavailable", "check-availability", {
+                clinic_id: clinicId,
+                dependency_category: "invalid_response",
+              });
               continue;
             }
 
-            // Existing appointment overlap
-            const appointmentConflict = (appointments ?? []).some(
-              (appointment: any) => {
-                const existingStart = DateTime.fromISO(
-                  appointment.start_time,
-                );
+            let slotStart = shiftStart;
 
-                const existingEnd = DateTime.fromISO(
-                  appointment.end_time,
-                );
+            while (slotStart.plus({ minutes: SLOT_MINUTES }).toMillis() <= shiftEnd.toMillis()) {
+              const slotEnd = slotStart.plus({
+                minutes: SLOT_MINUTES,
+              });
 
-                return (
-                  slotStart.toUTC().toMillis() <
-                    existingEnd.toUTC().toMillis() &&
-                  slotEnd.toUTC().toMillis() >
-                    existingStart.toUTC().toMillis()
-                );
-              },
-            );
+              // Don't return times already passed
+              if (slotStart.toMillis() <= now.toMillis()) {
+                slotStart = slotEnd;
+                continue;
+              }
 
-            // Time-off overlap
-            const timeOffConflict = (timeOff ?? []).some(
-              (block: any) => {
-                const blockedStart = DateTime.fromISO(
-                  block.start_time,
-                );
+              // Existing appointment overlap
+              const appointmentConflict = (appointments ?? []).some(
+                (appointment: { start_time: string; end_time: string }) => {
+                  const existingStart = DateTime.fromISO(appointment.start_time);
 
-                const blockedEnd = DateTime.fromISO(
-                  block.end_time,
-                );
+                  const existingEnd = DateTime.fromISO(appointment.end_time);
 
-                return (
-                  slotStart.toUTC().toMillis() <
-                    blockedEnd.toUTC().toMillis() &&
-                  slotEnd.toUTC().toMillis() >
-                    blockedStart.toUTC().toMillis()
-                );
-              },
-            );
+                  return (
+                    slotStart.toUTC().toMillis() < existingEnd.toUTC().toMillis() &&
+                    slotEnd.toUTC().toMillis() > existingStart.toUTC().toMillis()
+                  );
+                },
+              );
 
-            if (!appointmentConflict && !timeOffConflict) {
-              freeSlots.push(slotStart.toFormat("h:mm a"));
+              // Time-off overlap
+              const timeOffConflict = (timeOff ?? []).some(
+                (block: { start_time: string; end_time: string }) => {
+                  const blockedStart = DateTime.fromISO(block.start_time);
+
+                  const blockedEnd = DateTime.fromISO(block.end_time);
+
+                  return (
+                    slotStart.toUTC().toMillis() < blockedEnd.toUTC().toMillis() &&
+                    slotEnd.toUTC().toMillis() > blockedStart.toUTC().toMillis()
+                  );
+                },
+              );
+
+              if (!appointmentConflict && !timeOffConflict) {
+                freeSlots.push(slotStart.toFormat("HH:mm"));
+              }
+
+              slotStart = slotEnd;
             }
+          }
 
-            slotStart = slotEnd;
+          debug.push({
+            practitioner: staff.full_name,
+            day_of_week: dayOfWeek,
+            shifts_found: shifts.length,
+            appointments_found: appointments?.length ?? 0,
+            time_off_found: timeOff?.length ?? 0,
+            slots_generated: freeSlots.length,
+          });
+
+          if (freeSlots.length > 0) {
+            results.push({
+              practitioner_id: staff.id,
+              practitioner_name: staff.full_name,
+              specialty: staff.specialty,
+              available_slots: freeSlots,
+            });
           }
         }
 
-        debug.push({
-          practitioner: staff.full_name,
-          day_of_week: dayOfWeek,
-          shifts_found: shifts.length,
-          appointments_found: appointments?.length ?? 0,
-          time_off_found: timeOff?.length ?? 0,
-          slots_generated: freeSlots.length,
-        });
+        // ---------------------------
+        // NO SLOTS
+        // ---------------------------
 
-        if (freeSlots.length > 0) {
-          results.push({
-            practitioner_id: staff.id,
-            practitioner_name: staff.full_name,
-            specialty: staff.specialty,
-            available_slots: freeSlots,
+        if (results.length === 0) {
+          return Response.json({
+            available: false,
+            practitioner_found: practitionerName ? true : undefined,
+            date: requestedDate,
+            timezone,
+            message: "No appointment slots are available on the requested date.",
+
+            // TEMPORARY DEBUG
           });
         }
-      }
 
-      // ---------------------------
-      // NO SLOTS
-      // ---------------------------
+        // ---------------------------
+        // SUCCESS
+        // ---------------------------
 
-      if (results.length === 0) {
         return Response.json({
-          available: false,
+          available: true,
           practitioner_found: practitionerName ? true : undefined,
           date: requestedDate,
           timezone,
-          message:
-            "No appointment slots are available on the requested date.",
+          slot_duration_minutes: SLOT_MINUTES,
+          practitioners: results,
 
           // TEMPORARY DEBUG
-
         });
+      } catch {
+        operationalLog("calendar_unavailable", "check-availability", {
+          dependency_category: "internal_error",
+        });
+
+        return Response.json(
+          {
+            available: false,
+            message: "Availability check failed.",
+          },
+          { status: 500 },
+        );
       }
-
-      // ---------------------------
-      // SUCCESS
-      // ---------------------------
-
-      return Response.json({
-        available: true,
-        practitioner_found: practitionerName ? true : undefined,
-        date: requestedDate,
-        timezone,
-        slot_duration_minutes: SLOT_MINUTES,
-        practitioners: results,
-
-        // TEMPORARY DEBUG
-
-      });
-    } catch {
-      operationalLog("calendar_unavailable", "check-availability", {dependency_category: "internal_error"});
-
-      return Response.json(
-        {
-          available: false,
-          message: "Availability check failed.",
-        },
-        { status: 500 },
-      );
-    }
-  })),
+    }),
+  ),
 };

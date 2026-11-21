@@ -71,3 +71,26 @@ test("duplicate actual workspace keys fail even under different environment name
     true,
   );
 });
+
+test("signature verification follows integration lookup and timing labels contain no identity", async () => {
+  const order: string[] = [];
+  const phases: string[] = [];
+  const identity = await resolveTrustedIdentity(
+    JSON.stringify({ call: { agent_id: "agent-a" } }),
+    "key-a",
+    async (id) => {
+      order.push("lookup");
+      return integrations.get(id) ?? null;
+    },
+    (name) => secrets[name],
+    async (_body, key, signature) => {
+      order.push("verify");
+      return key === signature;
+    },
+    (phase, _elapsed, category) => phases.push(`${phase}:${category}`),
+  );
+  assert.equal(identity?.integration.clinic_id, "clinic-a");
+  assert.deepEqual(order, ["lookup", "verify"]);
+  assert.deepEqual(phases, ["integration_lookup:success", "signature_verification:success"]);
+  assert.equal(phases.join(" ").includes("key-a"), false);
+});

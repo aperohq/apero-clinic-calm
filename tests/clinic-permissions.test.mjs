@@ -29,10 +29,10 @@ const denied = (sql, values = []) =>
 
 test("Owner/Admin/Staff permissions with real PostgreSQL and two clinics", async (t) => {
   db = await createClinicDatabase();
-  await loadSql(db, "../tests/fixtures/10_clinic_access_privileges.sql");
+  await loadSql(db, "10_clinic_access_privileges.sql");
   await db.exec(
     await readFile(
-      new URL("../tests/fixtures/clinic_role_permissions.sql", import.meta.url),
+      new URL("../supabase/migrations/20261002170000_clinic_role_permissions.sql", import.meta.url),
       "utf8",
     ),
   );

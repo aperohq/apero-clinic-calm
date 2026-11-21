@@ -70,5 +70,5 @@ def apply_call_transfer(flow):
         conversation('node_transfer_done','Transfer already succeeded','A transfer was already authorized for this call. Do not dial again or create a failure request. If transfer_result is success, a trusted provider bridge has been recorded and normally the AI has left the call. Otherwise the outcome is pending: do not claim success or failure. Do not promise another transfer.',[edge('edge_transfer_done','node_end')])])
     return flow
 if __name__=='__main__':
-    data=json.loads(Path(sys.argv[1]).read_text());apply_call_transfer(data.get('conversationFlow',data))
-    Path(sys.argv[2]).write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n')
+    data=json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"));apply_call_transfer(data.get('conversationFlow',data))
+    Path(sys.argv[2]).write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n', encoding="utf-8")

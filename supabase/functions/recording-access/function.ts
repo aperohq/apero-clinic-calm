@@ -76,7 +76,7 @@ export function createRecordingAccessFunction(
       } catch {
         return json(400, "invalid_input");
       }
-      setOperationalContext(req, {dependency_category: "database_error"});
+      setOperationalContext(req, { dependency_category: "database_error" });
       const membership = await user
         .from("profiles")
         .select("clinic_id,role,revoked_at")
@@ -92,7 +92,7 @@ export function createRecordingAccessFunction(
         !["owner", "manager", "staff"].includes(actor.role)
       )
         return json(403, "not_authorized");
-      setOperationalContext(req, {clinic_id: actor.clinic_id});
+      setOperationalContext(req, { clinic_id: actor.clinic_id });
       const result = await user
         .from("conversations")
         .select("id,clinic_id,retell_call_id,retell_agent_id")
@@ -110,7 +110,10 @@ export function createRecordingAccessFunction(
         !/^[A-Za-z0-9_-]{1,128}$/.test(conversation.retell_call_id)
       )
         return json(404, "recording_unavailable");
-      setOperationalContext(req, {conversation_id: conversation.id, call_id: conversation.retell_call_id});
+      setOperationalContext(req, {
+        conversation_id: conversation.id,
+        call_id: conversation.retell_call_id,
+      });
       const mapping = await admin
         .from("voice_integrations")
         .select("agent_id,secret_env_name")
@@ -123,7 +126,7 @@ export function createRecordingAccessFunction(
         return json(404, "recording_unavailable");
       const key = getEnv(mapping.data.secret_env_name);
       if (!key) return json(503, "unavailable");
-      setOperationalContext(req, {dependency_category: "provider_error"});
+      setOperationalContext(req, { dependency_category: "provider_error" });
       const response = await transport(
         `https://api.retellai.com/v2/get-call/${encodeURIComponent(conversation.retell_call_id)}`,
         { headers: { Authorization: `Bearer ${key}` } },
@@ -152,7 +155,7 @@ export function createRecordingAccessFunction(
         return json(404, "recording_unavailable");
       // Recheck the RLS-protected record after the provider request so a
       // revocation/demotion during that request cannot issue playback access.
-      setOperationalContext(req, {dependency_category: "database_error"});
+      setOperationalContext(req, { dependency_category: "database_error" });
       const stillAllowed = await user
         .from("conversations")
         .select("id")

@@ -20,5 +20,5 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.demo-call]
-# Handler verifies user tokens using Auth getUser, then current Owner membership.
+# Handler validates Auth bearer and live clinic Owner membership itself.
 verify_jwt = false

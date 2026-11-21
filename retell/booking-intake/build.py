@@ -121,7 +121,7 @@ return {intake_route:route,practitioner_id:id,practitioner_name:name,practitione
     # Remove hardcoded service rewrites: backend staff + aliases are authoritative.
     svc=nodes['node_guard_service']
     start=svc['code'].index("let query=dv.service_query")
-    aliases=json.loads((ROOT/'approved-arabic-aliases.json').read_text())
+    aliases=json.loads((ROOT/'approved-arabic-aliases.json').read_text(encoding="utf-8"))
     approved={alias:service for service,values in aliases.items() for alias in values}
     svc['code']=svc['code'][:start]+"const approved="+json.dumps(approved,ensure_ascii=False)+";const normalize=s=>s.normalize('NFKD').replace(/[\\u064b-\\u065f\\u0670]/g,'').replace(/[أإآٱ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه').replace(/\\s+/g,' ').trim();let query=String(dv.service_query||'').trim();const hit=Object.entries(approved).find(([alias])=>normalize(alias)===normalize(query));if(hit)query=hit[1];return {reset_ready:!error,stage_ok:!error,reset_error:error,service_query:query};"
     svc['code']=CYCLE+"if(!cycle||!nameOK)return {reset_ready:false,stage_ok:false,reset_error:'name_required_before_service'};\n"+svc['code'].replace("const truth=v=>v===true||v==='true';",'').replace('let state;','')
@@ -180,6 +180,6 @@ return {intake_route:route,practitioner_id:id,practitioner_name:name,practitione
     return flow
 
 if __name__=='__main__':
-    result=build(json.loads((ROOT/'published-v16.json').read_text()))
-    (ROOT/'candidate.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n')
+    result=build(json.loads((ROOT/'published-v16.json').read_text(encoding="utf-8")))
+    (ROOT/'candidate.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n', encoding="utf-8")
     print(f"Built {len(result['nodes'])} nodes offline")

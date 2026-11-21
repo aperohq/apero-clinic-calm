@@ -61,7 +61,17 @@ begin
 end $$;
 revoke all on function public.guard_profile_sensitive_fields() from public, anon, authenticated;
 
-alter function public.retention_begin_offboarding(uuid) set apero.retention_revocation = 'on';
-alter function public.retention_replay_ledger(uuid) set apero.retention_revocation = 'on';
+-- Fresh managed Supabase installations use a non-superuser migration owner.
+-- Custom function SET parameters can be forbidden there. Keep the historical
+-- statements when supported; otherwise fail closed until the later, owner-scoped
+-- guard in 20261120102000 is installed. No migration ledger is changed or repaired.
+-- Both SET operations are atomic, so the fallback never leaves a partial flag.
+do $$
+begin
+  execute 'alter function public.retention_begin_offboarding(uuid) set apero.retention_revocation = ''on''';
+  execute 'alter function public.retention_replay_ledger(uuid) set apero.retention_revocation = ''on''';
+exception when insufficient_privilege then
+  raise notice 'Custom retention flag is unavailable; sessionless maintenance remains denied until the owner-scoped guard migration';
+end $$;
 
 commit;

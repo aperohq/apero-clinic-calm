@@ -7,7 +7,15 @@ import type { VoiceRequestRow } from "@/lib/db-types";
 const fields = "id,clinic_id,kind,caller_name,patient_name,phone,reason,status,created_at";
 export type VoiceRequestDisplay = Pick<
   VoiceRequestRow,
-  "id" | "clinic_id" | "kind" | "caller_name" | "patient_name" | "phone" | "reason" | "status" | "created_at"
+  | "id"
+  | "clinic_id"
+  | "kind"
+  | "caller_name"
+  | "patient_name"
+  | "phone"
+  | "reason"
+  | "status"
+  | "created_at"
 >;
 
 export function useVoiceRequests() {

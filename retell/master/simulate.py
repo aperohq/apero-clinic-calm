@@ -21,7 +21,7 @@ def main():
     output = Path(args.output_dir)
     output.mkdir(parents=True, exist_ok=True)
     definitions = cases()
-    (output / "cases.json").write_text(json.dumps(definitions, ensure_ascii=False, indent=2) + "\n")
+    (output / "cases.json").write_text(json.dumps(definitions, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     if not args.submit:
         print("Exported scenarios locally. Use --submit --agent-id to run paid mocked text simulations.")
         return
@@ -46,7 +46,7 @@ def main():
     ids = []
     record = {"agent_id": args.agent_id, "response_engine": engine, "cases": ids}
     def save():
-        (output / "retell-tests.json").write_text(json.dumps(record, indent=2) + "\n")
+        (output / "retell-tests.json").write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
     save()
     for case in definitions:
         result = api("create-test-case-definition", {**case, "response_engine": engine})

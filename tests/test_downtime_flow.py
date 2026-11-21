@@ -9,7 +9,7 @@ ROOT=Path(__file__).resolve().parents[1]
 spec=importlib.util.spec_from_file_location('downtime',ROOT/'retell/system-downtime.py');module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
 class DowntimeFlowTests(unittest.TestCase):
  def setUp(self):
-  data=json.loads(Path(os.environ.get('DOWNTIME_FLOW_PATH',ROOT/'retell/master/reference/golden.json')).read_text());self.before=data.get('conversationFlow',data)
+  data=json.loads(Path(os.environ.get('DOWNTIME_FLOW_PATH',ROOT/'retell/master/reference/golden.json')).read_text(encoding="utf-8"));self.before=data.get('conversationFlow',data)
   self.flow=module.apply_system_downtime(copy.deepcopy(self.before));self.nodes={n['id']:n for n in self.flow['nodes']};self.tools={t['tool_id']:t for t in self.flow['tools']}
  def functions(self):return [n for n in self.before['nodes'] if n['type']=='function' and '/clinic-operations' in self.tools.get(n.get('tool_id'),{}).get('url','')]
  def test_every_critical_tool_has_current_receipt_guard_and_no_retry(self):

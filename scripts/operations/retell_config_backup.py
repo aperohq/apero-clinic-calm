@@ -65,7 +65,7 @@ def main():
         repo = Path(__file__).resolve().parents[2]
         if repo == args.destination.resolve() or repo in args.destination.resolve().parents:
             raise ValueError('repository_destination')
-        recipients = [x.strip() for x in args.recipients.read_text().splitlines() if x.strip() and not x.startswith('#')]
+        recipients = [x.strip() for x in args.recipients.read_text(encoding="utf-8").splitlines() if x.strip() and not x.startswith('#')]
         if not recipients or any(not x.startswith('age1') for x in recipients):
             raise ValueError('public_recipients_required')
         result = capture(args.agent)
@@ -76,7 +76,7 @@ def main():
             target.flush(); os.fsync(target.fileno())
         if completed.returncode or not output.stat().st_size:
             raise ValueError('encryption_failed')
-        with output.with_suffix(output.suffix + '.sha256').open('x') as file:
+        with output.with_suffix(output.suffix + '.sha256').open('x', encoding="utf-8") as file:
             file.write(digest(output) + '  ' + output.name + '\n')
         print(json.dumps({'category': 'retell_backup_completed', 'state': 'success',
                           'scope': 'configuration_only', 'source_bytes_preserved': False}))

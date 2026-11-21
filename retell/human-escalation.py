@@ -60,6 +60,6 @@ def apply_human_escalation(flow):
     return flow
 
 if __name__=='__main__':
-    data=json.loads(Path(sys.argv[1]).read_text())
+    data=json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
     apply_human_escalation(data.get('conversationFlow',data))
-    Path(sys.argv[2]).write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n')
+    Path(sys.argv[2]).write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n', encoding="utf-8")

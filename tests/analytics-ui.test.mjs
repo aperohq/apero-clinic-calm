@@ -82,7 +82,11 @@ try {
   });
   // Resolve external packages from the workspace without changing package installs.
   await writeFile(join(temp, "package.json"), JSON.stringify({ type: "module" }));
-  await symlink(join(process.cwd(), "node_modules"), join(temp, "node_modules"));
+  await symlink(
+    join(process.cwd(), "node_modules"),
+    join(temp, "node_modules"),
+    process.platform === "win32" ? "junction" : "dir",
+  );
   const React = await import("react");
   const { createRoot } = await import("react-dom/client");
   const { QueryClient, QueryClientProvider } = await import("@tanstack/react-query");

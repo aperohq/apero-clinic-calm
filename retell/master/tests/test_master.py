@@ -13,7 +13,7 @@ from prepare import check_integration, create_draft, registration_sql
 
 class MasterContract(unittest.TestCase):
     def setUp(self):
-        self.config = json.loads((ROOT / "config/template.json").read_text())
+        self.config = json.loads((ROOT / "config/template.json").read_text(encoding="utf-8"))
         self.flow, self.agent = build(self.config)
         self.reference = golden()
 
@@ -64,7 +64,7 @@ class MasterContract(unittest.TestCase):
         flows = [module.build()]
         # Execute v4 construction in memory, excluding artifact writes.
         path = acceptance / "v4/build.py"
-        source = path.read_text().split("(R/'draft-flow.json').write_text", 1)[0]
+        source = path.read_text(encoding="utf-8").split("(R/'draft-flow.json').write_text", 1)[0]
         prior = sys.modules.get("build")
         sys.modules["build"] = module
         try:
@@ -161,7 +161,7 @@ class MasterContract(unittest.TestCase):
         self.assertIn("leave a message", nodes["node_message_collect"]["global_node_setting"]["condition"])
 
     def test_onboarding_refuses_reusing_existing_integration(self):
-        cfg = json.loads((ROOT / "config/clinic-b.local.json").read_text())
+        cfg = json.loads((ROOT / "config/clinic-b.local.json").read_text(encoding="utf-8"))
         snapshot = {"voice_integrations": [{"clinic_id": "other", "workspace_id": cfg["integration"]["workspace_id"], "agent_id": "agent-other", "secret_env_name": "RETELL_OTHER"}]}
         with self.assertRaises(ValueError): check_integration(cfg, snapshot)
         snapshot["voice_integrations"][0]["workspace_id"] = "org_other"
@@ -169,7 +169,7 @@ class MasterContract(unittest.TestCase):
         with self.assertRaises(ValueError): check_integration(cfg, snapshot)
 
     def test_registration_is_explicit_inactive_insert_without_secret_values(self):
-        cfg = json.loads((ROOT / "config/clinic-b.local.json").read_text())
+        cfg = json.loads((ROOT / "config/clinic-b.local.json").read_text(encoding="utf-8"))
         with self.assertRaises(ValueError): registration_sql(cfg)
         cfg["integration"].update(agent_id="agent_local_b", conversation_flow_id="conversation_flow_local_b")
         sql = registration_sql(cfg)
@@ -179,7 +179,7 @@ class MasterContract(unittest.TestCase):
         self.assertIn("RETELL_LOCAL_B", sql)
 
     def test_new_key_cannot_reuse_workspace_hidden_by_historical_metadata_typo(self):
-        cfg = json.loads((ROOT / "config/clinic-b.local.json").read_text())
+        cfg = json.loads((ROOT / "config/clinic-b.local.json").read_text(encoding="utf-8"))
         with patch.dict("os.environ", {"RETELL_API_KEY": "local-only-test"}), patch("prepare.request") as api:
             api.side_effect = [{"org_id": cfg["integration"]["workspace_id"]}, {"agent_id": "agent_existing"}]
             with self.assertRaisesRegex(ValueError, "already integrated"):

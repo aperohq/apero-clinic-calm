@@ -13,7 +13,8 @@ import {
   Outlet,
   RouterProvider,
 } from "@tanstack/react-router";
-import { AuthProvider, useAuth } from "@/lib/auth";
+import { useAuth } from "@/lib/auth";
+import { AuthProvider } from "@/lib/auth-provider";
 import { supabase } from "@/integrations/supabase/client";
 import { CalendarPage } from "@/components/clinic-pages";
 import { clinicWeek, calendarSegments } from "@/lib/calendar-layout";

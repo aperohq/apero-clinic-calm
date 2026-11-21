@@ -14,7 +14,7 @@ try:
     request=urllib.request.Request(url,headers={'Authorization':'Bearer '+os.environ['ACTIONS_ID_TOKEN_REQUEST_TOKEN']})
     with urllib.request.urlopen(request,timeout=20) as response:token=json.load(response)['value']
     encoded=token.split('.')[1];claims=json.loads(base64.urlsafe_b64decode(encoded+'='*(-len(encoded)%4)))
-    template=json.loads((Path(__file__).resolve().parents[2]/'operations/aws/production-backups.cloudformation.json').read_text())
+    template=json.loads((Path(__file__).resolve().parents[2]/'operations/aws/production-backups.cloudformation.json').read_text(encoding="utf-8"))
     expected=template['Outputs']['GitHubOidcSubject']['Value']
     # Subject identifies only this fixed main workflow; never print JWT/claims body.
     subject=claims['sub']

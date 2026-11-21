@@ -69,11 +69,11 @@ begin
   begin update public.voice_call_state set clinic_id=b where call_id=ca;
   exception when raise_exception then blocked := true; end;
   if not blocked then raise exception 'Call ownership reassignment accepted'; end if;
-  -- Composite staff foreign key is a second line of defense behind the RPC.
+  -- The same-clinic reference trigger rejects cross-clinic staff before any FK.
   blocked := false;
   begin update public.appointments set staff_id=sa where id=appointment_b;
-  exception when foreign_key_violation then blocked := true; end;
-  if not blocked then raise exception 'Cross clinic staff FK accepted'; end if;
+  exception when foreign_key_violation or raise_exception then blocked := true; end;
+  if not blocked then raise exception 'Cross clinic staff reference accepted'; end if;
 
   -- Only the verified tenant/patient can cancel its own appointment.
   r := public.voice_apply_appointment('cancel',b,'apero-test-'||gen_random_uuid(),cb,appointment_b,'Fixture Patient','+12025550102',null,null,null,null,null,null,null,null);

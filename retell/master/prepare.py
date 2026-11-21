@@ -114,11 +114,11 @@ def create_draft(config, flow, agent, output, existing_integrations):
     ids = {"workspace_id": info["org_id"], "conversation_flow_id": flow_result["conversation_flow_id"],
            "agent_id": None, "published": False}
     # Persist flow ID immediately so a failed agent creation does not lose the resource.
-    (output / "retell-created.json").write_text(json.dumps(ids, indent=2) + "\n")
+    (output / "retell-created.json").write_text(json.dumps(ids, indent=2) + "\n", encoding="utf-8")
     agent["response_engine"] = {"type": "conversation-flow", "conversation_flow_id": ids["conversation_flow_id"], "version": flow_result["version"]}
     result = api("create-agent", agent)
     ids["agent_id"] = result["agent_id"]
-    (output / "retell-created.json").write_text(json.dumps(ids, indent=2) + "\n")
+    (output / "retell-created.json").write_text(json.dumps(ids, indent=2) + "\n", encoding="utf-8")
     config["integration"].update({k: ids[k] for k in ("agent_id", "conversation_flow_id")})
 
 
@@ -129,7 +129,7 @@ def main():
     parser.add_argument("--fixture", help="Local-only backend snapshot; forbids external creation")
     parser.add_argument("--create-draft", action="store_true", help="Explicitly create NEW flow/agent, never publish")
     args = parser.parse_args()
-    config = json.loads(Path(args.config).read_text())
+    config = json.loads(Path(args.config).read_text(encoding="utf-8"))
     if config["mode"] != "clinic":
         parser.error("Use build.py for the unbound template; prepare.py requires a real clinic configuration")
     if args.fixture and args.create_draft:
@@ -137,7 +137,7 @@ def main():
     output = Path(args.output_dir)
     if args.create_draft and (output / "retell-created.json").exists():
         parser.error("Draft creation record already exists; inspect it instead of creating duplicate resources")
-    snapshot = json.loads(Path(args.fixture).read_text()) if args.fixture else backend_snapshot(config)
+    snapshot = json.loads(Path(args.fixture).read_text(encoding="utf-8")) if args.fixture else backend_snapshot(config)
     clinic_id = config["clinic"]["id"]
     clinic = next((c for c in snapshot["clinics"] if c["id"] == clinic_id), None)
     if not clinic:
@@ -149,12 +149,12 @@ def main():
     flow, agent = build(config)
     output.mkdir(parents=True, exist_ok=True)
     for name, value in (("flow", flow), ("agent", agent), ("backend-snapshot", snapshot)):
-        (output / f"{name}.json").write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n")
+        (output / f"{name}.json").write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     if args.create_draft:
         create_draft(config, flow, agent, output, snapshot.get("voice_integrations", []))
-    (output / "resolved-config.json").write_text(json.dumps(config, ensure_ascii=False, indent=2) + "\n")
+    (output / "resolved-config.json").write_text(json.dumps(config, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     if config["integration"]["agent_id"] and config["integration"]["conversation_flow_id"]:
-        (output / "register-inactive.sql").write_text(registration_sql(config))
+        (output / "register-inactive.sql").write_text(registration_sql(config), encoding="utf-8")
     print("Prepared local configuration. Next: verify workspace/voice/knowledge; create draft if needed; set Edge secret; review inactive registration; enable isolated integration for testing with no public phone; run signed and conversation tests; publish approved clinic draft and connect telephony.")
 
 

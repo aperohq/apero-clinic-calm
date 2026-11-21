@@ -1,2 +1,17 @@
 import { Navigate, createFileRoute } from "@tanstack/react-router";
-export const Route=createFileRoute("/")({head:()=>({meta:[{title:"Apero Clinic Operations"},{name:"description",content:"Apero receptionist and clinic operations workspace."},{property:"og:title",content:"Apero Clinic Operations"},{property:"og:description",content:"Apero receptionist and clinic operations workspace."},{property:"og:type",content:"website"},{name:"twitter:card",content:"summary_large_image"}]}),component:()=> <Navigate to="/login"/>});
+export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "Apero Clinic Operations" },
+      { name: "description", content: "Apero receptionist and clinic operations workspace." },
+      { property: "og:title", content: "Apero Clinic Operations" },
+      {
+        property: "og:description",
+        content: "Apero receptionist and clinic operations workspace.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
+  component: () => <Navigate to="/home" replace />,
+});

@@ -68,6 +68,15 @@ export function logDatabaseFailure(operation: string, error: unknown): void {
     error && typeof error === "object" && "code" in error
       ? String((error as { code?: unknown }).code ?? "unknown")
       : "unknown";
-  const component = operation.startsWith("Booking ") ? "book-appointment" : operation.startsWith("Availability ") ? "check-availability" : operation.startsWith("Retell ") ? "retell-webhook" : "database";
-  operationalLog("database_error", component, { dependency_category: "database_error", database_code: code });
+  const component = operation.startsWith("Booking ")
+    ? "book-appointment"
+    : operation.startsWith("Availability ")
+      ? "check-availability"
+      : operation.startsWith("Retell ")
+        ? "retell-webhook"
+        : "database";
+  operationalLog("database_error", component, {
+    dependency_category: "database_error",
+    database_code: code,
+  });
 }

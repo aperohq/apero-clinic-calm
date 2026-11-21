@@ -135,11 +135,25 @@ const localFetch = async (req) => {
     return reply(401, { message: "Missing user token" });
   if (url.pathname === "/rest/v1/rpc/clinic_team_members") {
     if (!account || account.role === "staff") return reply(403, { code: "42501" });
-    const rows = accounts.filter(item => item.clinicId === resolvedClinicId).map(item => ({
-      id: item.profileId, role: item.role, full_name: item.fullName, email: item.user.email,
-      revoked_at: null, invite_status: "active", invited_at: null, invite_accepted_at: null,
-    }));
-    return reply(200, rows.slice(Number(url.searchParams.get("offset") ?? 0), Number(url.searchParams.get("offset") ?? 0) + 1000));
+    const rows = accounts
+      .filter((item) => item.clinicId === resolvedClinicId)
+      .map((item) => ({
+        id: item.profileId,
+        role: item.role,
+        full_name: item.fullName,
+        email: item.user.email,
+        revoked_at: null,
+        invite_status: "active",
+        invited_at: null,
+        invite_accepted_at: null,
+      }));
+    return reply(
+      200,
+      rows.slice(
+        Number(url.searchParams.get("offset") ?? 0),
+        Number(url.searchParams.get("offset") ?? 0) + 1000,
+      ),
+    );
   }
   if (url.pathname === "/rest/v1/rpc/set_clinic_member_role") {
     const body = await req.json();
@@ -161,7 +175,11 @@ const localFetch = async (req) => {
     const fail = fixture.profileError;
     if (fixture.profileDelay)
       await new Promise((resolve) => setTimeout(resolve, fixture.profileDelay));
-    if (fail) return reply(403, { message: "Local profile read failure" });
+    if (fail === "network") throw new TypeError("Failed to fetch");
+    if (fail)
+      return reply(typeof fail === "number" ? fail : 403, {
+        message: "Local profile read failure",
+      });
     if (!url.searchParams.has("auth_user_id")) {
       const rows = accounts
         .filter(
@@ -206,7 +224,9 @@ const localFetch = async (req) => {
     const fail = fixture.clinicError;
     if (fixture.clinicDelay)
       await new Promise((resolve) => setTimeout(resolve, fixture.clinicDelay));
-    if (fail) return reply(403, { message: "Local clinic read failure" });
+    if (fail === "network") throw new TypeError("Failed to fetch");
+    if (fail)
+      return reply(typeof fail === "number" ? fail : 403, { message: "Local clinic read failure" });
     return reply(200, missing ? [] : [nextClinic]);
   }
   if (

@@ -6,68 +6,69 @@ import { demoRequest } from "@/hooks/use-retell-demo";
 
 export function DemoAccess({ children }: { children: ReactNode }) {
   const { session, profile, loading, authError, recoveringPassword } = useAuth();
-  const [verification, setVerification] = useState<{ token: string; allowed: boolean } | null>(
-    null,
-  );
-  const token = session?.access_token;
+  const identity = session && profile ? `${session.user.id}:${profile.clinic_id}` : null;
   const eligible =
     !loading &&
     !authError &&
     !recoveringPassword &&
     !!session &&
     profile?.auth_user_id === session.user.id &&
-    profile?.clinic_id === DEMO_CLINIC_REFERENCE &&
     profile?.role === "owner" &&
+    profile?.clinic_id === DEMO_CLINIC_REFERENCE &&
     profile.revoked_at === null;
+  const [verification, setVerification] = useState<{ identity: string; allowed: boolean } | null>(
+    null,
+  );
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
-    if (!eligible || !token) return;
+    if (!eligible || !identity) {
+      setVerification(null);
+      return;
+    }
     let active = true;
     void demoRequest("access")
-      .then(async (result) => {
-        const body: unknown = result.ok ? await result.json() : null;
-        const allowed =
-          !!body && typeof body === "object" && "allowed" in body && body.allowed === true;
-        if (active) setVerification({ token, allowed });
+      .then(async (response) => {
+        const data: unknown = response.ok ? await response.json() : null;
+        if (active)
+          setVerification({
+            identity,
+            allowed:
+              !!data && typeof data === "object" && "allowed" in data && data.allowed === true,
+          });
       })
       .catch(() => {
-        if (active) setVerification({ token, allowed: false });
+        if (active) setVerification({ identity, allowed: false });
       });
     return () => {
       active = false;
     };
-  }, [eligible, token, attempt]);
-  if (eligible && token && verification?.token === token && verification.allowed) return children;
-  const pending = loading || (eligible && verification?.token !== token);
+  }, [eligible, identity, attempt]);
+  if (eligible && identity && verification?.identity === identity && verification.allowed)
+    return children;
+  const pending = loading || (eligible && verification?.identity !== identity);
   return (
-    <div className="voice-demo grid min-h-screen place-items-center p-8 text-center">
+    <div className="demo-access">
+      <img src="/apero-logo-black.png" alt="Apero" width="54" height="54" />
+      <h1>{pending ? "Preparing your demo…" : "Your Apero voice experience"}</h1>
+      <p>
+        {pending
+          ? "Just a moment while we check your access."
+          : !session
+            ? "Sign in with your clinic owner account to continue."
+            : "Demo access is unavailable. Check with your Apero host, then retry."}
+      </p>
       <div>
-        <h1 className="text-lg font-semibold">
-          {pending ? "Verifying demo access…" : "Private Apero voice demo"}
-        </h1>
-        <p className="mt-3 text-sm text-muted-foreground">
-          {pending
-            ? "Checking your clinic membership."
-            : !session
-              ? "Sign in with your Dental Zone Owner account to continue."
-              : "Access could not be verified. This demo requires an active Dental Zone Owner account and available demo services."}
-        </p>
-        <div className="mt-6 flex justify-center gap-5">
-          <Link to="/login" className="underline">
-            Sign in
-          </Link>
-          {session && !pending && (
-            <button
-              className="underline"
-              onClick={() => {
-                setVerification(null);
-                setAttempt((a) => a + 1);
-              }}
-            >
-              Retry
-            </button>
-          )}
-        </div>
+        <Link to="/login">Sign in</Link>
+        {session && !pending && (
+          <button
+            onClick={() => {
+              setVerification(null);
+              setAttempt((n) => n + 1);
+            }}
+          >
+            Retry
+          </button>
+        )}
       </div>
     </div>
   );

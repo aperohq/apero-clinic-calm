@@ -90,7 +90,7 @@ def backup(destination, recipients, snapshot=None, snapshot_catalog=None):
     if not recipients.is_file():
         raise ValueError('recipient_file_required')
     # Recipient list contains public keys only. Reject passphrase/key prompts.
-    lines = [x.strip() for x in recipients.read_text().splitlines() if x.strip() and not x.startswith('#')]
+    lines = [x.strip() for x in recipients.read_text(encoding="utf-8").splitlines() if x.strip() and not x.startswith('#')]
     if not lines or any(not x.startswith('age1') for x in lines):
         raise ValueError('age_public_recipients_required')
     # Refuse silently dropping new persistent schemas or encryption/external jobs.
@@ -100,6 +100,7 @@ def backup(destination, recipients, snapshot=None, snapshot_catalog=None):
         and n.nspname not in ('pg_catalog','information_schema') and n.nspname not like 'pg_toast%'),
       'vault_count', (select count(*) from vault.secrets),
       'extensions', (select json_agg(extname) from pg_extension),
+      'extension_schemas', (select json_object_agg(e.extname,n.nspname) from pg_extension e join pg_namespace n on n.oid=e.extnamespace),
       'server_version', current_setting('server_version'))"""
     preflight = subprocess.run(['psql', '--no-password', '-X', '-A', '-t',
         '-v', 'ON_ERROR_STOP=1', '-c', query], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
@@ -143,7 +144,7 @@ def backup(destination, recipients, snapshot=None, snapshot_catalog=None):
                     'snapshot_catalog': snapshot_catalog, 'dump_format': 'pg_dump custom', 'encryption': 'age',
                     'archive_validated': False, 'restore_tested': False,
                     'scope': 'database + password-free role definitions; no object bytes or platform secrets'}
-        with (pending / 'manifest.json').open('x') as file:
+        with (pending / 'manifest.json').open('x', encoding="utf-8") as file:
             json.dump(manifest, file, indent=2)
         for path in pending.iterdir():
             with path.open('rb') as file:
@@ -165,7 +166,7 @@ def verify(bundle, identity):
     private(identity)
     if not identity.is_file():
         raise ValueError('identity_required')
-    manifest = json.loads((bundle / 'manifest.json').read_text())
+    manifest = json.loads((bundle / 'manifest.json').read_text(encoding="utf-8"))
     expected = {'database.dump.age', 'roles.sql.age'}
     if set(manifest['files']) != expected:
         raise ValueError('invalid_manifest')

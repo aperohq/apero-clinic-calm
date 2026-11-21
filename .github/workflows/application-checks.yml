@@ -1,0 +1,113 @@
+name: Application release checks
+on:
+  pull_request:
+  push:
+    branches: [main, "release/**"]
+permissions:
+  contents: read
+concurrency:
+  group: application-checks-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  quality:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run typecheck:clinic-users-edge
+      - run: npm run typecheck:demo
+      - name: Code lint
+        run: npm run lint:code
+      - name: Full lint and formatting
+        run: npm run lint -- --max-warnings=0
+      - name: Build (also runs when lint fails)
+        if: success() || failure()
+        env:
+          VITE_SUPABASE_URL: https://example.supabase.co
+          VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_local_fixture
+          SUPABASE_URL: https://example.supabase.co
+          SUPABASE_PUBLISHABLE_KEY: sb_publishable_local_fixture
+        run: npm run build
+  regression:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: npm ci
+      - run: python -m pip install -r retell/master/requirements.txt -r scripts/operations/requirements.txt
+      - run: node scripts/test-release.mjs
+  windows-components:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - run: node tests/analytics-ui.test.mjs
+      - run: node tests/recording-player.test.mjs
+      - run: node tests/clinic-user-cli.test.mjs
+      - run: node tests/dashboard-lifecycle.test.mjs
+  native-database:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - name: Install native PostgreSQL prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends postgresql-16 postgresql-client-16 postgresql-16-cron age
+      - name: Locate native PostgreSQL tools
+        run: echo "APERO_TEST_PG_BIN=/usr/lib/postgresql/16/bin" >> "$GITHUB_ENV"
+      - name: Native appointment races
+        run: npm run test:appointment-concurrency
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Native migrations, pg_cron and genuine synthetic restore
+        run: npm run test:native-migrations
+  supabase-bootstrap:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - uses: supabase/setup-cli@v3
+        with:
+          version: "3.0.0"
+      - name: Reset an unlinked temporary local Supabase stack
+        run: npm run test:supabase-bootstrap

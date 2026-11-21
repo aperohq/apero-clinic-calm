@@ -9,7 +9,7 @@ spec=importlib.util.spec_from_file_location('transfer',ROOT/'retell/call-transfe
 module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
 class TransferFlowTests(unittest.TestCase):
     def setUp(self):
-        data=json.loads(Path(os.environ.get('TRANSFER_FLOW_PATH',ROOT/'retell/master/reference/golden.json')).read_text())
+        data=json.loads(Path(os.environ.get('TRANSFER_FLOW_PATH',ROOT/'retell/master/reference/golden.json')).read_text(encoding="utf-8"))
         self.before=data.get('conversationFlow',data)
         if not any(n['id']=='node_human_prepare' for n in self.before['nodes']):
             human_spec=importlib.util.spec_from_file_location('human',ROOT/'retell/human-escalation.py');human=importlib.util.module_from_spec(human_spec);human_spec.loader.exec_module(human);human.apply_human_escalation(self.before)

@@ -1,190 +1,1197 @@
 // Pure local compilation of the seven audited fixes. Never calls any API.
-import fs from 'node:fs';
-import * as helpers from './common.mjs';
-import * as runtime from './runtime.mjs';
-const root=new URL('./',import.meta.url);
-export const allEdges=n=>[...(n.edges||[]),n.else_edge,n.always_edge,n.edge].filter(Boolean);
+import fs from "node:fs";
+import * as helpers from "./common.mjs";
+import * as runtime from "./runtime.mjs";
+const root = new URL("./", import.meta.url);
+export const allEdges = (n) =>
+  [...(n.edges || []), n.else_edge, n.always_edge, n.edge].filter(Boolean);
 export function build(before) {
-  const f=structuredClone(before),nodes=new Map(f.nodes.map(n=>[n.id,n])),tools=new Map(f.tools.map(t=>[t.name,t]));
-  if(nodes.has('node_r18_booking_result'))return f;
-  const common=Object.values(helpers).map(fn=>fn.toString()).join('\n');
-  function sandbox(source){
-    const selected=new Set();let changed=true;
-    while(changed){changed=false;const scan=source+'\n'+[...selected].map(name=>helpers[name].toString()).join('\n');
-      for(const name of Object.keys(helpers))if(!selected.has(name)&&new RegExp('\\b'+name+'\\s*\\(').test(scan)){selected.add(name);changed=true;}
+  const f = structuredClone(before),
+    nodes = new Map(f.nodes.map((n) => [n.id, n])),
+    tools = new Map(f.tools.map((t) => [t.name, t]));
+  if (nodes.has("node_r18_booking_result")) return f;
+  const common = Object.values(helpers)
+    .map((fn) => fn.toString())
+    .join("\n");
+  function sandbox(source) {
+    const selected = new Set();
+    let changed = true;
+    while (changed) {
+      changed = false;
+      const scan = source + "\n" + [...selected].map((name) => helpers[name].toString()).join("\n");
+      for (const name of Object.keys(helpers))
+        if (!selected.has(name) && new RegExp("\\b" + name + "\\s*\\(").test(scan)) {
+          selected.add(name);
+          changed = true;
+        }
     }
-    return [...selected].sort().map(name=>helpers[name].toString()).join('\n')+'\n'+source;
+    return (
+      [...selected]
+        .sort()
+        .map((name) => helpers[name].toString())
+        .join("\n") +
+      "\n" +
+      source
+    );
   }
-  const body=name=>sandbox('return ('+runtime[name].toString()+')(dv);');
-  const edge=(id,to,variable,value='true')=>({id,destination_node_id:to,transition_condition:variable?{type:'equation',operator:'&&',equations:[{left:'{{'+variable+'}}',operator:'==',right:value}]}:{type:'prompt',prompt:'Always'}});
-  const promptEdge=(id,to,prompt)=>({id,destination_node_id:to,transition_condition:{type:'prompt',prompt}});
-  const route=(id,to,value)=>edge(id,to,'r18_route',value);
-  function replaceTarget(from,to,exclude=new Set()) {for(const n of f.nodes)if(!exclude.has(n.id))for(const e of allEdges(n))if(e.destination_node_id===from)e.destination_node_id=to;}
-  function code(id,name,source,outputs,routes,failure='node_reset_failed') {
-    const n={id,name,type:'code',code:source,response_variables:Object.fromEntries(outputs.map(k=>[k,k])),wait_for_result:true,speak_during_execution:false,timeout_ms:5000,skippable:false,display_position:{x:26000,y:f.nodes.length*50},edges:routes,else_edge:promptEdge(id+'_error',failure,'Else')};
-    f.nodes.push(n);nodes.set(id,n);return n;
+  const body = (name) => sandbox("return (" + runtime[name].toString() + ")(dv);");
+  const edge = (id, to, variable, value = "true") => ({
+    id,
+    destination_node_id: to,
+    transition_condition: variable
+      ? {
+          type: "equation",
+          operator: "&&",
+          equations: [{ left: "{{" + variable + "}}", operator: "==", right: value }],
+        }
+      : { type: "prompt", prompt: "Always" },
+  });
+  const promptEdge = (id, to, prompt) => ({
+    id,
+    destination_node_id: to,
+    transition_condition: { type: "prompt", prompt },
+  });
+  const route = (id, to, value) => edge(id, to, "r18_route", value);
+  function replaceTarget(from, to, exclude = new Set()) {
+    for (const n of f.nodes)
+      if (!exclude.has(n.id))
+        for (const e of allEdges(n)) if (e.destination_node_id === from) e.destination_node_id = to;
   }
-  function extract(id,name,variables,to,failure='node_reset_failed') {
-    const n={id,name,type:'extract_dynamic_variables',skippable:false,variables,display_position:{x:26500,y:f.nodes.length*50},edges:[edge(id+'_next',to)],else_edge:promptEdge(id+'_error',failure,'Else')};f.nodes.push(n);nodes.set(id,n);return n;
+  function code(id, name, source, outputs, routes, failure = "node_reset_failed") {
+    const n = {
+      id,
+      name,
+      type: "code",
+      code: source,
+      response_variables: Object.fromEntries(outputs.map((k) => [k, k])),
+      wait_for_result: true,
+      speak_during_execution: false,
+      timeout_ms: 5000,
+      skippable: false,
+      display_position: { x: 26000, y: f.nodes.length * 50 },
+      edges: routes,
+      else_edge: promptEdge(id + "_error", failure, "Else"),
+    };
+    f.nodes.push(n);
+    nodes.set(id, n);
+    return n;
   }
-  const variable=(name,description,type='string')=>({name,type,description});
-  const targetKeys=['operation_kind','existing_selected_id','existing_target_snapshot','existing_staff_id','existing_service','existing_start','existing_action','existing_readback','existing_approval','existing_approval_tuple','existing_attempt','existing_attempt_tuple','existing_attempt_target','existing_attempt_action','existing_slot_id','existing_slots_snapshot','existing_current_check','existing_new_date','existing_new_time','cancel_success','cancelled_id','reschedule_success','rescheduled_id','current_cancelled','current_rescheduled','existing_result_verified','r18_route'];
-  const resultKeys=['cancel_success','cancelled_id','cancel_error_type','reschedule_success','rescheduled_id','reschedule_error_type','current_cancelled','current_rescheduled','current_result_service','current_result_staff','current_result_start','existing_result_verified','apero_response_received','apero_system_unavailable','apero_downtime_message'];
-  const existingKeys=[...targetKeys,...resultKeys,'operation_kind','existing_cycle','existing_lookup_cycle','existing_lookup_snapshot','existing_patient_name','existing_patient_phone','slot_id','slots','current_availability_check','current_availability_snapshot','current_availability_signature','availability_query_signature','availability_success','available','booking_success','appointment_booked','booking_id','booking_error_type','consent_confirmed','consent_tuple','consent_cycle','booking_readback','selection_cycle','patient_cycle','lookup_success','appointments','appointment_count','existing_choice_index','existing_choice_action','existing_choice_unclear','existing_requested_date','existing_requested_time','existing_window_start','existing_window_end','existing_search_mode','reschedule_changes_service','reschedule_changes_practitioner'];
+  function extract(id, name, variables, to, failure = "node_reset_failed") {
+    const n = {
+      id,
+      name,
+      type: "extract_dynamic_variables",
+      skippable: false,
+      variables,
+      display_position: { x: 26500, y: f.nodes.length * 50 },
+      edges: [edge(id + "_next", to)],
+      else_edge: promptEdge(id + "_error", failure, "Else"),
+    };
+    f.nodes.push(n);
+    nodes.set(id, n);
+    return n;
+  }
+  const variable = (name, description, type = "string") => ({ name, type, description });
+  const targetKeys = [
+    "operation_kind",
+    "existing_selected_id",
+    "existing_target_snapshot",
+    "existing_staff_id",
+    "existing_service",
+    "existing_start",
+    "existing_action",
+    "existing_readback",
+    "existing_approval",
+    "existing_approval_tuple",
+    "existing_attempt",
+    "existing_attempt_tuple",
+    "existing_attempt_target",
+    "existing_attempt_action",
+    "existing_slot_id",
+    "existing_slots_snapshot",
+    "existing_current_check",
+    "existing_new_date",
+    "existing_new_time",
+    "cancel_success",
+    "cancelled_id",
+    "reschedule_success",
+    "rescheduled_id",
+    "current_cancelled",
+    "current_rescheduled",
+    "existing_result_verified",
+    "r18_route",
+  ];
+  const resultKeys = [
+    "cancel_success",
+    "cancelled_id",
+    "cancel_error_type",
+    "reschedule_success",
+    "rescheduled_id",
+    "reschedule_error_type",
+    "current_cancelled",
+    "current_rescheduled",
+    "current_result_service",
+    "current_result_staff",
+    "current_result_start",
+    "existing_result_verified",
+    "apero_response_received",
+    "apero_system_unavailable",
+    "apero_downtime_message",
+  ];
+  const existingKeys = [
+    ...targetKeys,
+    ...resultKeys,
+    "operation_kind",
+    "existing_cycle",
+    "existing_lookup_cycle",
+    "existing_lookup_snapshot",
+    "existing_patient_name",
+    "existing_patient_phone",
+    "slot_id",
+    "slots",
+    "current_availability_check",
+    "current_availability_snapshot",
+    "current_availability_signature",
+    "availability_query_signature",
+    "availability_success",
+    "available",
+    "booking_success",
+    "appointment_booked",
+    "booking_id",
+    "booking_error_type",
+    "consent_confirmed",
+    "consent_tuple",
+    "consent_cycle",
+    "booking_readback",
+    "selection_cycle",
+    "patient_cycle",
+    "lookup_success",
+    "appointments",
+    "appointment_count",
+    "existing_choice_index",
+    "existing_choice_action",
+    "existing_choice_unclear",
+    "existing_requested_date",
+    "existing_requested_time",
+    "existing_window_start",
+    "existing_window_end",
+    "existing_search_mode",
+    "reschedule_changes_service",
+    "reschedule_changes_practitioner",
+  ];
   // H1: proper shared check provenance and immutable latest-response snapshot.
-  for(const id of ['node_check','node_check_arabic_wait','node_check_silent'])nodes.get(id).edges.find(e=>e.destination_node_id==='node_offer').destination_node_id='node_r18_capture_availability';
-  code('node_r18_capture_availability','Store current returned availability',body('captureAvailability'),['current_availability_check','current_availability_snapshot','current_availability_signature','r18_route'],[route('r18_current_slots','node_offer','offer')],'node_calendar_unavailable');
-  nodes.get('node_match_slot').code=body('matchBookingSlot');
-  nodes.get('node_capture_slot').variables.push(variable('slot_choice_index','Explicitly selected 1-based ordinal in the latest returned slots, such as first/second/last. Empty unless ordinal selection is explicit. Never a token or appointment ID.'),variable('slot_choice_practitioner','Exact practitioner name from the current returned slots only if caller explicitly uses it to distinguish same-time slots; otherwise empty.'));
-  nodes.get('node_offer').instruction.text+=' Offer slots in their returned order, at most the first three unless the caller asks for more. When times repeat for different practitioners, identify the practitioner and ask which returned option. An explicit ordinal selection refers to that displayed returned order.';
-  nodes.get('node_correction_guard').code=nodes.get('node_correction_guard').code.replaceAll('check!==token.q','check!==token.i').replaceAll('check=token.q','check=token.i').replace("if(!token.q||!token.k", "if(!token.i||token.i!==dv.current_availability_check||!token.q||!token.k");
-  for(const id of ['node_calendar_prepare_node_check','node_calendar_prepare_node_check_arabic_wait','node_calendar_prepare_node_check_silent']) {
-    const n=nodes.get(id);n.code=n.code.replace('return {',"return {current_availability_check:'',current_availability_snapshot:'[]',current_availability_signature:'',");for(const k of ['current_availability_check','current_availability_snapshot','current_availability_signature'])n.response_variables[k]=k;
+  for (const id of ["node_check", "node_check_arabic_wait", "node_check_silent"])
+    nodes.get(id).edges.find((e) => e.destination_node_id === "node_offer").destination_node_id =
+      "node_r18_capture_availability";
+  code(
+    "node_r18_capture_availability",
+    "Store current returned availability",
+    body("captureAvailability"),
+    [
+      "current_availability_check",
+      "current_availability_snapshot",
+      "current_availability_signature",
+      "r18_route",
+    ],
+    [route("r18_current_slots", "node_offer", "offer")],
+    "node_calendar_unavailable",
+  );
+  nodes.get("node_match_slot").code = body("matchBookingSlot");
+  nodes
+    .get("node_capture_slot")
+    .variables.push(
+      variable(
+        "slot_choice_index",
+        "Explicitly selected 1-based ordinal in the latest returned slots, such as first/second/last. Empty unless ordinal selection is explicit. Never a token or appointment ID.",
+      ),
+      variable(
+        "slot_choice_practitioner",
+        "Exact practitioner name from the current returned slots only if caller explicitly uses it to distinguish same-time slots; otherwise empty.",
+      ),
+    );
+  nodes.get("node_offer").instruction.text +=
+    " Offer slots in their returned order, at most the first three unless the caller asks for more. When times repeat for different practitioners, identify the practitioner and ask which returned option. An explicit ordinal selection refers to that displayed returned order.";
+  nodes.get("node_correction_guard").code = nodes
+    .get("node_correction_guard")
+    .code.replaceAll("check!==token.q", "check!==token.i")
+    .replaceAll("check=token.q", "check=token.i")
+    .replace(
+      "if(!token.q||!token.k",
+      "if(!token.i||token.i!==dv.current_availability_check||!token.q||!token.k",
+    );
+  for (const id of [
+    "node_calendar_prepare_node_check",
+    "node_calendar_prepare_node_check_arabic_wait",
+    "node_calendar_prepare_node_check_silent",
+  ]) {
+    const n = nodes.get(id);
+    n.code = n.code.replace(
+      "return {",
+      "return {current_availability_check:'',current_availability_snapshot:'[]',current_availability_signature:'',",
+    );
+    for (const k of [
+      "current_availability_check",
+      "current_availability_snapshot",
+      "current_availability_signature",
+    ])
+      n.response_variables[k] = k;
   }
   // H3: validate backend-supported any scope before search; concrete ID at creation.
-  nodes.get('node_capture_search').edges[0].destination_node_id='node_r18_practitioner_scope';
-  code('node_r18_practitioner_scope','Validate backend practitioner scope',body('practitionerState')+"\n",['practitioner_scope'],[edge('r18_practitioner_ready','node_guard_search_clear_result')],'node_doctor_preference');
-  for(const id of ['node_guard_search','node_intake_entry_node_check','node_intake_entry_node_check_arabic_wait','node_intake_entry_node_check_silent']) {
-    const n=nodes.get(id);n.code="if(dv.practitioner_mode==='any'&&(dv.practitioner_scope!=='any'||dv.practitioner_id!==''||dv.practitioner_name!==''))throw Error('any_scope_not_resolved');\n"+n.code;
+  nodes.get("node_capture_search").edges[0].destination_node_id = "node_r18_practitioner_scope";
+  code(
+    "node_r18_practitioner_scope",
+    "Validate backend practitioner scope",
+    body("practitionerState") + "\n",
+    ["practitioner_scope"],
+    [edge("r18_practitioner_ready", "node_guard_search_clear_result")],
+    "node_doctor_preference",
+  );
+  for (const id of [
+    "node_guard_search",
+    "node_intake_entry_node_check",
+    "node_intake_entry_node_check_arabic_wait",
+    "node_intake_entry_node_check_silent",
+  ]) {
+    const n = nodes.get(id);
+    n.code =
+      "if(dv.practitioner_mode==='any'&&(dv.practitioner_scope!=='any'||dv.practitioner_id!==''||dv.practitioner_name!==''))throw Error('any_scope_not_resolved');\n" +
+      n.code;
   }
-  for(const id of ['node_guard_book','node_intake_entry_node_book','node_intake_entry_node_book_arabic_wait']) {
-    const n=nodes.get(id);n.code="if(dv.booking_reconciliation_required===true||dv.booking_reconciliation_required==='true')throw Error('unresolved_booking_no_retry');if(typeof dv.practitioner_id!=='string'||! /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(dv.practitioner_id))throw Error('practitioner_id_required');\n"+n.code;
+  for (const id of [
+    "node_guard_book",
+    "node_intake_entry_node_book",
+    "node_intake_entry_node_book_arabic_wait",
+  ]) {
+    const n = nodes.get(id);
+    n.code =
+      "if(dv.booking_reconciliation_required===true||dv.booking_reconciliation_required==='true')throw Error('unresolved_booking_no_retry');if(typeof dv.practitioner_id!=='string'||! /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(dv.practitioner_id))throw Error('practitioner_id_required');\n" +
+      n.code;
   }
   // C3: reserve before invocation, retain latch on every nonverified outcome.
-  for(const id of ['node_intake_entry_node_book','node_intake_entry_node_book_arabic_wait']) {
-    const n=nodes.get(id);n.code=body('bookingEntry');for(const k of ['booking_reconciliation_required','booking_attempt_tuple','booking_attempt_cycle'])n.response_variables[k]=k;
+  for (const id of ["node_intake_entry_node_book", "node_intake_entry_node_book_arabic_wait"]) {
+    const n = nodes.get(id);
+    n.code = body("bookingEntry");
+    for (const k of [
+      "booking_reconciliation_required",
+      "booking_attempt_tuple",
+      "booking_attempt_cycle",
+    ])
+      n.response_variables[k] = k;
   }
-  for(const id of ['node_book','node_book_arabic_wait']){
-    const prepare=nodes.get('node_downtime_prepare_'+id),prior=JSON.parse(prepare.code.slice(7,-1));
-    const clear={booking_id:'',booking_error_type:'',booking_result_verified:false,booking_retry_allowed:false,booking_follow_up_saved:false,booking_follow_up_id:''};
-    prepare.code='return '+JSON.stringify({...prior,...clear})+';';for(const k of Object.keys(clear))prepare.response_variables[k]=k;
+  for (const id of ["node_book", "node_book_arabic_wait"]) {
+    const prepare = nodes.get("node_downtime_prepare_" + id),
+      prior = JSON.parse(prepare.code.slice(7, -1));
+    const clear = {
+      booking_id: "",
+      booking_error_type: "",
+      booking_result_verified: false,
+      booking_retry_allowed: false,
+      booking_follow_up_saved: false,
+      booking_follow_up_id: "",
+    };
+    prepare.code = "return " + JSON.stringify({ ...prior, ...clear }) + ";";
+    for (const k of Object.keys(clear)) prepare.response_variables[k] = k;
   }
-  for(const id of ['node_book','node_book_arabic_wait'])nodes.get(id).edges.find(e=>e.destination_node_id==='node_booked').destination_node_id='node_r18_booking_result';
-  code('node_r18_booking_result','Verify current creation before unlocking',body('bookingResult'),['booking_result_verified','booking_reconciliation_required'],[edge('r18_booking_verified','node_booked','booking_result_verified')],'node_book_failed');
-  nodes.get('node_book_failed').edges=[promptEdge('r18_booking_failure_callback','node_callback_collect','Caller requests staff follow-up and the current failed-booking request was not already saved'),promptEdge('r18_booking_failure_end','node_end','Caller is finished, wants a new automated booking, or follow-up was already saved; creation remains locked pending staff reconciliation')];
-  nodes.get('node_book_failed').instruction.text="The appointment is NOT confirmed. Do not claim an uncertain remote operation failed definitively. Never retry creation, select a different slot, restart booking or create a new operation key after this attempted creation. Staff must reconcile the outcome. If booking_follow_up_saved is true, say the details were saved for clinic staff to verify; do not create a duplicate callback. Otherwise offer existing staff follow-up or configured direct clinic contact. No appointment is confirmed by this failure. Continue in the established language.";
-  tools.get('book_appointment').response_variables={...tools.get('book_appointment').response_variables,booking_retry_allowed:'retry_allowed',booking_follow_up_saved:'follow_up_saved',booking_follow_up_id:'follow_up_request_id'};
-  code('node_r18_new_booking_gate','Block fresh creation after unresolved attempt',"return {r18_route:(dv.booking_reconciliation_required===true||dv.booking_reconciliation_required==='true')?'locked':'new'};",['r18_route'],[route('r18_fresh_allowed','node_reset_prepare','new'),route('r18_fresh_locked','node_book_failed','locked')],'node_book_failed');
-  replaceTarget('node_reset_prepare','node_r18_new_booking_gate',new Set(['node_r18_new_booking_gate']));
+  for (const id of ["node_book", "node_book_arabic_wait"])
+    nodes.get(id).edges.find((e) => e.destination_node_id === "node_booked").destination_node_id =
+      "node_r18_booking_result";
+  code(
+    "node_r18_booking_result",
+    "Verify current creation before unlocking",
+    body("bookingResult"),
+    ["booking_result_verified", "booking_reconciliation_required"],
+    [edge("r18_booking_verified", "node_booked", "booking_result_verified")],
+    "node_book_failed",
+  );
+  nodes.get("node_book_failed").edges = [
+    promptEdge(
+      "r18_booking_failure_callback",
+      "node_callback_collect",
+      "Caller requests staff follow-up and the current failed-booking request was not already saved",
+    ),
+    promptEdge(
+      "r18_booking_failure_end",
+      "node_end",
+      "Caller is finished, wants a new automated booking, or follow-up was already saved; creation remains locked pending staff reconciliation",
+    ),
+  ];
+  nodes.get("node_book_failed").instruction.text =
+    "The appointment is NOT confirmed. Do not claim an uncertain remote operation failed definitively. Never retry creation, select a different slot, restart booking or create a new operation key after this attempted creation. Staff must reconcile the outcome. If booking_follow_up_saved is true, say the details were saved for clinic staff to verify; do not create a duplicate callback. Otherwise offer existing staff follow-up or configured direct clinic contact. No appointment is confirmed by this failure. Continue in the established language.";
+  tools.get("book_appointment").response_variables = {
+    ...tools.get("book_appointment").response_variables,
+    booking_retry_allowed: "retry_allowed",
+    booking_follow_up_saved: "follow_up_saved",
+    booking_follow_up_id: "follow_up_request_id",
+  };
+  code(
+    "node_r18_new_booking_gate",
+    "Block fresh creation after unresolved attempt",
+    "return {r18_route:(dv.booking_reconciliation_required===true||dv.booking_reconciliation_required==='true')?'locked':'new'};",
+    ["r18_route"],
+    [
+      route("r18_fresh_allowed", "node_reset_prepare", "new"),
+      route("r18_fresh_locked", "node_book_failed", "locked"),
+    ],
+    "node_book_failed",
+  );
+  replaceTarget(
+    "node_reset_prepare",
+    "node_r18_new_booking_gate",
+    new Set(["node_r18_new_booking_gate"]),
+  );
   // Surgical state boundaries preserve patient/contact and the unresolved booking latch.
-  const reset=nodes.get('node_reset_prepare');reset.code=common+'\nconst old=(function(){'+reset.code+'})();return {...old,...clearExistingTarget(dv),existing_cycle:"",existing_lookup_cycle:"",existing_lookup_snapshot:"[]",existing_patient_name:"",existing_patient_phone:"",operation_kind:"book"};';
+  const reset = nodes.get("node_reset_prepare");
+  reset.code =
+    common +
+    "\nconst old=(function(){" +
+    reset.code +
+    '})();return {...old,...clearExistingTarget(dv),existing_cycle:"",existing_lookup_cycle:"",existing_lookup_snapshot:"[]",existing_patient_name:"",existing_patient_phone:"",operation_kind:"book"};';
   // clearExistingTarget is deliberately injected separately: common contains no runtime node functions.
-  reset.code=runtime.clearExistingTarget.toString()+'\n'+reset.code;for(const k of [...targetKeys,'existing_cycle','existing_lookup_cycle','existing_lookup_snapshot','existing_patient_name','existing_patient_phone'])reset.response_variables[k]=k;reset.response_variables.operation_kind='operation_kind';
-  code('node_r18_existing_boundary','Clear operation-specific state for lookup',body('operationBoundary'),[...new Set([...existingKeys,'existing_target_fresh','existing_target_verified_attempt','existing_fresh_lookup_success','existing_fresh_appointments','existing_fresh_attempt'])],[route('r18_existing_identity','node_existing_identity','identity')],'node_tool_failure');
-  replaceTarget('node_existing_identity','node_r18_existing_boundary',new Set(['node_r18_existing_boundary']));
+  reset.code = runtime.clearExistingTarget.toString() + "\n" + reset.code;
+  for (const k of [
+    ...targetKeys,
+    "existing_cycle",
+    "existing_lookup_cycle",
+    "existing_lookup_snapshot",
+    "existing_patient_name",
+    "existing_patient_phone",
+  ])
+    reset.response_variables[k] = k;
+  reset.response_variables.operation_kind = "operation_kind";
+  code(
+    "node_r18_existing_boundary",
+    "Clear operation-specific state for lookup",
+    body("operationBoundary"),
+    [
+      ...new Set([
+        ...existingKeys,
+        "existing_target_fresh",
+        "existing_target_verified_attempt",
+        "existing_fresh_lookup_success",
+        "existing_fresh_appointments",
+        "existing_fresh_attempt",
+      ]),
+    ],
+    [route("r18_existing_identity", "node_existing_identity", "identity")],
+    "node_tool_failure",
+  );
+  replaceTarget(
+    "node_existing_identity",
+    "node_r18_existing_boundary",
+    new Set(["node_r18_existing_boundary"]),
+  );
   // Reuse the already-required existing patient name/contact, with no new identity factor.
-  extract('node_r18_existing_identity_capture','Store existing name and contact',[variable('client_name','Patient full name already provided/confirmed for this lookup, not a previous patient.'),variable('client_phone','Existing appointment contact already provided/confirmed for this lookup. Do not infer from arbitrary metadata.')],'node_r18_existing_identity_guard','node_existing_identity');
-  nodes.get('node_existing_identity').edges[0].destination_node_id='node_r18_existing_identity_capture';
-  code('node_r18_existing_identity_guard','Validate existing required lookup fields',common+"\nif(!textValue(dv.client_name)||!phoneValid(dv.client_phone))throw Error('lookup_identity_missing');return {r18_route:'lookup'};",['r18_route'],[route('r18_lookup_fields_ready','node_lookup_wait_language_gate','lookup')],'node_existing_identity');
-  for(const field of ['client_name','client_phone'])tools.get('lookup_appointments').parameters.properties[field]={type:'string',const:'{{'+field+'}}'};
-  for(const id of ['node_lookup','node_lookup_arabic_wait'])nodes.get(id).edges.find(e=>e.destination_node_id==='node_select_existing').destination_node_id='node_r18_lookup_snapshot';
-  code('node_r18_lookup_snapshot','Store current trusted lookup membership',body('captureLookup'),['existing_lookup_snapshot','existing_lookup_cycle','existing_patient_name','existing_patient_phone','r18_route'],[route('r18_lookup_select','node_select_existing','select')],'node_tool_failure');
+  extract(
+    "node_r18_existing_identity_capture",
+    "Store existing name and contact",
+    [
+      variable(
+        "client_name",
+        "Patient full name already provided/confirmed for this lookup, not a previous patient.",
+      ),
+      variable(
+        "client_phone",
+        "Existing appointment contact already provided/confirmed for this lookup. Do not infer from arbitrary metadata.",
+      ),
+    ],
+    "node_r18_existing_identity_guard",
+    "node_existing_identity",
+  );
+  nodes.get("node_existing_identity").edges[0].destination_node_id =
+    "node_r18_existing_identity_capture";
+  code(
+    "node_r18_existing_identity_guard",
+    "Validate existing required lookup fields",
+    common +
+      "\nif(!textValue(dv.client_name)||!phoneValid(dv.client_phone))throw Error('lookup_identity_missing');return {r18_route:'lookup'};",
+    ["r18_route"],
+    [route("r18_lookup_fields_ready", "node_lookup_wait_language_gate", "lookup")],
+    "node_existing_identity",
+  );
+  for (const field of ["client_name", "client_phone"])
+    tools.get("lookup_appointments").parameters.properties[field] = {
+      type: "string",
+      const: "{{" + field + "}}",
+    };
+  for (const id of ["node_lookup", "node_lookup_arabic_wait"])
+    nodes
+      .get(id)
+      .edges.find((e) => e.destination_node_id === "node_select_existing").destination_node_id =
+      "node_r18_lookup_snapshot";
+  code(
+    "node_r18_lookup_snapshot",
+    "Store current trusted lookup membership",
+    body("captureLookup"),
+    [
+      "existing_lookup_snapshot",
+      "existing_lookup_cycle",
+      "existing_patient_name",
+      "existing_patient_phone",
+      "r18_route",
+    ],
+    [route("r18_lookup_select", "node_select_existing", "select")],
+    "node_tool_failure",
+  );
   // C1: choice extractor produces a local ordinal, never an appointment ID.
-  nodes.get('node_select_existing').instruction.text="Read only appointments in {{existing_lookup_snapshot}}, numbered in their returned order. Ask which appointment and whether to cancel or change date/time. If one appointment is returned and intent is explicit, do not ask redundantly. Selection capture may only provide the ordinal of a current listed appointment; never invent or accept a caller-provided appointment ID. No mutation has occurred. A changed/ambiguous target must return here for selection.";
-  nodes.get('node_select_existing').edges=[promptEdge('r18_existing_choice','node_r18_existing_choice','Caller identifies a listed appointment and cancellation or date/time reschedule intent'),promptEdge('r18_existing_stop','node_r18_existing_abandon','Caller declines, keeps appointments or is finished')];
-  extract('node_r18_existing_choice','Capture local existing appointment choice',[variable('existing_choice_index','1-based ordinal in current existing_lookup_snapshot matching the caller selection. If exactly one and clear intent use 1. Empty if ambiguous; never output an ID.'),variable('existing_choice_action','cancel or reschedule for this current selected appointment only. Empty if unclear.'),variable('existing_choice_unclear','True if target/action is ambiguous or was not selected from current results.','boolean')],'node_r18_existing_select','node_select_existing');
-  code('node_r18_existing_select','Bind exact trusted selected appointment',body('selectExisting'),[...targetKeys,'operation_kind','reschedule_changes_service','reschedule_changes_practitioner'],[route('r18_selected_cancel','node_r18_existing_readback','cancel'),route('r18_selected_reschedule','node_reschedule_details','reschedule'),route('r18_selection_unclear','node_select_existing','select')],'node_select_existing');
+  nodes.get("node_select_existing").instruction.text =
+    "Read only appointments in {{existing_lookup_snapshot}}, numbered in their returned order. Ask which appointment and whether to cancel or change date/time. If one appointment is returned and intent is explicit, do not ask redundantly. Selection capture may only provide the ordinal of a current listed appointment; never invent or accept a caller-provided appointment ID. No mutation has occurred. A changed/ambiguous target must return here for selection.";
+  nodes.get("node_select_existing").edges = [
+    promptEdge(
+      "r18_existing_choice",
+      "node_r18_existing_choice",
+      "Caller identifies a listed appointment and cancellation or date/time reschedule intent",
+    ),
+    promptEdge(
+      "r18_existing_stop",
+      "node_r18_existing_abandon",
+      "Caller declines, keeps appointments or is finished",
+    ),
+  ];
+  extract(
+    "node_r18_existing_choice",
+    "Capture local existing appointment choice",
+    [
+      variable(
+        "existing_choice_index",
+        "1-based ordinal in current existing_lookup_snapshot matching the caller selection. If exactly one and clear intent use 1. Empty if ambiguous; never output an ID.",
+      ),
+      variable(
+        "existing_choice_action",
+        "cancel or reschedule for this current selected appointment only. Empty if unclear.",
+      ),
+      variable(
+        "existing_choice_unclear",
+        "True if target/action is ambiguous or was not selected from current results.",
+        "boolean",
+      ),
+    ],
+    "node_r18_existing_select",
+    "node_select_existing",
+  );
+  code(
+    "node_r18_existing_select",
+    "Bind exact trusted selected appointment",
+    body("selectExisting"),
+    [
+      ...targetKeys,
+      "operation_kind",
+      "reschedule_changes_service",
+      "reschedule_changes_practitioner",
+    ],
+    [
+      route("r18_selected_cancel", "node_r18_existing_readback", "cancel"),
+      route("r18_selected_reschedule", "node_reschedule_details", "reschedule"),
+      route("r18_selection_unclear", "node_select_existing", "select"),
+    ],
+    "node_select_existing",
+  );
   // Trusted target remains immutable across final approval, search and mutation.
-  code('node_r18_existing_readback','Prepare exact existing operation readback',body('existingReadback'),['existing_readback','existing_approval','existing_approval_tuple','r18_route'],[route('r18_cancel_review','node_cancel_confirm','cancel'),route('r18_reschedule_review','node_reschedule_final','reschedule'),route('r18_review_target_missing','node_select_existing','select'),route('r18_review_slot_missing','node_reschedule_details','reschedule_search')],'node_select_existing');
-  extract('node_r18_existing_approval','Capture approval of exact existing tuple',[variable('existing_approval','True only for the latest explicit approval of the exact current existing_readback just spoken. Prior yes/FAQ response/correction/other target is false.','boolean'),variable('existing_approval_tuple','Copy existing_readback EXACTLY only for that latest explicit approval; otherwise empty.')],'node_r18_existing_entry','node_select_existing');
-  code('node_r18_existing_entry','Guard bound target and exact current approval',body('existingEntry'),[...resultKeys,'existing_attempt','existing_attempt_tuple','existing_attempt_action','existing_attempt_target','r18_route'],[route('r18_cancel_approved','node_cancel_tool_wait_language_gate','cancel'),route('r18_reschedule_approved','node_reschedule_tool_wait_language_gate','reschedule'),route('r18_mutation_reselect','node_select_existing','select'),route('r18_mutation_recheck','node_reschedule_details','reschedule_search')],'node_select_existing');
+  code(
+    "node_r18_existing_readback",
+    "Prepare exact existing operation readback",
+    body("existingReadback"),
+    ["existing_readback", "existing_approval", "existing_approval_tuple", "r18_route"],
+    [
+      route("r18_cancel_review", "node_cancel_confirm", "cancel"),
+      route("r18_reschedule_review", "node_reschedule_final", "reschedule"),
+      route("r18_review_target_missing", "node_select_existing", "select"),
+      route("r18_review_slot_missing", "node_reschedule_details", "reschedule_search"),
+    ],
+    "node_select_existing",
+  );
+  extract(
+    "node_r18_existing_approval",
+    "Capture approval of exact existing tuple",
+    [
+      variable(
+        "existing_approval",
+        "True only for the latest explicit approval of the exact current existing_readback just spoken. Prior yes/FAQ response/correction/other target is false.",
+        "boolean",
+      ),
+      variable(
+        "existing_approval_tuple",
+        "Copy existing_readback EXACTLY only for that latest explicit approval; otherwise empty.",
+      ),
+    ],
+    "node_r18_existing_entry",
+    "node_select_existing",
+  );
+  code(
+    "node_r18_existing_entry",
+    "Guard bound target and exact current approval",
+    body("existingEntry"),
+    [
+      ...resultKeys,
+      "existing_attempt",
+      "existing_attempt_tuple",
+      "existing_attempt_action",
+      "existing_attempt_target",
+      "r18_route",
+    ],
+    [
+      route("r18_cancel_approved", "node_cancel_tool_wait_language_gate", "cancel"),
+      route("r18_reschedule_approved", "node_reschedule_tool_wait_language_gate", "reschedule"),
+      route("r18_mutation_reselect", "node_select_existing", "select"),
+      route("r18_mutation_recheck", "node_reschedule_details", "reschedule_search"),
+    ],
+    "node_select_existing",
+  );
   // Re-read the already-identified patient's appointments immediately before
   // mutation. A changed/removed target needs fresh selection and fresh consent.
-  const freshTool=structuredClone(tools.get('lookup_appointments'));freshTool.name='verify_selected_appointment';freshTool.tool_id='tool-r18-verify-selected';freshTool.description='Re-read the existing patient appointments to verify the already selected original target is unchanged. No new identity factor.';freshTool.speak_during_execution=false;
-  freshTool.parameters.properties.client_name={type:'string',const:'{{existing_patient_name}}'};freshTool.parameters.properties.client_phone={type:'string',const:'{{existing_patient_phone}}'};
-  freshTool.response_variables={existing_fresh_lookup_success:'success',existing_fresh_appointments:'appointments',apero_response_received:'apero_response_received',apero_system_unavailable:'system_unavailable',apero_downtime_message:'message'};f.tools.push(freshTool);tools.set(freshTool.name,freshTool);
-  code('node_r18_existing_fresh_prepare','Clear current target recheck receipt',"return {existing_target_fresh:false,existing_target_verified_attempt:'',existing_fresh_lookup_success:false,existing_fresh_appointments:'[]',existing_fresh_attempt:dv.existing_attempt,apero_response_received:false,apero_system_unavailable:false,apero_downtime_message:'',r18_route:'lookup'};",['existing_target_fresh','existing_target_verified_attempt','existing_fresh_lookup_success','existing_fresh_appointments','existing_fresh_attempt','apero_response_received','apero_system_unavailable','apero_downtime_message','r18_route'],[route('r18_recheck_lookup','node_r18_existing_fresh_lookup','lookup')],'node_r18_existing_reselect');
-  const freshNode=structuredClone(nodes.get('node_lookup'));freshNode.id='node_r18_existing_fresh_lookup';freshNode.name='Verify reviewed appointment still current';freshNode.tool_id=freshTool.tool_id;freshNode.speak_during_execution=false;freshNode.edges=[structuredClone(freshNode.edges[0]),edge('r18_fresh_response','node_r18_existing_fresh_guard','apero_response_received')];freshNode.edges[0].id='r18_fresh_downtime';freshNode.edges[1].transition_condition.equations.push({left:'{{apero_system_unavailable}}',operator:'==',right:'false'});freshNode.else_edge=promptEdge('r18_fresh_transport','node_downtime_clear','Else');f.nodes.push(freshNode);nodes.set(freshNode.id,freshNode);
-  code('node_r18_existing_fresh_guard','Check current target against exact reviewed lookup row',body('revalidateExistingTarget'),['existing_target_fresh','existing_target_verified_attempt','existing_selected_id','existing_target_snapshot','existing_readback','existing_approval','existing_approval_tuple','existing_attempt','existing_attempt_tuple','existing_lookup_snapshot','existing_lookup_cycle','r18_route'],[route('r18_fresh_cancel','node_cancel_tool_wait_language_gate','cancel'),route('r18_fresh_reschedule','node_reschedule_tool_wait_language_gate','reschedule'),route('r18_fresh_changed','node_select_existing','select'),route('r18_fresh_missing','node_existing_not_found','not_found')],'node_r18_existing_reselect');
-  for(const e of nodes.get('node_r18_existing_entry').edges)if(['r18_cancel_approved','r18_reschedule_approved'].includes(e.id))e.destination_node_id='node_r18_existing_fresh_prepare';
-  for(const id of ['node_cancel_confirm','node_reschedule_final']){
-    const n=nodes.get(id);for(const e of n.edges){if(e.destination_node_id.endsWith('tool_wait_language_gate'))e.destination_node_id='node_r18_existing_approval';if(e.destination_node_id==='node_anything_else')e.destination_node_id='node_r18_existing_abandon';}
-    n.instruction.text=(id==='node_cancel_confirm'?"Read back only the cancellation tuple in {{existing_readback}} for appointment {{existing_selected_id}}. Speak the patient, original service/practitioner/date/time naturally; IDs remain internal. Ask explicit approval to CANCEL that appointment. ":"Read back only {{existing_readback}}: the original appointment and selected NEW date/time. Original service and practitioner cannot change. Ask explicit approval to MOVE exactly that appointment. ")+"A correction, ambiguous yes or another appointment is not approval. If target is corrected or ambiguous, return to current appointment selection. Never change the stored target in conversation. Preserve established language.";
-    n.edges.unshift(promptEdge(id+'_target_changed','node_r18_existing_reselect','Caller changes, questions or ambiguously identifies the original appointment target; must select again before any mutation'));
+  const freshTool = structuredClone(tools.get("lookup_appointments"));
+  freshTool.name = "verify_selected_appointment";
+  freshTool.tool_id = "tool-r18-verify-selected";
+  freshTool.description =
+    "Re-read the existing patient appointments to verify the already selected original target is unchanged. No new identity factor.";
+  freshTool.speak_during_execution = false;
+  freshTool.parameters.properties.client_name = {
+    type: "string",
+    const: "{{existing_patient_name}}",
+  };
+  freshTool.parameters.properties.client_phone = {
+    type: "string",
+    const: "{{existing_patient_phone}}",
+  };
+  freshTool.response_variables = {
+    existing_fresh_lookup_success: "success",
+    existing_fresh_appointments: "appointments",
+    apero_response_received: "apero_response_received",
+    apero_system_unavailable: "system_unavailable",
+    apero_downtime_message: "message",
+  };
+  f.tools.push(freshTool);
+  tools.set(freshTool.name, freshTool);
+  code(
+    "node_r18_existing_fresh_prepare",
+    "Clear current target recheck receipt",
+    "return {existing_target_fresh:false,existing_target_verified_attempt:'',existing_fresh_lookup_success:false,existing_fresh_appointments:'[]',existing_fresh_attempt:dv.existing_attempt,apero_response_received:false,apero_system_unavailable:false,apero_downtime_message:'',r18_route:'lookup'};",
+    [
+      "existing_target_fresh",
+      "existing_target_verified_attempt",
+      "existing_fresh_lookup_success",
+      "existing_fresh_appointments",
+      "existing_fresh_attempt",
+      "apero_response_received",
+      "apero_system_unavailable",
+      "apero_downtime_message",
+      "r18_route",
+    ],
+    [route("r18_recheck_lookup", "node_r18_existing_fresh_lookup", "lookup")],
+    "node_r18_existing_reselect",
+  );
+  const freshNode = structuredClone(nodes.get("node_lookup"));
+  freshNode.id = "node_r18_existing_fresh_lookup";
+  freshNode.name = "Verify reviewed appointment still current";
+  freshNode.tool_id = freshTool.tool_id;
+  freshNode.speak_during_execution = false;
+  freshNode.edges = [
+    structuredClone(freshNode.edges[0]),
+    edge("r18_fresh_response", "node_r18_existing_fresh_guard", "apero_response_received"),
+  ];
+  freshNode.edges[0].id = "r18_fresh_downtime";
+  freshNode.edges[1].transition_condition.equations.push({
+    left: "{{apero_system_unavailable}}",
+    operator: "==",
+    right: "false",
+  });
+  freshNode.else_edge = promptEdge("r18_fresh_transport", "node_downtime_clear", "Else");
+  f.nodes.push(freshNode);
+  nodes.set(freshNode.id, freshNode);
+  code(
+    "node_r18_existing_fresh_guard",
+    "Check current target against exact reviewed lookup row",
+    body("revalidateExistingTarget"),
+    [
+      "existing_target_fresh",
+      "existing_target_verified_attempt",
+      "existing_selected_id",
+      "existing_target_snapshot",
+      "existing_readback",
+      "existing_approval",
+      "existing_approval_tuple",
+      "existing_attempt",
+      "existing_attempt_tuple",
+      "existing_lookup_snapshot",
+      "existing_lookup_cycle",
+      "r18_route",
+    ],
+    [
+      route("r18_fresh_cancel", "node_cancel_tool_wait_language_gate", "cancel"),
+      route("r18_fresh_reschedule", "node_reschedule_tool_wait_language_gate", "reschedule"),
+      route("r18_fresh_changed", "node_select_existing", "select"),
+      route("r18_fresh_missing", "node_existing_not_found", "not_found"),
+    ],
+    "node_r18_existing_reselect",
+  );
+  for (const e of nodes.get("node_r18_existing_entry").edges)
+    if (["r18_cancel_approved", "r18_reschedule_approved"].includes(e.id))
+      e.destination_node_id = "node_r18_existing_fresh_prepare";
+  for (const id of ["node_cancel_confirm", "node_reschedule_final"]) {
+    const n = nodes.get(id);
+    for (const e of n.edges) {
+      if (e.destination_node_id.endsWith("tool_wait_language_gate"))
+        e.destination_node_id = "node_r18_existing_approval";
+      if (e.destination_node_id === "node_anything_else")
+        e.destination_node_id = "node_r18_existing_abandon";
+    }
+    n.instruction.text =
+      (id === "node_cancel_confirm"
+        ? "Read back only the cancellation tuple in {{existing_readback}} for appointment {{existing_selected_id}}. Speak the patient, original service/practitioner/date/time naturally; IDs remain internal. Ask explicit approval to CANCEL that appointment. "
+        : "Read back only {{existing_readback}}: the original appointment and selected NEW date/time. Original service and practitioner cannot change. Ask explicit approval to MOVE exactly that appointment. ") +
+      "A correction, ambiguous yes or another appointment is not approval. If target is corrected or ambiguous, return to current appointment selection. Never change the stored target in conversation. Preserve established language.";
+    n.edges.unshift(
+      promptEdge(
+        id + "_target_changed",
+        "node_r18_existing_reselect",
+        "Caller changes, questions or ambiguously identifies the original appointment target; must select again before any mutation",
+      ),
+    );
   }
   // C2: every calling variant clears ALL current result fields; response validator checks flag+target+tuple.
-  for(const id of ['node_cancel_tool','node_cancel_tool_arabic_wait','node_reschedule_tool','node_reschedule_tool_arabic_wait']){
-    const n=nodes.get(id),prepare=nodes.get('node_downtime_prepare_'+id);
-    const cleared={cancel_success:false,cancelled_id:'',cancel_error_type:'',reschedule_success:false,rescheduled_id:'',reschedule_error_type:'',current_cancelled:false,current_rescheduled:false,current_result_service:'',current_result_staff:'',current_result_start:'',existing_result_verified:false};
-    const prior=JSON.parse(prepare.code.slice(7,-1));prepare.code='return '+JSON.stringify({...prior,...cleared})+';';for(const k of Object.keys(cleared))prepare.response_variables[k]=k;
+  for (const id of [
+    "node_cancel_tool",
+    "node_cancel_tool_arabic_wait",
+    "node_reschedule_tool",
+    "node_reschedule_tool_arabic_wait",
+  ]) {
+    const n = nodes.get(id),
+      prepare = nodes.get("node_downtime_prepare_" + id);
+    const cleared = {
+      cancel_success: false,
+      cancelled_id: "",
+      cancel_error_type: "",
+      reschedule_success: false,
+      rescheduled_id: "",
+      reschedule_error_type: "",
+      current_cancelled: false,
+      current_rescheduled: false,
+      current_result_service: "",
+      current_result_staff: "",
+      current_result_start: "",
+      existing_result_verified: false,
+    };
+    const prior = JSON.parse(prepare.code.slice(7, -1));
+    prepare.code = "return " + JSON.stringify({ ...prior, ...cleared }) + ";";
+    for (const k of Object.keys(cleared)) prepare.response_variables[k] = k;
     // All coherent received outcomes validate; actual transport/system retains downtime priority.
-    const current=edge(id+'_validate_current','node_r18_existing_result','apero_response_received');current.transition_condition.equations.push({left:'{{apero_system_unavailable}}',operator:'==',right:'false'});n.edges=[n.edges[0],current];
-    n.else_edge=promptEdge(id+'_failure',id.includes('cancel')?'node_cancel_failed':'node_reschedule_failed','Else');
+    const current = edge(
+      id + "_validate_current",
+      "node_r18_existing_result",
+      "apero_response_received",
+    );
+    current.transition_condition.equations.push({
+      left: "{{apero_system_unavailable}}",
+      operator: "==",
+      right: "false",
+    });
+    n.edges = [n.edges[0], current];
+    n.else_edge = promptEdge(
+      id + "_failure",
+      id.includes("cancel") ? "node_cancel_failed" : "node_reschedule_failed",
+      "Else",
+    );
   }
-  code('node_r18_existing_result','Verify one coherent current existing-operation result',body('existingResult'),['existing_result_verified','r18_route'],[route('r18_cancel_success','node_cancelled','cancel'),route('r18_reschedule_success','node_rescheduled','reschedule'),route('r18_existing_result_failed','node_r18_existing_result_failure','failure')],'node_r18_existing_result_failure');
-  code('node_r18_existing_result_failure','Keep current mutation failure in its operation family',"return {r18_route:dv.existing_attempt_action==='cancel'?'cancel':'reschedule'};",['r18_route'],[route('r18_cancel_failure','node_cancel_failed','cancel'),route('r18_reschedule_failure','node_reschedule_failed','reschedule')],'node_tool_failure');
-  for(const name of ['cancel_appointment','reschedule_appointment']) {
-    const t=tools.get(name);for(const key of Object.keys(t.parameters.properties))if(key!=='action'&&key!=='confirmed')t.parameters.properties[key]={type:'string',const:'{{'+({appointment_id:'existing_selected_id',client_name:'existing_patient_name',client_phone:'existing_patient_phone',slot_id:'existing_slot_id',service_name:'existing_service',practitioner_id:'existing_staff_id',appointment_date:'existing_new_date',appointment_time:'existing_new_time'}[key])+'}}'};
-    if(name==='cancel_appointment'){t.parameters.properties.confirmed={type:'boolean',const:true};t.response_variables.current_cancelled='appointment_cancelled';}
-    else Object.assign(t.response_variables,{current_rescheduled:'appointment_rescheduled',current_result_staff:'staff_id',current_result_service:'service_name',current_result_start:'start_time'});
+  code(
+    "node_r18_existing_result",
+    "Verify one coherent current existing-operation result",
+    body("existingResult"),
+    ["existing_result_verified", "r18_route"],
+    [
+      route("r18_cancel_success", "node_cancelled", "cancel"),
+      route("r18_reschedule_success", "node_rescheduled", "reschedule"),
+      route("r18_existing_result_failed", "node_r18_existing_result_failure", "failure"),
+    ],
+    "node_r18_existing_result_failure",
+  );
+  code(
+    "node_r18_existing_result_failure",
+    "Keep current mutation failure in its operation family",
+    "return {r18_route:dv.existing_attempt_action==='cancel'?'cancel':'reschedule'};",
+    ["r18_route"],
+    [
+      route("r18_cancel_failure", "node_cancel_failed", "cancel"),
+      route("r18_reschedule_failure", "node_reschedule_failed", "reschedule"),
+    ],
+    "node_tool_failure",
+  );
+  for (const name of ["cancel_appointment", "reschedule_appointment"]) {
+    const t = tools.get(name);
+    for (const key of Object.keys(t.parameters.properties))
+      if (key !== "action" && key !== "confirmed")
+        t.parameters.properties[key] = {
+          type: "string",
+          const:
+            "{{" +
+            {
+              appointment_id: "existing_selected_id",
+              client_name: "existing_patient_name",
+              client_phone: "existing_patient_phone",
+              slot_id: "existing_slot_id",
+              service_name: "existing_service",
+              practitioner_id: "existing_staff_id",
+              appointment_date: "existing_new_date",
+              appointment_time: "existing_new_time",
+            }[key] +
+            "}}",
+        };
+    if (name === "cancel_appointment") {
+      t.parameters.properties.confirmed = { type: "boolean", const: true };
+      t.response_variables.current_cancelled = "appointment_cancelled";
+    } else
+      Object.assign(t.response_variables, {
+        current_rescheduled: "appointment_rescheduled",
+        current_result_staff: "staff_id",
+        current_result_service: "service_name",
+        current_result_start: "start_time",
+      });
   }
   // H4: date/time-only reschedule; service/staff/old ID never model-generated.
-  const availability=tools.get('check_availability');const map={appointment_id:'existing_selected_id',client_name:'existing_patient_name',client_phone:'existing_patient_phone',service_name:'existing_service',practitioner_id:'existing_staff_id',requested_date:'existing_requested_date',requested_time:'existing_requested_time',window_start:'existing_window_start',window_end:'existing_window_end',search_mode:'existing_search_mode'};
-  for(const [k,v]of Object.entries(map))availability.parameters.properties[k]={type:'string',const:'{{'+v+'}}'};
-  availability.parameters.properties.practitioner_mode={type:'string',const:'specific'};availability.parameters.properties.practitioner_name={type:'string',const:''};
-  availability.parameters.required=[...new Set([...availability.parameters.required,'appointment_id','client_name','client_phone','practitioner_id'])];
-  nodes.get('node_reschedule_details').instruction.text="This reschedule changes DATE/TIME ONLY for {{existing_target_snapshot}}. Preserve original service {{existing_service}} and original practitioner ID {{existing_staff_id}}; never ask or imply they can change. Ask only missing preferred date/time, naturally, in the established language. Reuse already supplied current date/time. If caller requests another service/practitioner, explain this needs clinic staff assistance; do not silently make a new booking or cancellation. If caller changes original appointment target, return to selection.";
-  nodes.get('node_reschedule_details').edges=[promptEdge('r18_reschedule_unsupported','node_r18_reschedule_unsupported','Caller wants a different service or practitioner'),promptEdge('r18_reschedule_target','node_r18_existing_reselect','Caller changes or ambiguously identifies the original appointment'),promptEdge('r18_reschedule_dates','node_r18_reschedule_search_capture','New preferred date/time or earliest search is clear; original service/practitioner remain unchanged')];
-  extract('node_r18_reschedule_search_capture','Capture date/time-only move preferences',[variable('existing_requested_date','New preferred local date YYYY-MM-DD; empty for earliest.'),variable('existing_requested_time','New preferred local time HH:mm or empty.'),variable('existing_window_start','New preferred window start HH:mm or empty.'),variable('existing_window_end','New preferred window end HH:mm or empty.'),variable('existing_search_mode','date or earliest for this move.'),variable('reschedule_changes_service','True if current caller request changes original service.','boolean'),variable('reschedule_changes_practitioner','True if current caller request changes original practitioner.','boolean')],'node_r18_reschedule_search_guard','node_reschedule_details');
-  code('node_r18_reschedule_search_guard','Enforce original reschedule service and practitioner',body('rescheduleSearch'),['existing_slot_id','existing_new_date','existing_new_time','existing_current_check','existing_slots_snapshot','existing_readback','existing_approval','existing_approval_tuple','existing_attempt','existing_attempt_tuple','r18_route'],[route('r18_move_search','node_reschedule_check_wait_language_gate','search'),route('r18_move_clarify','node_reschedule_details','clarify'),route('r18_move_scope','node_r18_reschedule_unsupported','unsupported'),route('r18_move_reselect','node_select_existing','select')],'node_select_existing');
-  const unsupported=structuredClone(nodes.get('node_reschedule_details'));unsupported.id='node_r18_reschedule_unsupported';unsupported.name='Date/time-only reschedule limitation';unsupported.instruction={type:'prompt',text:'Continue in the established language. Changing this appointment to a different service or practitioner is not supported by automated reschedule. The original appointment remains unchanged. Offer existing clinic staff assistance; do not cancel it, create a replacement booking, or claim a change. If the caller instead wants only a date/time change, preserve the original appointment and continue.'};unsupported.edges=[promptEdge('r18_scope_staff','node_human_prepare','Caller requests staff help for this unsupported reschedule change'),promptEdge('r18_scope_date_only','node_reschedule_details','Caller agrees to change date/time only with original service/practitioner'),promptEdge('r18_scope_stop','node_r18_existing_abandon','Caller declines or is finished')];f.nodes.push(unsupported);nodes.set(unsupported.id,unsupported);
-  for(const id of ['node_reschedule_check','node_reschedule_check_arabic_wait'])nodes.get(id).edges.find(e=>e.destination_node_id==='node_reschedule_offer').destination_node_id='node_r18_reschedule_provenance';
-  code('node_r18_reschedule_provenance','Store original-practitioner replacement slots',body('captureRescheduleAvailability'),['existing_current_check','existing_slots_snapshot','r18_route'],[route('r18_move_offer','node_reschedule_offer','offer')],'node_calendar_unavailable');
-  for(const id of ['node_reschedule_offer','node_reschedule_final','node_reschedule_no_slots','node_reschedule_check_error']){
-    const n=nodes.get(id);n.instruction.text+=' This operation changes date/time only; original service and practitioner cannot change. Never offer another practitioner. Different service/practitioner requests use node_r18_reschedule_unsupported.';
-    n.edges.unshift(promptEdge(id+'_unsupported_scope','node_r18_reschedule_unsupported','Caller requests changing original service or practitioner'));
+  const availability = tools.get("check_availability");
+  const map = {
+    appointment_id: "existing_selected_id",
+    client_name: "existing_patient_name",
+    client_phone: "existing_patient_phone",
+    service_name: "existing_service",
+    practitioner_id: "existing_staff_id",
+    requested_date: "existing_requested_date",
+    requested_time: "existing_requested_time",
+    window_start: "existing_window_start",
+    window_end: "existing_window_end",
+    search_mode: "existing_search_mode",
+  };
+  for (const [k, v] of Object.entries(map))
+    availability.parameters.properties[k] = { type: "string", const: "{{" + v + "}}" };
+  availability.parameters.properties.practitioner_mode = { type: "string", const: "specific" };
+  availability.parameters.properties.practitioner_name = { type: "string", const: "" };
+  availability.parameters.required = [
+    ...new Set([
+      ...availability.parameters.required,
+      "appointment_id",
+      "client_name",
+      "client_phone",
+      "practitioner_id",
+    ]),
+  ];
+  nodes.get("node_reschedule_details").instruction.text =
+    "This reschedule changes DATE/TIME ONLY for {{existing_target_snapshot}}. Preserve original service {{existing_service}} and original practitioner ID {{existing_staff_id}}; never ask or imply they can change. Ask only missing preferred date/time, naturally, in the established language. Reuse already supplied current date/time. If caller requests another service/practitioner, explain this needs clinic staff assistance; do not silently make a new booking or cancellation. If caller changes original appointment target, return to selection.";
+  nodes.get("node_reschedule_details").edges = [
+    promptEdge(
+      "r18_reschedule_unsupported",
+      "node_r18_reschedule_unsupported",
+      "Caller wants a different service or practitioner",
+    ),
+    promptEdge(
+      "r18_reschedule_target",
+      "node_r18_existing_reselect",
+      "Caller changes or ambiguously identifies the original appointment",
+    ),
+    promptEdge(
+      "r18_reschedule_dates",
+      "node_r18_reschedule_search_capture",
+      "New preferred date/time or earliest search is clear; original service/practitioner remain unchanged",
+    ),
+  ];
+  extract(
+    "node_r18_reschedule_search_capture",
+    "Capture date/time-only move preferences",
+    [
+      variable(
+        "existing_requested_date",
+        "New preferred local date YYYY-MM-DD; empty for earliest.",
+      ),
+      variable("existing_requested_time", "New preferred local time HH:mm or empty."),
+      variable("existing_window_start", "New preferred window start HH:mm or empty."),
+      variable("existing_window_end", "New preferred window end HH:mm or empty."),
+      variable("existing_search_mode", "date or earliest for this move."),
+      variable(
+        "reschedule_changes_service",
+        "True if current caller request changes original service.",
+        "boolean",
+      ),
+      variable(
+        "reschedule_changes_practitioner",
+        "True if current caller request changes original practitioner.",
+        "boolean",
+      ),
+    ],
+    "node_r18_reschedule_search_guard",
+    "node_reschedule_details",
+  );
+  code(
+    "node_r18_reschedule_search_guard",
+    "Enforce original reschedule service and practitioner",
+    body("rescheduleSearch"),
+    [
+      "existing_slot_id",
+      "existing_new_date",
+      "existing_new_time",
+      "existing_current_check",
+      "existing_slots_snapshot",
+      "existing_readback",
+      "existing_approval",
+      "existing_approval_tuple",
+      "existing_attempt",
+      "existing_attempt_tuple",
+      "r18_route",
+    ],
+    [
+      route("r18_move_search", "node_reschedule_check_wait_language_gate", "search"),
+      route("r18_move_clarify", "node_reschedule_details", "clarify"),
+      route("r18_move_scope", "node_r18_reschedule_unsupported", "unsupported"),
+      route("r18_move_reselect", "node_select_existing", "select"),
+    ],
+    "node_select_existing",
+  );
+  const unsupported = structuredClone(nodes.get("node_reschedule_details"));
+  unsupported.id = "node_r18_reschedule_unsupported";
+  unsupported.name = "Date/time-only reschedule limitation";
+  unsupported.instruction = {
+    type: "prompt",
+    text: "Continue in the established language. Changing this appointment to a different service or practitioner is not supported by automated reschedule. The original appointment remains unchanged. Offer existing clinic staff assistance; do not cancel it, create a replacement booking, or claim a change. If the caller instead wants only a date/time change, preserve the original appointment and continue.",
+  };
+  unsupported.edges = [
+    promptEdge(
+      "r18_scope_staff",
+      "node_human_prepare",
+      "Caller requests staff help for this unsupported reschedule change",
+    ),
+    promptEdge(
+      "r18_scope_date_only",
+      "node_reschedule_details",
+      "Caller agrees to change date/time only with original service/practitioner",
+    ),
+    promptEdge("r18_scope_stop", "node_r18_existing_abandon", "Caller declines or is finished"),
+  ];
+  f.nodes.push(unsupported);
+  nodes.set(unsupported.id, unsupported);
+  for (const id of ["node_reschedule_check", "node_reschedule_check_arabic_wait"])
+    nodes
+      .get(id)
+      .edges.find((e) => e.destination_node_id === "node_reschedule_offer").destination_node_id =
+      "node_r18_reschedule_provenance";
+  code(
+    "node_r18_reschedule_provenance",
+    "Store original-practitioner replacement slots",
+    body("captureRescheduleAvailability"),
+    ["existing_current_check", "existing_slots_snapshot", "r18_route"],
+    [route("r18_move_offer", "node_reschedule_offer", "offer")],
+    "node_calendar_unavailable",
+  );
+  for (const id of [
+    "node_reschedule_offer",
+    "node_reschedule_final",
+    "node_reschedule_no_slots",
+    "node_reschedule_check_error",
+  ]) {
+    const n = nodes.get(id);
+    n.instruction.text +=
+      " This operation changes date/time only; original service and practitioner cannot change. Never offer another practitioner. Different service/practitioner requests use node_r18_reschedule_unsupported.";
+    n.edges.unshift(
+      promptEdge(
+        id + "_unsupported_scope",
+        "node_r18_reschedule_unsupported",
+        "Caller requests changing original service or practitioner",
+      ),
+    );
   }
-  nodes.get('node_reschedule_offer').edges.find(e=>e.id==='edge_reschedule_offer_change').transition_condition.prompt='Caller changes only the replacement date, time, time window or selected replacement slot, while preserving original service, practitioner and appointment target. Exclude unsupported service/practitioner changes and target changes.';
-  nodes.get('node_reschedule_final').edges.find(e=>e.id==='edge_reschedule_final_change').transition_condition.prompt='Caller changes only replacement date/time or selected replacement slot. Original target changes require selection; original service/practitioner changes are unsupported.';
-  nodes.get('node_reschedule_no_slots').edges.find(e=>e.destination_node_id==='node_invalidate_reschedule_clear_ack').transition_condition.prompt='Caller gives another replacement date/time with original service and original practitioner unchanged.';
-  nodes.get('node_reschedule_check_error').instruction.text='The replacement date/time was not verified. Preserve the original appointment, service and practitioner. Clarify only invalid date/time. If the original practitioner/service is no longer available or a technical error occurred, offer existing clinic staff assistance; do not substitute a different service or practitioner. No move is confirmed.';
-  const faqMove=nodes.get('node_global_faq').edges.find(e=>e.destination_node_id==='node_invalidate_reschedule_clear_ack');
-  faqMove.transition_condition.prompt='Caller corrects only replacement date/time of the SAME reschedule task that was interrupted; original appointment, service and practitioner remain unchanged.';
-  nodes.get('node_global_faq').edges.unshift(promptEdge('r18_faq_move_scope','node_r18_reschedule_unsupported','During the SAME interrupted reschedule task the caller requests changing original service or practitioner. This is unsupported; do not treat it as a booking correction.'));
-  nodes.get('node_reschedule_no_slots').instruction.text='The original appointment remains unchanged. No returned replacement slot matched. Ask for another date/time with the SAME original practitioner and service; never offer another practitioner.';
-  nodes.get('node_reschedule_offer').edges.find(e=>e.id==='edge_reschedule_offer_choose').destination_node_id='node_r18_reschedule_slot_capture';
-  extract('node_r18_reschedule_slot_capture','Capture local replacement slot choice',structuredClone(nodes.get('node_capture_slot').variables),'node_r18_reschedule_slot_match','node_reschedule_offer');
-  code('node_r18_reschedule_slot_match','Match replacement only from current original-practitioner slots',body('matchRescheduleSlot'),['existing_slot_id','existing_new_date','existing_new_time','r18_route'],[route('r18_move_slot_chosen','node_r18_existing_readback','readback'),route('r18_move_slot_clarify','node_reschedule_offer','clarify'),route('r18_move_slot_refresh','node_reschedule_details','search'),route('r18_move_slot_reselect','node_select_existing','select')],'node_select_existing');
+  nodes
+    .get("node_reschedule_offer")
+    .edges.find((e) => e.id === "edge_reschedule_offer_change").transition_condition.prompt =
+    "Caller changes only the replacement date, time, time window or selected replacement slot, while preserving original service, practitioner and appointment target. Exclude unsupported service/practitioner changes and target changes.";
+  nodes
+    .get("node_reschedule_final")
+    .edges.find((e) => e.id === "edge_reschedule_final_change").transition_condition.prompt =
+    "Caller changes only replacement date/time or selected replacement slot. Original target changes require selection; original service/practitioner changes are unsupported.";
+  nodes
+    .get("node_reschedule_no_slots")
+    .edges.find(
+      (e) => e.destination_node_id === "node_invalidate_reschedule_clear_ack",
+    ).transition_condition.prompt =
+    "Caller gives another replacement date/time with original service and original practitioner unchanged.";
+  nodes.get("node_reschedule_check_error").instruction.text =
+    "The replacement date/time was not verified. Preserve the original appointment, service and practitioner. Clarify only invalid date/time. If the original practitioner/service is no longer available or a technical error occurred, offer existing clinic staff assistance; do not substitute a different service or practitioner. No move is confirmed.";
+  const faqMove = nodes
+    .get("node_global_faq")
+    .edges.find((e) => e.destination_node_id === "node_invalidate_reschedule_clear_ack");
+  faqMove.transition_condition.prompt =
+    "Caller corrects only replacement date/time of the SAME reschedule task that was interrupted; original appointment, service and practitioner remain unchanged.";
+  nodes
+    .get("node_global_faq")
+    .edges.unshift(
+      promptEdge(
+        "r18_faq_move_scope",
+        "node_r18_reschedule_unsupported",
+        "During the SAME interrupted reschedule task the caller requests changing original service or practitioner. This is unsupported; do not treat it as a booking correction.",
+      ),
+    );
+  nodes.get("node_reschedule_no_slots").instruction.text =
+    "The original appointment remains unchanged. No returned replacement slot matched. Ask for another date/time with the SAME original practitioner and service; never offer another practitioner.";
+  nodes
+    .get("node_reschedule_offer")
+    .edges.find((e) => e.id === "edge_reschedule_offer_choose").destination_node_id =
+    "node_r18_reschedule_slot_capture";
+  extract(
+    "node_r18_reschedule_slot_capture",
+    "Capture local replacement slot choice",
+    structuredClone(nodes.get("node_capture_slot").variables),
+    "node_r18_reschedule_slot_match",
+    "node_reschedule_offer",
+  );
+  code(
+    "node_r18_reschedule_slot_match",
+    "Match replacement only from current original-practitioner slots",
+    body("matchRescheduleSlot"),
+    ["existing_slot_id", "existing_new_date", "existing_new_time", "r18_route"],
+    [
+      route("r18_move_slot_chosen", "node_r18_existing_readback", "readback"),
+      route("r18_move_slot_clarify", "node_reschedule_offer", "clarify"),
+      route("r18_move_slot_refresh", "node_reschedule_details", "search"),
+      route("r18_move_slot_reselect", "node_select_existing", "select"),
+    ],
+    "node_select_existing",
+  );
   // Prevent corrections from silently changing the old target; explicit re-selection clears it.
-  code('node_r18_existing_reselect','Clear reviewed target before choosing another',body('clearExistingTarget'),targetKeys,[route('r18_reselect_after_clear','node_select_existing','done')],'node_tool_failure');
-  code('node_r18_existing_abandon','Clear completed or abandoned existing operation',body('clearExistingTarget'),targetKeys,[route('r18_existing_done','node_anything_else','done')],'node_tool_failure');
-  allEdges(nodes.get('node_cancelled'))[0].destination_node_id='node_r18_existing_abandon';
-  allEdges(nodes.get('node_rescheduled'))[0].destination_node_id='node_r18_existing_abandon';
-  for(const id of ['node_reschedule_offer','node_reschedule_no_slots','node_reschedule_final','node_cancel_confirm'])for(const e of nodes.get(id).edges)if(e.destination_node_id==='node_anything_else')e.destination_node_id='node_r18_existing_abandon';
+  code(
+    "node_r18_existing_reselect",
+    "Clear reviewed target before choosing another",
+    body("clearExistingTarget"),
+    targetKeys,
+    [route("r18_reselect_after_clear", "node_select_existing", "done")],
+    "node_tool_failure",
+  );
+  code(
+    "node_r18_existing_abandon",
+    "Clear completed or abandoned existing operation",
+    body("clearExistingTarget"),
+    targetKeys,
+    [route("r18_existing_done", "node_anything_else", "done")],
+    "node_tool_failure",
+  );
+  allEdges(nodes.get("node_cancelled"))[0].destination_node_id = "node_r18_existing_abandon";
+  allEdges(nodes.get("node_rescheduled"))[0].destination_node_id = "node_r18_existing_abandon";
+  for (const id of [
+    "node_reschedule_offer",
+    "node_reschedule_no_slots",
+    "node_reschedule_final",
+    "node_cancel_confirm",
+  ])
+    for (const e of nodes.get(id).edges)
+      if (e.destination_node_id === "node_anything_else")
+        e.destination_node_id = "node_r18_existing_abandon";
   // H2: explicit identity-only edit path, retaining current slot/service/practitioner.
-  extract('node_r18_identity_capture','Capture only explicitly corrected patient fields',[variable('corrected_patient_name','Only the NEW patient name explicitly corrected in the latest caller turn; empty if unchanged. Never copy the old name.'),variable('corrected_patient_phone','Only NEW patient phone explicitly corrected in latest turn; empty if unchanged. Do not infer metadata.'),variable('identity_correction_evidence','Quote exact latest caller words establishing corrected fields; preserve spoken digits as digits.'),variable('identity_also_changes_schedule','True only when latest correction also explicitly changes service/practitioner/date/time; false for patient/contact only.','boolean')],'node_r18_identity_apply');
-  code('node_r18_identity_apply','Apply identity edits and invalidate prior consent only',body('identityCorrection'),['client_name','client_phone','patient_confirmed','patient_evidence','intake_name_cycle','intake_name_evidence','consent_confirmed','consent_cycle','consent_tuple','booking_readback','patient_cycle','active_booking_state','r18_route'],[route('r18_identity_readback','node_guard_patient_clear_result','readback'),route('r18_identity_offer','node_offer','offer'),route('r18_identity_intake','node_intake_before_time_clear','intake'),route('r18_identity_schedule','node_invalidate_booking_clear_ack','schedule'),route('r18_identity_clarify','node_r18_identity_clarify','clarify'),route('r18_identity_locked','node_book_failed','locked')]);
-  const clarify=structuredClone(nodes.get('node_intake_name'));clarify.id='node_r18_identity_clarify';clarify.name='Clarify patient correction';clarify.instruction={type:'prompt',text:'Continue naturally in the established language. Ask only for the unclear corrected patient name or contact number, one question at a time. Preserve the current service, practitioner, date/time and verified slot. Do not book or treat correction as consent.'};clarify.edges=[promptEdge('r18_identity_answer','node_r18_identity_capture','Caller supplies corrected name/contact'),promptEdge('r18_identity_declined','node_anything_else','Caller stops booking')];f.nodes.push(clarify);nodes.set(clarify.id,clarify);
-  for(const id of ['node_intake_name','node_service','node_service_clarify','node_doctor_preference','node_patient','node_date_time','node_offer','node_final','node_change_booking','node_correction_clarify','node_slot_clarify'])nodes.get(id).edges.unshift(promptEdge(id+'_patient_correction','node_r18_identity_capture','Caller explicitly CORRECTS the current patient name or phone/contact. This is not an ordinary answer to a missing-field question, another patient/new booking, FAQ, consent or original existing-appointment operation. Handle before scheduling-only correction.'));
+  extract(
+    "node_r18_identity_capture",
+    "Capture only explicitly corrected patient fields",
+    [
+      variable(
+        "corrected_patient_name",
+        "Only the NEW patient name explicitly corrected in the latest caller turn; empty if unchanged. Never copy the old name.",
+      ),
+      variable(
+        "corrected_patient_phone",
+        "Only NEW patient phone explicitly corrected in latest turn; empty if unchanged. Do not infer metadata.",
+      ),
+      variable(
+        "identity_correction_evidence",
+        "Quote exact latest caller words establishing corrected fields; preserve spoken digits as digits.",
+      ),
+      variable(
+        "identity_also_changes_schedule",
+        "True only when latest correction also explicitly changes service/practitioner/date/time; false for patient/contact only.",
+        "boolean",
+      ),
+    ],
+    "node_r18_identity_apply",
+  );
+  code(
+    "node_r18_identity_apply",
+    "Apply identity edits and invalidate prior consent only",
+    body("identityCorrection"),
+    [
+      "client_name",
+      "client_phone",
+      "patient_confirmed",
+      "patient_evidence",
+      "intake_name_cycle",
+      "intake_name_evidence",
+      "consent_confirmed",
+      "consent_cycle",
+      "consent_tuple",
+      "booking_readback",
+      "patient_cycle",
+      "active_booking_state",
+      "r18_route",
+    ],
+    [
+      route("r18_identity_readback", "node_guard_patient_clear_result", "readback"),
+      route("r18_identity_offer", "node_offer", "offer"),
+      route("r18_identity_intake", "node_intake_before_time_clear", "intake"),
+      route("r18_identity_schedule", "node_invalidate_booking_clear_ack", "schedule"),
+      route("r18_identity_clarify", "node_r18_identity_clarify", "clarify"),
+      route("r18_identity_locked", "node_book_failed", "locked"),
+    ],
+  );
+  const clarify = structuredClone(nodes.get("node_intake_name"));
+  clarify.id = "node_r18_identity_clarify";
+  clarify.name = "Clarify patient correction";
+  clarify.instruction = {
+    type: "prompt",
+    text: "Continue naturally in the established language. Ask only for the unclear corrected patient name or contact number, one question at a time. Preserve the current service, practitioner, date/time and verified slot. Do not book or treat correction as consent.",
+  };
+  clarify.edges = [
+    promptEdge(
+      "r18_identity_answer",
+      "node_r18_identity_capture",
+      "Caller supplies corrected name/contact",
+    ),
+    promptEdge("r18_identity_declined", "node_anything_else", "Caller stops booking"),
+  ];
+  f.nodes.push(clarify);
+  nodes.set(clarify.id, clarify);
+  for (const id of [
+    "node_intake_name",
+    "node_service",
+    "node_service_clarify",
+    "node_doctor_preference",
+    "node_patient",
+    "node_date_time",
+    "node_offer",
+    "node_final",
+    "node_change_booking",
+    "node_correction_clarify",
+    "node_slot_clarify",
+  ])
+    nodes
+      .get(id)
+      .edges.unshift(
+        promptEdge(
+          id + "_patient_correction",
+          "node_r18_identity_capture",
+          "Caller explicitly CORRECTS the current patient name or phone/contact. This is not an ordinary answer to a missing-field question, another patient/new booking, FAQ, consent or original existing-appointment operation. Handle before scheduling-only correction.",
+        ),
+      );
   // Extraction candidates must not inherit omitted fields from a previous edit/choice.
-  for(const [target,id,values] of [
-    ['node_r18_identity_capture','node_r18_identity_prepare',{corrected_patient_name:'',corrected_patient_phone:'',identity_correction_evidence:'',identity_also_changes_schedule:false}],
-    ['node_r18_existing_choice','node_r18_choice_prepare',{existing_choice_index:'',existing_choice_action:'',existing_choice_unclear:false}],
-  ]){replaceTarget(target,id);code(id,'Clear prior explicit edit/choice candidates','return '+JSON.stringify(values)+';',Object.keys(values),[edge(id+'_next',target)]);}
+  for (const [target, id, values] of [
+    [
+      "node_r18_identity_capture",
+      "node_r18_identity_prepare",
+      {
+        corrected_patient_name: "",
+        corrected_patient_phone: "",
+        identity_correction_evidence: "",
+        identity_also_changes_schedule: false,
+      },
+    ],
+    [
+      "node_r18_existing_choice",
+      "node_r18_choice_prepare",
+      { existing_choice_index: "", existing_choice_action: "", existing_choice_unclear: false },
+    ],
+  ]) {
+    replaceTarget(target, id);
+    code(
+      id,
+      "Clear prior explicit edit/choice candidates",
+      "return " + JSON.stringify(values) + ";",
+      Object.keys(values),
+      [edge(id + "_next", target)],
+    );
+  }
   // Extra current acknowledgements are cleared before every new routing code node.
-  const added=f.nodes.filter(n=>n.id.startsWith('node_r18_')&&n.type==='code');
-  for(const n of added){const ack=Object.hasOwn(n.response_variables,'r18_route')?'r18_route':Object.hasOwn(n.response_variables,'booking_result_verified')?'booking_result_verified':null;if(!ack)continue;
-    const clear=n.id+'_clear';replaceTarget(n.id,clear);code(clear,'Clear current remediation routing result','return '+JSON.stringify({[ack]:ack==='r18_route'?'':false})+';',[ack],[edge(clear+'_next',n.id,ack,ack==='r18_route'?'':'false')],n.else_edge.destination_node_id);
+  const added = f.nodes.filter((n) => n.id.startsWith("node_r18_") && n.type === "code");
+  for (const n of added) {
+    const ack = Object.hasOwn(n.response_variables, "r18_route")
+      ? "r18_route"
+      : Object.hasOwn(n.response_variables, "booking_result_verified")
+        ? "booking_result_verified"
+        : null;
+    if (!ack) continue;
+    const clear = n.id + "_clear";
+    replaceTarget(n.id, clear);
+    code(
+      clear,
+      "Clear current remediation routing result",
+      "return " + JSON.stringify({ [ack]: ack === "r18_route" ? "" : false }) + ";",
+      [ack],
+      [edge(clear + "_next", n.id, ack, ack === "r18_route" ? "" : "false")],
+      n.else_edge.destination_node_id,
+    );
   }
   // Each existing function entry must itself recheck the locked prepared tuple (C1),
   // including language branches and stale argument attempts.
-  for(const id of ['node_cancel_tool','node_cancel_tool_arabic_wait','node_reschedule_tool','node_reschedule_tool_arabic_wait']){
-    const target='node_downtime_prepare_'+id,gate='node_r18_entry_'+id;
-    const expectedAction=id.includes('cancel')?'cancel':'reschedule';
-    replaceTarget(target,gate);
-    code(gate,'Recheck immutable existing operation at tool entry',common+"\nif(dv.existing_action!=="+JSON.stringify(expectedAction)+"||dv.operation_kind!=="+JSON.stringify(expectedAction)+"||!truth(dv.existing_target_fresh)||dv.existing_target_verified_attempt!==dv.existing_attempt||!selectedTargetValid(dv)||!dv.existing_attempt||dv.existing_attempt_target!==dv.existing_selected_id||dv.existing_attempt_action!==dv.existing_action||dv.existing_attempt_tuple!==existingTuple(dv)||dv.existing_readback!==existingTuple(dv)||!truth(dv.existing_approval)||dv.existing_approval_tuple!==existingTuple(dv))throw Error('existing_target_or_approval_changed');return {r18_route:'execute'};",['r18_route'],[route(gate+'_execute',target,'execute')],'node_r18_existing_reselect_clear');
-    replaceTarget(gate,gate+'_clear');
-    code(gate+'_clear','Clear current mutation-entry acknowledgement',"return {r18_route:''};",['r18_route'],[edge(gate+'_clear_next',gate,'r18_route','')],'node_r18_existing_reselect_clear');
+  for (const id of [
+    "node_cancel_tool",
+    "node_cancel_tool_arabic_wait",
+    "node_reschedule_tool",
+    "node_reschedule_tool_arabic_wait",
+  ]) {
+    const target = "node_downtime_prepare_" + id,
+      gate = "node_r18_entry_" + id;
+    const expectedAction = id.includes("cancel") ? "cancel" : "reschedule";
+    replaceTarget(target, gate);
+    code(
+      gate,
+      "Recheck immutable existing operation at tool entry",
+      common +
+        "\nif(dv.existing_action!==" +
+        JSON.stringify(expectedAction) +
+        "||dv.operation_kind!==" +
+        JSON.stringify(expectedAction) +
+        "||!truth(dv.existing_target_fresh)||dv.existing_target_verified_attempt!==dv.existing_attempt||!selectedTargetValid(dv)||!dv.existing_attempt||dv.existing_attempt_target!==dv.existing_selected_id||dv.existing_attempt_action!==dv.existing_action||dv.existing_attempt_tuple!==existingTuple(dv)||dv.existing_readback!==existingTuple(dv)||!truth(dv.existing_approval)||dv.existing_approval_tuple!==existingTuple(dv))throw Error('existing_target_or_approval_changed');return {r18_route:'execute'};",
+      ["r18_route"],
+      [route(gate + "_execute", target, "execute")],
+      "node_r18_existing_reselect_clear",
+    );
+    replaceTarget(gate, gate + "_clear");
+    code(
+      gate + "_clear",
+      "Clear current mutation-entry acknowledgement",
+      "return {r18_route:''};",
+      ["r18_route"],
+      [edge(gate + "_clear_next", gate, "r18_route", "")],
+      "node_r18_existing_reselect_clear",
+    );
   }
   // Default-only initialization; call-level reconciliation latch is intentionally never
   // touched by reset, identity edit, or a feature switch.
-  Object.assign(f.default_dynamic_variables,{booking_reconciliation_required:'false',booking_result_verified:'false',booking_attempt_tuple:'',booking_attempt_cycle:'',booking_retry_allowed:'false',booking_follow_up_saved:'false',booking_follow_up_id:'',practitioner_scope:'',current_availability_check:'',current_availability_snapshot:'[]',current_availability_signature:'',r18_route:''});
-  for(const k of [...new Set(existingKeys)])if(!Object.hasOwn(f.default_dynamic_variables,k))f.default_dynamic_variables[k]=k.endsWith('snapshot')?(k==='existing_target_snapshot'?'{}':'[]'):'';
-  for(const n of f.nodes)for(const k of Object.keys(n.response_variables||{}))if(!Object.hasOwn(f.default_dynamic_variables,k)&&k.startsWith('existing_'))f.default_dynamic_variables[k]='';
-  f.global_prompt+='\nAUDITED OPERATION BINDING: Existing appointment cancellation and reschedule use only current lookup-selected stored targets and exact current approval tuples; never invent or substitute target IDs. Reschedule changes date/time ONLY, preserving original service/practitioner. A different service/practitioner needs existing staff assistance. After any attempted booking without verified current success, booking_reconciliation_required remains true across task changes and resets; no new creation or new slot retry is permitted. State that the appointment is not confirmed and staff must reconcile. Patient name/contact-only corrections preserve scheduling and returned slots, update identity, clear consent and require a new final approval.';
+  Object.assign(f.default_dynamic_variables, {
+    booking_reconciliation_required: "false",
+    booking_result_verified: "false",
+    booking_attempt_tuple: "",
+    booking_attempt_cycle: "",
+    booking_retry_allowed: "false",
+    booking_follow_up_saved: "false",
+    booking_follow_up_id: "",
+    practitioner_scope: "",
+    current_availability_check: "",
+    current_availability_snapshot: "[]",
+    current_availability_signature: "",
+    r18_route: "",
+  });
+  for (const k of [...new Set(existingKeys)])
+    if (!Object.hasOwn(f.default_dynamic_variables, k))
+      f.default_dynamic_variables[k] = k.endsWith("snapshot")
+        ? k === "existing_target_snapshot"
+          ? "{}"
+          : "[]"
+        : "";
+  for (const n of f.nodes)
+    for (const k of Object.keys(n.response_variables || {}))
+      if (!Object.hasOwn(f.default_dynamic_variables, k) && k.startsWith("existing_"))
+        f.default_dynamic_variables[k] = "";
+  f.global_prompt +=
+    "\nAUDITED OPERATION BINDING: Existing appointment cancellation and reschedule use only current lookup-selected stored targets and exact current approval tuples; never invent or substitute target IDs. Reschedule changes date/time ONLY, preserving original service/practitioner. A different service/practitioner needs existing staff assistance. After any attempted booking without verified current success, booking_reconciliation_required remains true across task changes and resets; no new creation or new slot retry is permitted. State that the appointment is not confirmed and staff must reconcile. Patient name/contact-only corrections preserve scheduling and returned slots, update identity, clear consent and require a new final approval.";
   // Embed only the helper dependency closure used by each sandbox. Retell also
   // limits total saved-flow size; repeated unrelated helpers are not deployed.
-  for(const n of f.nodes){if(n.code?.includes(common+'\n'))n.code=sandbox(n.code.replace(common+'\n',''));if(n.code&&n.code.length>20000)throw Error('Code exceeds Retell sandbox limit: '+n.id);}
+  for (const n of f.nodes) {
+    if (n.code?.includes(common + "\n")) n.code = sandbox(n.code.replace(common + "\n", ""));
+    if (n.code && n.code.length > 20000) throw Error("Code exceeds Retell sandbox limit: " + n.id);
+  }
   return f;
 }
-if(process.argv[1]===new URL(import.meta.url).pathname){const baseline=JSON.parse(fs.readFileSync(new URL('baseline-v17.json',root)));const result=build(baseline);fs.writeFileSync(new URL('candidate.json',root),JSON.stringify(result,null,2)+'\n');console.log('Built '+result.nodes.length+' nodes offline');}
+if (process.argv[1] === new URL(import.meta.url).pathname) {
+  const baseline = JSON.parse(fs.readFileSync(new URL("baseline-v17.json", root)));
+  const result = build(baseline);
+  fs.writeFileSync(new URL("candidate.json", root), JSON.stringify(result, null, 2) + "\n");
+  console.log("Built " + result.nodes.length + " nodes offline");
+}

@@ -1,2 +1,15 @@
-import { createFileRoute } from "@tanstack/react-router"; import { ClientsPage } from "@/components/clinic-pages";
-export const Route=createFileRoute("/clients/")({head:()=>({meta:[{title:"Clients — Apero"},{name:"description",content:"Search and manage clinic clients."},{property:"og:title",content:"Clients — Apero"},{property:"og:description",content:"Search and manage clinic clients."},{property:"og:type",content:"website"},{name:"twitter:card",content:"summary_large_image"}]}),component:ClientsPage});
+import { createFileRoute } from "@tanstack/react-router";
+import { ClientsPage } from "@/components/clinic-pages";
+export const Route = createFileRoute("/clients/")({
+  head: () => ({
+    meta: [
+      { title: "Clients — Apero" },
+      { name: "description", content: "Search and manage clinic clients." },
+      { property: "og:title", content: "Clients — Apero" },
+      { property: "og:description", content: "Search and manage clinic clients." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
+  component: ClientsPage,
+});
