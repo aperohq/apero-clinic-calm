@@ -62,12 +62,29 @@ const evidence = {
   production_data: false,
   modes: [],
 };
-for (const mode of ["fresh", "existing-upgrade"]) {
+for (const mode of ["fresh", "existing-upgrade", "restricted-owner"]) {
   const cluster = await disposablePostgres({ cron: true });
   const sql = postgres({ ...cluster, max: 1, onnotice() {} });
   let success = false;
   try {
     await sql.unsafe(shim);
+    if (mode === "restricted-owner") {
+      // Managed Supabase's postgres role is not a superuser. Preinstalled
+      // extensions are platform infrastructure, never a privilege granted to app roles.
+      await sql.unsafe(
+        "create extension if not exists btree_gist;create extension if not exists pgcrypto;create extension if not exists pg_cron;",
+      );
+      await sql.unsafe(`create role apero_migrator login nosuperuser createdb createrole bypassrls;
+        grant anon,authenticated,service_role,pg_read_all_settings to apero_migrator;
+        grant usage on schema auth,cron to apero_migrator;grant all on auth.users to apero_migrator;
+        alter database apero_native_validation owner to apero_migrator;
+        set role apero_migrator;`);
+      assert.equal(
+        (await sql`select rolsuper from pg_roles where rolname=current_user`)[0].rolsuper,
+        false,
+      );
+    }
+
     const files = (await readdir("supabase/migrations")).filter((f) => f.endsWith(".sql")).sort();
     let snapshot;
     for (const file of files) {
@@ -77,7 +94,7 @@ for (const mode of ["fresh", "existing-upgrade"]) {
       }
       await sql.unsafe(await readFile("supabase/migrations/" + file, "utf8"));
     }
-    if (mode === "fresh") {
+    if (mode !== "existing-upgrade") {
       assert.equal((await sql`select count(*)::int n from clients`)[0].n, 0);
       await seed(sql);
     } else assert.deepEqual(await snapshotRows(sql), snapshot);
