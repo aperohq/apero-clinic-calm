@@ -5,12 +5,12 @@ import { createClient } from "@supabase/supabase-js";
 import type { Database } from "./types";
 import { brokeredPreviewStorage } from "./previewAuthStorage";
 
-const SUPABASE_URL =
-  (import.meta.env["VITE_SUPABASE_URL"] as string | undefined) ??
-  (typeof process !== "undefined" ? process.env["SUPABASE_URL"] : undefined);
-const SUPABASE_PUBLISHABLE_KEY =
-  (import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"] as string | undefined) ??
-  (typeof process !== "undefined" ? process.env["SUPABASE_PUBLISHABLE_KEY"] : undefined);
+const SUPABASE_URL = (import.meta.env["VITE_SUPABASE_URL"] as string | undefined)?.trim();
+const SUPABASE_PUBLISHABLE_KEY = (import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"] as string | undefined)?.trim();
+
+// Browser configuration must be present at build time; server-only variables
+// cannot repair a missing value in the shipped frontend bundle.
+export const hasSupabaseConfiguration = Boolean(SUPABASE_URL && SUPABASE_PUBLISHABLE_KEY);
 
 function createSupabaseFetch(supabaseKey: string): typeof fetch {
   return (input, init) => {

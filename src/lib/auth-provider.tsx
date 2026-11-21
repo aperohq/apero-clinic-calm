@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Session } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
+import { hasSupabaseConfiguration, supabase } from "@/integrations/supabase/client";
 import { db } from "@/lib/db";
 import type { ClinicRow, ProfileRole, ProfileRow } from "@/lib/db-types";
 import { AuthContext, type AuthState } from "@/lib/auth-context";
@@ -25,6 +25,26 @@ function sameRow(left: object, right: object) {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  if (!hasSupabaseConfiguration) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-background px-6 text-foreground">
+        <div className="max-w-lg space-y-4 text-center" role="alert">
+          <h1 className="text-xl font-semibold">Apero connection setup is incomplete</h1>
+          <p className="text-sm leading-6 text-muted-foreground">
+            The Supabase project URL or publishable key is missing. Sign-in and clinic data are unavailable until the connection settings are restored.
+          </p>
+          <p className="text-sm leading-6 text-muted-foreground">
+            Add <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_PUBLISHABLE_KEY</code> in the secure environment settings, then rebuild the preview.
+          </p>
+          <a href="mailto:apero.hq@gmail.com" className="inline-block text-sm font-medium underline">Contact Apero support</a>
+        </div>
+      </main>
+    );
+  }
+  return <ConfiguredAuthProvider>{children}</ConfiguredAuthProvider>;
+}
+
+function ConfiguredAuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState<Session | null>(null);

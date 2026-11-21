@@ -338,7 +338,7 @@ globalThis.__cleanupAuthTests = async () => {
 };
 try {
   await build({
-    entryPoints: [inviteMode ? "tests/invite-setup.test.tsx" : "tests/clinic-auth.test.tsx"],
+    entryPoints: [process.argv.includes("--missing-config") ? "tests/missing-supabase-config.test.tsx" : inviteMode ? "tests/invite-setup.test.tsx" : "tests/clinic-auth.test.tsx"],
     outfile: join(directory, "tests.cjs"),
     bundle: true,
     platform: "node",
@@ -346,7 +346,7 @@ try {
     format: "cjs",
     jsx: "automatic",
     define: {
-      "import.meta.env": JSON.stringify({
+      "import.meta.env": JSON.stringify(process.argv.includes("--missing-config") ? {} : {
         VITE_SUPABASE_URL: origin,
         VITE_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_local_test_only",
       }),
