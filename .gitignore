@@ -49,10 +49,11 @@ database-backups/
 *.json.age
 scripts/operations/__pycache__/
 
-# Keep local configuration private; commit only placeholders.
+# Keep local configuration private; allow only examples and public production build values.
 .env
 .env.*
 !.env.example
+!.env.production
 __pycache__/
 *.pyc
 supabase/.temp/
