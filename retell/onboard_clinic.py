@@ -12,7 +12,7 @@ parser.add_argument("--config", required=True)
 parser.add_argument("--output", required=True)
 parser.add_argument("--fixture", help="Local clinic/staff JSON for offline validation")
 args = parser.parse_args()
-cfg = json.loads(Path(args.config).read_text())
+cfg = json.loads(Path(args.config).read_text(encoding="utf-8"))
 clinic_id = cfg["clinic_id"]
 
 def fetch(table, columns):
@@ -25,7 +25,7 @@ def fetch(table, columns):
         return json.load(response)
 
 if args.fixture:
-    fixture = json.loads(Path(args.fixture).read_text())
+    fixture = json.loads(Path(args.fixture).read_text(encoding="utf-8"))
     clinics, staff = fixture["clinics"], fixture["staff"]
     clinics = [c for c in clinics if c["id"] == clinic_id]
     staff = [s for s in staff if s["clinic_id"] == clinic_id]

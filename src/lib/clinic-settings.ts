@@ -23,7 +23,10 @@ export type SettingsField = (typeof SETTINGS_FIELDS)[number];
 export type HoursPeriod = { start: string; end: string };
 export type ClinicHours = { days: { day: number; periods: HoursPeriod[] }[] };
 export type ClinicSettings = Pick<ClinicRow, SettingsField>;
-export type SettingsDraft = Record<Exclude<SettingsField, "opening_hours" | "live_transfer_enabled">, string> & {
+export type SettingsDraft = Record<
+  Exclude<SettingsField, "opening_hours" | "live_transfer_enabled">,
+  string
+> & {
   opening_hours: ClinicHours | null;
   live_transfer_enabled: boolean;
 };
@@ -138,7 +141,11 @@ export function settingsDraft(row: ClinicSettings): SettingsDraft {
   return Object.fromEntries(
     SETTINGS_FIELDS.map((key) => [
       key,
-      key === "opening_hours" ? structuredClone(row[key] ?? null) : key === "live_transfer_enabled" ? row[key] === true : (row[key] ?? ""),
+      key === "opening_hours"
+        ? structuredClone(row[key] ?? null)
+        : key === "live_transfer_enabled"
+          ? row[key] === true
+          : (row[key] ?? ""),
     ]),
   ) as SettingsDraft;
 }
@@ -149,8 +156,10 @@ export function normalizeSettings(draft: SettingsDraft, original?: ClinicSetting
   const row = {} as ClinicSettings;
   for (const key of SETTINGS_FIELDS) {
     if (key === "live_transfer_enabled") {
-      if(typeof draft[key] !== "boolean")throw new SettingsValidationError("Choose whether live transfer is enabled.");
-      row[key]=draft[key];continue;
+      if (typeof draft[key] !== "boolean")
+        throw new SettingsValidationError("Choose whether live transfer is enabled.");
+      row[key] = draft[key];
+      continue;
     }
     if (original && JSON.stringify(draft[key]) === JSON.stringify(settingsDraft(original)[key])) {
       Object.assign(row, { [key]: original[key] ?? null });
@@ -209,7 +218,10 @@ export function changedSettings(
 ): Partial<ClinicSettings> {
   return Object.fromEntries(
     SETTINGS_FIELDS.filter(
-      (key) => JSON.stringify(key === "live_transfer_enabled" ? original[key] === true : original[key] ?? null) !== JSON.stringify(next[key]),
+      (key) =>
+        JSON.stringify(
+          key === "live_transfer_enabled" ? original[key] === true : (original[key] ?? null),
+        ) !== JSON.stringify(next[key]),
     ).map((key) => [key, next[key]]),
   );
 }

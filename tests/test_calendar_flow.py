@@ -10,7 +10,7 @@ module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
 
 class CalendarFlowTests(unittest.TestCase):
     def setUp(self):
-        source=json.loads(Path(os.environ.get('CALENDAR_FLOW_PATH',ROOT/'retell/master/reference/golden.json')).read_text())
+        source=json.loads(Path(os.environ.get('CALENDAR_FLOW_PATH',ROOT/'retell/master/reference/golden.json')).read_text(encoding="utf-8"))
         self.before=source.get('conversationFlow',source)
         self.flow=module.apply_calendar_fallback(copy.deepcopy(self.before))
         self.nodes={n['id']:n for n in self.flow['nodes']}
@@ -43,7 +43,7 @@ class CalendarFlowTests(unittest.TestCase):
         for identifier in ['node_book','node_book_failed']:
             self.assertEqual(self.nodes[identifier],next(n for n in self.before['nodes'] if n['id']==identifier))
     def test_requests_label(self):
-        source=(ROOT/'src/components/requests.tsx').read_text()
+        source=(ROOT/'src/components/requests.tsx').read_text(encoding="utf-8")
         self.assertIn('row.reason.startsWith("Calendar unavailable —")',source)
         self.assertIn('"Calendar unavailable — follow-up"',source)
     def test_patch_is_idempotent(self):

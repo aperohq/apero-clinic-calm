@@ -9,9 +9,22 @@ test("weekly editor represents Monday through Sunday without inventing missing h
     { day_of_week: 0, start_time: "09:30:00", end_time: "14:00:00", is_available: true },
   ] as StaffAvailabilityRow[];
   const rows = buildWeeklyRows(saved);
-  assert.deepEqual(rows.map((row) => row.day_of_week), STAFF_WEEK_DAYS);
-  assert.deepEqual(rows[2], { day_of_week: 3, start_time: "11:00", end_time: "18:00", is_available: false });
-  assert.deepEqual(rows[6], { day_of_week: 0, start_time: "09:30", end_time: "14:00", is_available: true });
+  assert.deepEqual(
+    rows.map((row) => row.day_of_week),
+    STAFF_WEEK_DAYS,
+  );
+  assert.deepEqual(rows[2], {
+    day_of_week: 3,
+    start_time: "11:00",
+    end_time: "18:00",
+    is_available: false,
+  });
+  assert.deepEqual(rows[6], {
+    day_of_week: 0,
+    start_time: "09:30",
+    end_time: "14:00",
+    is_available: true,
+  });
   assert.deepEqual(rows[5], { day_of_week: 6, start_time: "", end_time: "", is_available: false });
 });
 

@@ -13,7 +13,8 @@ import {
   Outlet,
   RouterProvider,
 } from "@tanstack/react-router";
-import { AuthProvider, useAuth } from "@/lib/auth";
+import { useAuth } from "@/lib/auth";
+import { AuthProvider } from "@/lib/auth-provider";
 import { supabase } from "@/integrations/supabase/client";
 import { RouteShell } from "@/components/route-shell";
 import { LoginPage } from "@/components/clinic-pages";
@@ -357,7 +358,9 @@ test("clinic authentication with the real Supabase SDK and local HTTP fixtures",
       const reads = fixture.requests.filter(
         (r) =>
           r.path.startsWith("/rest/v1/") &&
-          !["/rest/v1/profiles", "/rest/v1/clinics", "/rest/v1/rpc/clinic_team_members"].includes(r.path),
+          !["/rest/v1/profiles", "/rest/v1/clinics", "/rest/v1/rpc/clinic_team_members"].includes(
+            r.path,
+          ),
       );
       assert.ok(reads.length >= keys.length);
       assert.ok(reads.every((r) => r.search.clinic_id === "eq.test-clinic"));
@@ -404,12 +407,43 @@ test("clinic authentication with the real Supabase SDK and local HTTP fixtures",
       assert.ok(!container.textContent!.includes("Clinic B user"));
     },
   );
+  await t.test(
+    "background network failure preserves account, cache and mounted forms, then recovers",
+    async () => {
+      const mounts = portalMounts;
+      const profile = auth.profile;
+      queryClient.setQueryData(["unsaved-work-fixture"], "keep");
+      for (const failure of [503, "network"]) {
+        fixture.profileError = failure;
+        await act(async () => {
+          await auth.refreshProfile(true);
+        });
+        assert.equal(auth.profile, profile);
+      }
+      assert.equal(auth.authError, false);
+      assert.equal(auth.loading, false);
+      assert.equal(auth.profile, profile);
+      assert.equal(portalMounts, mounts);
+      assert.equal(queryClient.getQueryData(["unsaved-work-fixture"]), "keep");
+      fixture.profileError = false;
+      await act(async () => {
+        await auth.refreshProfile(true);
+      });
+      assert.equal(auth.profile, profile);
+    },
+  );
   await t.test("unchanged-role focus refresh preserves the mounted portal", async () => {
     const mounts = portalMounts;
     const profile = auth.profile;
     const reads = fixture.requests.filter((request) => request.path === "/rest/v1/profiles").length;
-    await act(async () => { window.dispatchEvent(new window.Event("focus")); });
-    await waitFor(() => fixture.requests.filter((request) => request.path === "/rest/v1/profiles").length > reads, "background permission check");
+    await act(async () => {
+      window.dispatchEvent(new window.Event("focus"));
+    });
+    await waitFor(
+      () =>
+        fixture.requests.filter((request) => request.path === "/rest/v1/profiles").length > reads,
+      "background permission check",
+    );
     assert.equal(auth.loading, false);
     assert.equal(portalMounts, mounts);
     assert.equal(auth.profile, profile);
@@ -530,7 +564,9 @@ test("clinic authentication with the real Supabase SDK and local HTTP fixtures",
     fixture.requests.filter(
       (r) =>
         r.path.startsWith("/rest/v1/") &&
-        !["/rest/v1/profiles", "/rest/v1/clinics", "/rest/v1/rpc/clinic_team_members"].includes(r.path),
+        !["/rest/v1/profiles", "/rest/v1/clinics", "/rest/v1/rpc/clinic_team_members"].includes(
+          r.path,
+        ),
     ).length;
   for (const [label, changes, message] of [
     ["profile has no clinic ID", { profileClinicId: null }, "No clinic is linked"],

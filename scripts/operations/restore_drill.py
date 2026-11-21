@@ -15,7 +15,7 @@ import sys
 import time
 import uuid
 from database_backup import private,digest
-from recovery_catalog import STRUCTURE_SQL
+from recovery_catalog import STRUCTURE_SQL, structures_match
 
 
 def execute(command,input=None):
@@ -38,6 +38,26 @@ def stream(identity,path,command):
 def quote(identifier):
     if not re.fullmatch(r'[A-Za-z_][A-Za-z0-9_]*',identifier):raise ValueError('invalid_identifier')
     return '"'+identifier+'"'
+
+
+def prepare_extensions(psql, catalog):
+    names = catalog.get('extensions', [])
+    locations = catalog.get('extension_schemas', {})
+    if 'btree_gist' in names:
+        # Older Apero archives used the canonical public schema. New manifests
+        # record the real location, supporting Supabase's extensions namespace.
+        schema = locations.get('btree_gist', 'public')
+        if schema not in ('public', 'extensions'):
+            raise ValueError('unsupported_extension_schema')
+        execute(psql, input=(f'create schema if not exists {quote(schema)}; '
+            f'create extension if not exists btree_gist with schema {quote(schema)};').encode('utf-8'))
+
+
+def restore_archive_sections(identity, archive, psql, restore, catalog):
+    """Shared by the isolated Docker drill and native synthetic acceptance."""
+    stream(identity, archive, restore + ['--section=pre-data'])
+    prepare_extensions(psql, catalog)
+    stream(identity, archive, restore + ['--section=data', '--section=post-data'])
 
 
 def main():
@@ -81,8 +101,12 @@ def main():
         psql=['docker','exec','-i',container,'psql','-X','-A','-t','-U','drill_admin','-d','drill_restore','-v','ON_ERROR_STOP=1']
         execute(psql,input=b'drop schema public cascade;')
         stream(args.identity,args.bundle/'roles.sql.age',psql)
-        stream(args.identity,args.bundle/'database.dump.age',
-            ['docker','exec','-i',container,'pg_restore','--exit-on-error','--single-transaction','-U','drill_admin','-d','drill_restore'])
+        restore = ['docker','exec','-i',container,'pg_restore','--exit-on-error',
+            '--single-transaction','-U','drill_admin','-d','drill_restore']
+        # Schema-filtered pg_dump archives may omit CREATE EXTENSION. Restore
+        # namespaces first, then install operator classes before post-data GiST
+        # exclusion constraints. Every phase stays inside the disposable container.
+        restore_archive_sections(args.identity,args.bundle/'database.dump.age',psql,restore,manifest.get('catalog', {}))
         expected=manifest['snapshot_catalog']
         for table in expected['tables']:
             sql=f"select count(*) from {quote(table['schema'])}.{quote(table['table'])};"
@@ -98,7 +122,7 @@ def main():
           'functions':f'select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname in {schemas};'}
         for key,query in queries.items():
             if int(execute(psql,input=query.encode()).strip())!=expected[key]:raise ValueError('catalog_count_mismatch')
-        if json.loads(execute(psql,input=STRUCTURE_SQL.encode()).strip())!=expected['structure']:
+        if not structures_match(expected['structure'], json.loads(execute(psql,input=STRUCTURE_SQL.encode()).strip())):
             raise ValueError('structure_or_acl_mismatch')
         # Existing real data stays inside container; output is booleans/counts only.
         check="""select count(*) from appointments a left join clients c on c.id=a.client_id and c.clinic_id=a.clinic_id

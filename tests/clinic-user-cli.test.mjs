@@ -174,7 +174,7 @@ test("new invite directly uses Auth Admin and verifies correct membership before
     "https://aperodashboard.lovable.app/account/setup",
   );
   assert.equal(official.searchParams.get("provider_parameter"), "retain");
-  assert.equal((await stat(f.output)).mode & 0o777, 0o600);
+  if (process.platform !== "win32") assert.equal((await stat(f.output)).mode & 0o777, 0o600);
   assert.ok(!(await readFile(f.output, "utf8")).includes(secret));
   assert.equal(r.calls.at(-1).path, "/rest/v1/rpc/finish_clinic_invitation");
   assert.match(r.text, /Clinic membership verified/);

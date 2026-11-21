@@ -76,6 +76,6 @@ def apply_unknown_fallback(flow):
     return flow
 
 if __name__ == '__main__':
-    source=json.loads(Path(sys.argv[1]).read_text())
+    source=json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
     apply_unknown_fallback(source.get('conversationFlow',source))
-    Path(sys.argv[2]).write_text(json.dumps(source,ensure_ascii=False,indent=2)+'\n')
+    Path(sys.argv[2]).write_text(json.dumps(source,ensure_ascii=False,indent=2)+'\n', encoding="utf-8")

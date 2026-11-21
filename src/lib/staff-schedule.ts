@@ -22,7 +22,10 @@ export function schedulePayload(rows: WeeklyScheduleRow[]) {
   for (const row of rows) {
     if (row.is_available && (!row.start_time || !row.end_time))
       throw new Error("Set start and end times for each working day.");
-    if ((row.start_time || row.end_time) && (!row.start_time || !row.end_time || row.end_time <= row.start_time))
+    if (
+      (row.start_time || row.end_time) &&
+      (!row.start_time || !row.end_time || row.end_time <= row.start_time)
+    )
       throw new Error("End time must be after start time for each day with hours.");
   }
   return rows.filter((row) => row.start_time && row.end_time);

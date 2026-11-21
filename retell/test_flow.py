@@ -4,7 +4,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-flow = json.loads(Path("retell/dental-zone-flow.json").read_text())
+flow = json.loads(Path("retell/dental-zone-flow.json").read_text(encoding="utf-8"))
 nodes = {n["id"]: n for n in flow["nodes"]}
 tools = {t["tool_id"]: t for t in flow["tools"]}
 
@@ -18,7 +18,7 @@ class FlowSafety(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory) / "clinic-b.json"
             subprocess.run(["python3", "retell/build_flow.py", "--config", "retell/config/clinic-b.local.json", "--output", str(output)], check=True, capture_output=True)
-            second = json.loads(output.read_text())
+            second = json.loads(output.read_text(encoding="utf-8"))
         self.assertEqual([n["id"] for n in second["nodes"]], [n["id"] for n in flow["nodes"]])
         self.assertEqual(second["knowledge_base_ids"], ["knowledge_base_local_fixture"])
         self.assertTrue(all(t["url"].startswith("http://localhost:") for t in second["tools"]))

@@ -12,11 +12,11 @@ parser.add_argument("--config", default="retell/config/dental-zone.json")
 parser.add_argument("--source", default="retell/dental-zone-flow.json", help="Saved flow used for model defaults")
 parser.add_argument("--output", default="retell/dental-zone-flow.json")
 args = parser.parse_args()
-config = json.loads(Path(args.config).read_text())
+config = json.loads(Path(args.config).read_text(encoding="utf-8"))
 required = ("clinic_id", "clinic_name", "clinic_name_ar", "clinic_address", "clinic_phone", "clinic_hours", "timezone", "languages", "clinic_type", "knowledge_base_id", "tool_url")
 missing = [key for key in required if not config.get(key)]
 if missing: parser.error("Missing clinic config: " + ", ".join(missing))
-old = json.loads(Path(args.source).read_text())
+old = json.loads(Path(args.source).read_text(encoding="utf-8"))
 URL = config["tool_url"]
 
 def prompt(text): return {"type": "prompt", "prompt": text}
@@ -265,5 +265,5 @@ def render(value):
     if isinstance(value, dict): return {key: render(item) for key, item in value.items()}
     return value
 output = render(output)
-Path(args.output).write_text(json.dumps(output, ensure_ascii=False, indent=2) + "\n")
+Path(args.output).write_text(json.dumps(output, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 print(f"Prepared {len(nodes)} nodes and {len(tools)} tools for {config['clinic_name']} at {args.output}")

@@ -1,2 +1,20 @@
-import { createFileRoute } from "@tanstack/react-router"; import { AccountPage } from "@/components/clinic-pages"; import { RouteShell } from "@/components/route-shell";
-export const Route=createFileRoute("/account")({head:()=>({meta:[{title:"Account — Apero"},{name:"description",content:"Manage your Apero account and profile."},{property:"og:title",content:"Account — Apero"},{property:"og:description",content:"Manage your Apero account and profile."},{property:"og:type",content:"website"},{name:"twitter:card",content:"summary_large_image"}]}),component:()=> <RouteShell><AccountPage/></RouteShell>});
+import { createFileRoute } from "@tanstack/react-router";
+import { AccountPage } from "@/components/clinic-pages";
+import { RouteShell } from "@/components/route-shell";
+export const Route = createFileRoute("/account")({
+  head: () => ({
+    meta: [
+      { title: "Account — Apero" },
+      { name: "description", content: "Manage your Apero account and profile." },
+      { property: "og:title", content: "Account — Apero" },
+      { property: "og:description", content: "Manage your Apero account and profile." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
+  component: () => (
+    <RouteShell>
+      <AccountPage />
+    </RouteShell>
+  ),
+});

@@ -16,9 +16,9 @@ class BackupSafetyTests(unittest.TestCase):
         self.root = Path(self.temp.name)
         self.root.chmod(0o700)
         self.recipients = self.root / 'recipients'
-        self.recipients.write_text('age1synthetic-public-key\n')
+        self.recipients.write_text('age1synthetic-public-key\n', encoding="utf-8")
         self.password = self.root / 'pgpass'
-        self.password.write_text('DO_NOT_LOG_PASSWORD')
+        self.password.write_text('DO_NOT_LOG_PASSWORD', encoding="utf-8")
         self.password.chmod(0o600)
         self.env = patch.dict(os.environ, {'PGHOST': 'db.example.test', 'PGUSER': 'postgres',
             'PGDATABASE': 'postgres', 'PGSSLMODE': 'verify-full', 'PGPASSFILE': str(self.password),
@@ -70,7 +70,7 @@ class BackupSafetyTests(unittest.TestCase):
             first = backup.backup(self.root, self.recipients)
             second = backup.backup(self.root, self.recipients)
         self.assertNotEqual(first, second)
-        manifest = json.loads((first / 'manifest.json').read_text())
+        manifest = json.loads((first / 'manifest.json').read_text(encoding="utf-8"))
         self.assertFalse(manifest['restore_tested'])
         self.assertFalse(manifest['archive_validated'])
         self.assertEqual(manifest['files']['database.dump.age']['sha256'], backup.digest(first / 'database.dump.age'))

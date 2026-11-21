@@ -62,8 +62,30 @@ const session = (authUser = user) => {
   };
 };
 const fixture = {
-  settings: process.argv.includes("--settings"), settingsError: false, settingsDelay: 0, settingsSaveDelay: 0, settingsSaveError: false, settingsConflict: false, settingsUpdates: [],
-  clinicValues: { localized_name: "العيادة", clinic_type: "Dental", phone: "+12025550100", email: "clinic@example.test", website: "https://clinic.example.test", fallback_phone: "+12025550199", address: "Building 1", city: "City", country: "Country", directions: "Ground floor", parking_information: "Visitor parking", receptionist_name: "Apero", receptionist_localized_name: "أبيرو", opening_hours: null, live_transfer_enabled: false },
+  settings: process.argv.includes("--settings"),
+  settingsError: false,
+  settingsDelay: 0,
+  settingsSaveDelay: 0,
+  settingsSaveError: false,
+  settingsConflict: false,
+  settingsUpdates: [],
+  clinicValues: {
+    localized_name: "العيادة",
+    clinic_type: "Dental",
+    phone: "+12025550100",
+    email: "clinic@example.test",
+    website: "https://clinic.example.test",
+    fallback_phone: "+12025550199",
+    address: "Building 1",
+    city: "City",
+    country: "Country",
+    directions: "Ground floor",
+    parking_information: "Visitor parking",
+    receptionist_name: "Apero",
+    receptionist_localized_name: "أبيرو",
+    opening_hours: null,
+    live_transfer_enabled: false,
+  },
   calendar: process.argv.includes("--calendar")
     ? {
         appointments: [],
@@ -95,7 +117,13 @@ const fixture = {
   accountPasswords: new Map(),
   passwordUpdateError: false,
   roleChanges: [],
-  teamInvitations: [], teamRevocations: [], teamError: false, teamEmpty: false, teamEmailFailure: false, teamInviteRejection: null, teamRevokeFailure: false,
+  teamInvitations: [],
+  teamRevocations: [],
+  teamError: false,
+  teamEmpty: false,
+  teamEmailFailure: false,
+  teamInviteRejection: null,
+  teamRevokeFailure: false,
 };
 const origin = "http://127.0.0.1:54321";
 const localFetch = async (req) => {
@@ -150,36 +178,84 @@ const localFetch = async (req) => {
   if (!req.headers.get("authorization")?.startsWith("Bearer eyJ"))
     return reply(401, { message: "Missing user token" });
   if (url.pathname === "/rest/v1/rpc/clinic_team_members") {
-    if (!account || account.role === "staff" || account.revokedAt) return reply(403, { code: "42501" });
+    if (!account || account.role === "staff" || account.revokedAt)
+      return reply(403, { code: "42501" });
     if (fixture.teamError) return reply(500, { message: "PRIVATE_DIRECTORY_DIAGNOSTIC" });
-    const rows = fixture.teamEmpty ? [] : accounts.filter(item => item.clinicId === resolvedClinicId).map(item => ({
-      id: item.profileId, role: item.role, full_name: item.fullName, email: item.user.email,
-      revoked_at: item.revokedAt ?? null, invite_status: item.revokedAt ? "revoked" : item.inviteStatus ?? "active",
-      invited_at: item.inviteStatus ? "2026-10-01T00:00:00Z" : null, invite_accepted_at: null,
-    }));
-    if (fixture.teamOverflow) rows.push(...Array.from({ length: 1002 }, (_, n) => ({
-      id: `overflow-${n}`, full_name: `Overflow member ${n}`, email: `overflow${n}@example.test`,
-      role: "staff", revoked_at: null, invite_status: "active", invited_at: null, invite_accepted_at: null,
-    })));
-    return reply(200, rows.slice(Number(url.searchParams.get("offset") ?? 0), Number(url.searchParams.get("offset") ?? 0) + 1000));
+    const rows = fixture.teamEmpty
+      ? []
+      : accounts
+          .filter((item) => item.clinicId === resolvedClinicId)
+          .map((item) => ({
+            id: item.profileId,
+            role: item.role,
+            full_name: item.fullName,
+            email: item.user.email,
+            revoked_at: item.revokedAt ?? null,
+            invite_status: item.revokedAt ? "revoked" : (item.inviteStatus ?? "active"),
+            invited_at: item.inviteStatus ? "2026-10-01T00:00:00Z" : null,
+            invite_accepted_at: null,
+          }));
+    if (fixture.teamOverflow)
+      rows.push(
+        ...Array.from({ length: 1002 }, (_, n) => ({
+          id: `overflow-${n}`,
+          full_name: `Overflow member ${n}`,
+          email: `overflow${n}@example.test`,
+          role: "staff",
+          revoked_at: null,
+          invite_status: "active",
+          invited_at: null,
+          invite_accepted_at: null,
+        })),
+      );
+    return reply(
+      200,
+      rows.slice(
+        Number(url.searchParams.get("offset") ?? 0),
+        Number(url.searchParams.get("offset") ?? 0) + 1000,
+      ),
+    );
   }
   if (url.pathname === "/functions/v1/manage-clinic-users") {
     const body = await req.json();
-    if (account?.role !== "owner" || account.revokedAt) return reply(403, { code: "not_authorized" });
+    if (account?.role !== "owner" || account.revokedAt)
+      return reply(403, { code: "not_authorized" });
     fixture.teamInvitations.push(body);
     if (fixture.teamInviteRejection) return reply(429, { code: fixture.teamInviteRejection });
     if (fixture.teamEmailFailure) return reply(502, { code: "invite_email_failed" });
-    if (body.action === "resend") return reply(200, { code: "invite_sent", profileId: body.profileId });
-    if (accounts.some(item => item.clinicId === resolvedClinicId && item.user.email === body.email)) return reply(409, { code: "invite_pending" });
+    if (body.action === "resend")
+      return reply(200, { code: "invite_sent", profileId: body.profileId });
+    if (
+      accounts.some((item) => item.clinicId === resolvedClinicId && item.user.email === body.email)
+    )
+      return reply(409, { code: "invite_pending" });
     const id = `00000000-0000-4000-8000-${String(accounts.length + 1).padStart(12, "0")}`;
-    accounts.push({ user: { ...user, id, email: body.email }, clinicId: resolvedClinicId, profileId: id,
-      fullName: body.fullName, role: body.role, inviteStatus: "pending" });
+    accounts.push({
+      user: { ...user, id, email: body.email },
+      clinicId: resolvedClinicId,
+      profileId: id,
+      fullName: body.fullName,
+      role: body.role,
+      inviteStatus: "pending",
+    });
     return reply(200, { code: "invite_sent", profileId: id });
   }
   if (url.pathname === "/rest/v1/rpc/revoke_clinic_member") {
-    const body = await req.json();const target = accounts.find(item => item.profileId === body.p_profile_id);
-    if (fixture.teamRevokeFailure || account?.role !== "owner" || account.revokedAt || !target || target.clinicId !== resolvedClinicId || target.role === "owner" || target.user.id === account.user.id) return reply(403, { code: "42501", message: "PRIVATE_REVOKE_DIAGNOSTIC" });
-    target.revokedAt = new Date().toISOString();fixture.teamRevocations.push(body);return reply(200, target.profileId);
+    const body = await req.json();
+    const target = accounts.find((item) => item.profileId === body.p_profile_id);
+    if (
+      fixture.teamRevokeFailure ||
+      account?.role !== "owner" ||
+      account.revokedAt ||
+      !target ||
+      target.clinicId !== resolvedClinicId ||
+      target.role === "owner" ||
+      target.user.id === account.user.id
+    )
+      return reply(403, { code: "42501", message: "PRIVATE_REVOKE_DIAGNOSTIC" });
+    target.revokedAt = new Date().toISOString();
+    fixture.teamRevocations.push(body);
+    return reply(200, target.profileId);
   }
   if (url.pathname === "/rest/v1/rpc/set_clinic_member_role") {
     const body = await req.json();
@@ -240,19 +316,30 @@ const localFetch = async (req) => {
     );
   }
   if (url.pathname === "/rest/v1/rpc/update_clinic_settings") {
-    const body = await req.json(); fixture.settingsUpdates.push(body);
-    if (fixture.settingsSaveDelay) await new Promise(resolve => setTimeout(resolve, fixture.settingsSaveDelay));
-    if (account?.role !== "owner" || account.revokedAt) return reply(403, { code: "42501", message: "PRIVATE_SETTINGS_DIAGNOSTIC" });
+    const body = await req.json();
+    fixture.settingsUpdates.push(body);
+    if (fixture.settingsSaveDelay)
+      await new Promise((resolve) => setTimeout(resolve, fixture.settingsSaveDelay));
+    if (account?.role !== "owner" || account.revokedAt)
+      return reply(403, { code: "42501", message: "PRIVATE_SETTINGS_DIAGNOSTIC" });
     if (fixture.settingsSaveError) return reply(500, { message: "PRIVATE_SETTINGS_DIAGNOSTIC" });
     const current = { ...clinic, ...fixture.clinicValues };
-    if (fixture.settingsConflict || Object.keys(body.p_expected).some(key => JSON.stringify(current[key]) !== JSON.stringify(body.p_expected[key]))) return reply(409, { code: "40001", message: "PRIVATE_SETTINGS_CONFLICT" });
+    if (
+      fixture.settingsConflict ||
+      Object.keys(body.p_expected).some(
+        (key) => JSON.stringify(current[key]) !== JSON.stringify(body.p_expected[key]),
+      )
+    )
+      return reply(409, { code: "40001", message: "PRIVATE_SETTINGS_CONFLICT" });
     Object.assign(fixture.clinicValues, body.p_patch);
     return reply(200, { ...clinic, ...fixture.clinicValues });
   }
   if (url.pathname === "/rest/v1/clinics") {
     const settingsRead = fixture.settings && url.searchParams.get("select") !== "*";
-    if (settingsRead && fixture.settingsDelay) await new Promise(resolve => setTimeout(resolve, fixture.settingsDelay));
-    if (settingsRead && fixture.settingsError) return reply(500, { message: "PRIVATE_SETTINGS_DIAGNOSTIC" });
+    if (settingsRead && fixture.settingsDelay)
+      await new Promise((resolve) => setTimeout(resolve, fixture.settingsDelay));
+    if (settingsRead && fixture.settingsError)
+      return reply(500, { message: "PRIVATE_SETTINGS_DIAGNOSTIC" });
     const nextClinic = {
       ...clinic,
       ...(fixture.settings ? fixture.clinicValues : {}),
@@ -263,7 +350,14 @@ const localFetch = async (req) => {
     if (fixture.clinicDelay)
       await new Promise((resolve) => setTimeout(resolve, fixture.clinicDelay));
     if (fail) return reply(403, { message: "Local clinic read failure" });
-    return reply(200, missing ? [] : req.headers.get("accept")?.includes("application/vnd.pgrst.object+json") ? nextClinic : [nextClinic]);
+    return reply(
+      200,
+      missing
+        ? []
+        : req.headers.get("accept")?.includes("application/vnd.pgrst.object+json")
+          ? nextClinic
+          : [nextClinic],
+    );
   }
   if (fixture.calendar && url.pathname === "/rest/v1/rpc/appointment_available_slots") {
     const body = await req.json();

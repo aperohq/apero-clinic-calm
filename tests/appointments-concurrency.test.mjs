@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFile, writeFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import postgres from "postgres";
+import { join, resolve } from "node:path";
 import {
   appointmentWriteError,
   appointmentSlotConflictMessage,
@@ -9,18 +10,23 @@ import {
 
 // Deliberately no DATABASE_URL, Supabase credentials, TCP host or remote fallback.
 // Start the documented disposable PostgreSQL cluster before running this suite.
-const cluster = "/tmp/apero-concurrency-postgres";
+const cluster = process.env.APERO_TEST_CONCURRENCY_CLUSTER;
+if (!cluster)
+  throw new Error("Run via scripts/test-concurrency.mjs to create an isolated database.");
+const marker = JSON.parse(await readFile(join(cluster, ".apero-disposable.json"), "utf8"));
 const database = "apero_concurrency_acceptance";
 const options = {
-  host: `${cluster}/socket`,
-  port: 55437,
+  host: process.platform === "win32" ? "127.0.0.1" : join(cluster, "socket"),
+  port: marker.port,
   database,
-  username: "nour",
+  username: "apero_test",
   max: 1,
   connect_timeout: 5,
   idle_timeout: 0,
   onnotice() {},
 };
+assert.equal(marker.database, database);
+assert.ok(Number.isInteger(marker.port) && marker.port > 0 && marker.port < 65536);
 const admin = postgres(options);
 const connections = [postgres(options), postgres(options)];
 const uuid = (n) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
@@ -108,8 +114,8 @@ async function setup() {
   const [identity] =
     await admin`select current_database() as database,current_setting('data_directory') as directory,current_setting('server_version') as version,inet_server_addr() as address`;
   assert.equal(identity.database, database);
-  assert.equal(identity.directory, `${cluster}/data`);
-  assert.equal(identity.address, null);
+  assert.equal(resolve(identity.directory), resolve(cluster, "data"));
+  assert.equal(identity.address, process.platform === "win32" ? "127.0.0.1" : null);
   evidence.environment = identity;
   await admin.unsafe(`create role anon nologin nobypassrls; create role authenticated nologin nobypassrls; create role service_role nologin bypassrls;
     create schema auth; create table auth.users(id uuid primary key,email text unique);
@@ -125,13 +131,16 @@ async function setup() {
     "05_voice_integrations.sql",
     "06_staff_scheduling.sql",
     "07_prelaunch_security.sql",
-    "../tests/fixtures/08_voice_requests_handling.sql",
+    "08_voice_requests_handling.sql",
     "09_client_notes_restrict_update.sql",
-    "../tests/fixtures/10_clinic_access_privileges.sql",
+    "10_clinic_access_privileges.sql",
   ])
     await admin.unsafe(await readFile(new URL(`../db/${name}`, import.meta.url), "utf8"));
   await admin.unsafe(
-    await readFile(new URL("./fixtures/clinic_role_permissions.sql", import.meta.url), "utf8"),
+    await readFile(
+      new URL("../supabase/migrations/20261002170000_clinic_role_permissions.sql", import.meta.url),
+      "utf8",
+    ),
   );
   // Match the production preflight's existing exclusion, without copying any
   // production appointment data or using any production connection.
@@ -146,6 +155,15 @@ async function setup() {
   );
   evidence.environment.migration_sha256 = createHash("sha256").update(migration).digest("hex");
   await admin.unsafe(migration);
+  await admin.unsafe(
+    await readFile(
+      new URL(
+        "../supabase/migrations/20261120104000_voice_practitioner_reschedule.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  );
   await admin`select set_config('request.jwt.claims','{"role":"service_role"}',false)`;
   for (const t of [
     { clinic: tenant.clinic, staff: tenant.staff, client: patients[0] },

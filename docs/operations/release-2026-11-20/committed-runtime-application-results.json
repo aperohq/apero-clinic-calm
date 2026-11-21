@@ -1,0 +1,135 @@
+[
+  {
+    "suite": "test:stabilization",
+    "status": "PASS",
+    "exit": 0
+  },
+  {
+    "suite": "test:auth",
+    "status": "PASS",
+    "exit": 0
+  },
+  {
+    "suite": "test:recordings",
+    "status": "PASS",
+    "exit": 0
+  },
+  {
+    "suite": "test:analytics",
+    "status": "PASS",
+    "exit": 0
+  },
+  {
+    "suite": "test:appointment-migration",
+    "status": "PASS",
+    "exit": 0
+  },
+  {
+    "suite": "test:appointment-conflicts",
+    "status": "PASS",
+    "exit": 0
+  },
+  {
+    "suite": "test:appointments",
+    "status": "PASS",
+    "exit": 0
+  },
+  {
+    "suite": "test:security",
+    "status": "PASS",
+    "exit": 0
+  },
+  {
+    "suite": "test:clinic-users",
+    "status": "PASS",
+    "exit": 0
+  },
+  {
+    "suite": "test:clinic-user-cli",
+    "status": "PASS",
+    "exit": 0
+  },
+  {
+    "suite": "test:permissions",
+    "status": "PASS",
+    "exit": 0
+  },
+  {
+    "suite": "test:permissions:ui",
+    "status": "PASS",
+    "exit": 0
+  },
+  {
+    "suite": "test:team",
+    "status": "PASS",
+    "exit": 0
+  },
+  {
+    "suite": "test:settings",
+    "status": "PASS",
+    "exit": 0
+  },
+  {
+    "suite": "test:navigation",
+    "status": "PASS",
+    "exit": 0
+  },
+  {
+    "suite": "test:invite-setup",
+    "status": "PASS",
+    "exit": 0
+  },
+  {
+    "suite": "test:booking-fallback",
+    "status": "PASS",
+    "exit": 0
+  },
+  {
+    "suite": "test:calendar-unavailable",
+    "status": "PASS",
+    "exit": 0
+  },
+  {
+    "suite": "test:unknown-answer",
+    "status": "PASS",
+    "exit": 0
+  },
+  {
+    "suite": "test:human-escalation",
+    "status": "PASS",
+    "exit": 0
+  },
+  {
+    "suite": "test:call-transfer",
+    "status": "PASS",
+    "exit": 0
+  },
+  {
+    "suite": "test:system-downtime",
+    "status": "PASS",
+    "exit": 0
+  },
+  {
+    "suite": "test:retention",
+    "status": "PASS",
+    "exit": 0
+  },
+  {
+    "suite": "test:demo",
+    "status": "PASS",
+    "exit": 0
+  },
+  {
+    "suite": "test:monitoring",
+    "status": "PASS",
+    "exit": 0
+  },
+  {
+    "suite": "python-operations",
+    "status": "PASS"
+  },
+  {
+    "suite": "python-utf8",
+    "status": "PASS"
+  }
+]

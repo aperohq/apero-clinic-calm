@@ -51,7 +51,11 @@ export const tenants = [100, 200].map((n) => ({
 export async function loadSql(db, name) {
   return db.exec(await readFile(new URL(`../../db/${name}`, import.meta.url), "utf8"));
 }
-export async function createClinicDatabase({ appointments = false, settings = process.env.APERO_TEST_SETTINGS_MIGRATION === "1", team = settings || process.env.APERO_TEST_TEAM_MIGRATION === "1" } = {}) {
+export async function createClinicDatabase({
+  appointments = false,
+  settings = process.env.APERO_TEST_SETTINGS_MIGRATION === "1",
+  team = settings || process.env.APERO_TEST_TEAM_MIGRATION === "1",
+} = {}) {
   // Real PostgreSQL/WASM: no query mocks, network, production credentials, or
   // persistent database. Only Supabase Auth's claims/schema are shimmed locally.
   const db = new PGlite({ extensions: { pgcrypto, btree_gist } });
@@ -80,20 +84,22 @@ export async function createClinicDatabase({ appointments = false, settings = pr
     "05_voice_integrations.sql",
     "06_staff_scheduling.sql",
     "07_prelaunch_security.sql",
-    "../tests/fixtures/08_voice_requests_handling.sql",
+    "08_voice_requests_handling.sql",
     "09_client_notes_restrict_update.sql",
   ])
     await loadSql(db, name);
   // Compatibility suites exercise the current role policies as well as the
   // historical schema, without applying anything to a hosted database.
-  await loadSql(db, "../tests/fixtures/clinic_role_permissions.sql");
+  await loadSql(db, "../supabase/migrations/20261002170000_clinic_role_permissions.sql");
   for (const tenant of tenants) await seedTenant(db, tenant);
   if (appointments) {
-    await loadSql(db, "../tests/fixtures/10_clinic_access_privileges.sql");
+    await loadSql(db, "10_clinic_access_privileges.sql");
     await loadSql(db, "../supabase/migrations/20261002190000_shared_appointment_availability.sql");
   }
   if (team) {
-    await db.exec("alter table auth.users add column invited_at timestamptz; alter table auth.users add column email_confirmed_at timestamptz");
+    await db.exec(
+      "alter table auth.users add column invited_at timestamptz; alter table auth.users add column email_confirmed_at timestamptz",
+    );
     await loadSql(db, "../supabase/migrations/20261003160000_clinic_team_management.sql");
   }
   if (settings) await loadSql(db, "../supabase/migrations/20261003200000_clinic_settings.sql");

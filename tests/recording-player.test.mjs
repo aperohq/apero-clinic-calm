@@ -15,6 +15,12 @@ for (const name of ["window", "document", "navigator", "HTMLElement", "Node"])
   });
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 const requests = [];
+const expiryTimers = [];
+const originalTimeout = window.setTimeout.bind(window);
+window.setTimeout = (callback, delay, ...args) => {
+  if (delay === 4 * 60_000) expiryTimers.push(callback);
+  return originalTimeout(callback, delay, ...args);
+};
 globalThis.recordingFixture = {
   auth: { session: { user: { id: "user-a" } }, clinicId: "clinic-a", role: "owner" },
   requests,
@@ -47,7 +53,11 @@ try {
       },
     ],
   });
-  await symlink(join(process.cwd(), "node_modules"), join(temp, "node_modules"));
+  await symlink(
+    join(process.cwd(), "node_modules"),
+    join(temp, "node_modules"),
+    process.platform === "win32" ? "junction" : "dir",
+  );
   const React = await import("react");
   const { createRoot } = await import("react-dom/client");
   const { RecordingPlayer } = await import(pathToFileURL(join(temp, "player.mjs")));
@@ -69,6 +79,14 @@ try {
     container.querySelector("audio").getAttribute("src"),
     "https://media.example/fresh.wav?signature=local",
   );
+  assert.equal(expiryTimers.length, 0, "long playback has no four-minute unmount timer");
+  const audio = container.querySelector("audio");
+  await React.act(async () => audio.dispatchEvent(new window.Event("error")));
+  assert.equal(container.querySelector("audio"), null);
+  assert.match(container.textContent, /Recording unavailable/);
+  await click();
+  assert.ok(container.querySelector("audio"), "expired provider URLs can be reauthorized");
+  requests.pop(); // The following stale-response checks address the next request.
   await render("conversation-b");
   assert.equal(
     container.querySelector("audio"),

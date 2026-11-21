@@ -170,8 +170,8 @@ test("clinic isolation enforced by PostgreSQL grants, RLS, triggers, and foreign
   await db.exec(
     "grant select on public.voice_integrations to public; grant update (clinic_id) on public.voice_requests to authenticated",
   );
-  await loadSql(db, "../tests/fixtures/10_clinic_access_privileges.sql");
-  await loadSql(db, "../tests/fixtures/10_clinic_access_privileges.sql"); // repeat-safe migration
+  await loadSql(db, "10_clinic_access_privileges.sql");
+  await loadSql(db, "10_clinic_access_privileges.sql"); // repeat-safe migration
   await t.test("complete table inventory has RLS and browser roles cannot bypass it", async () => {
     const { rows } = await db.query(
       "select relname, relrowsecurity from pg_class join pg_namespace on pg_namespace.oid = relnamespace where nspname = 'public' and relkind in ('r','p') order by relname",
@@ -439,7 +439,7 @@ test("clinic isolation enforced by PostgreSQL grants, RLS, triggers, and foreign
     "existing appointment-RPC tenant isolation fixture passes in local PostgreSQL",
     async () => {
       const sql = await readFile(
-        new URL("./fixtures/tenant_isolation.sql", import.meta.url),
+        new URL("../retell/master/tests/tenant_isolation.sql", import.meta.url),
         "utf8",
       );
       await db.exec(sql);
@@ -489,7 +489,7 @@ test("clinic isolation enforced by PostgreSQL grants, RLS, triggers, and foreign
         "select tablename,policyname,qual,with_check from pg_policies where schemaname='public' order by tablename,policyname",
       );
       const sql = await readFile(
-        new URL("./fixtures/clinic_isolation_inspect.sql", import.meta.url),
+        new URL("../db/audits/clinic_isolation_inspect.sql", import.meta.url),
         "utf8",
       );
       const results = await db.exec(sql);

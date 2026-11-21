@@ -1,2 +1,22 @@
-import { createFileRoute } from "@tanstack/react-router"; import { ConversationDetailPage } from "@/components/clinic-pages";
-export const Route=createFileRoute("/conversations/$id")({head:()=>({meta:[{title:"Conversation details — Apero"},{name:"description",content:"Review a clinic call summary, recording, and transcript."},{property:"og:title",content:"Conversation details — Apero"},{property:"og:description",content:"Review a clinic call summary, recording, and transcript."},{property:"og:type",content:"website"},{name:"twitter:card",content:"summary_large_image"}]}),component:Page}); function Page(){const {id}=Route.useParams();return <ConversationDetailPage id={id}/>}
+import { createFileRoute } from "@tanstack/react-router";
+import { ConversationDetailPage } from "@/components/clinic-pages";
+export const Route = createFileRoute("/conversations/$id")({
+  head: () => ({
+    meta: [
+      { title: "Conversation details — Apero" },
+      { name: "description", content: "Review a clinic call summary, recording, and transcript." },
+      { property: "og:title", content: "Conversation details — Apero" },
+      {
+        property: "og:description",
+        content: "Review a clinic call summary, recording, and transcript.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
+  component: Page,
+});
+function Page() {
+  const { id } = Route.useParams();
+  return <ConversationDetailPage id={id} />;
+}

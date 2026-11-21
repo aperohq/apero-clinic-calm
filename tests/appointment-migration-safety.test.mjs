@@ -100,7 +100,7 @@ async function slots(db, appointment = null, date = "2040-01-02") {
 test("deployment preflight rejects incompatible history before structural changes", async (t) => {
   const db = await createClinicDatabase();
   try {
-    await loadSql(db, "../tests/fixtures/10_clinic_access_privileges.sql");
+    await loadSql(db, "10_clinic_access_privileges.sql");
     await t.test(
       "historical overlapping records abort with both appointment IDs and full rollback",
       async () => {
@@ -190,7 +190,7 @@ test("deployment preflight rejects incompatible history before structural change
 test("legacy safe updates, exact duration contract, FK behavior and secured writes", async (t) => {
   const db = await createClinicDatabase();
   try {
-    await loadSql(db, "../tests/fixtures/10_clinic_access_privileges.sql");
+    await loadSql(db, "10_clinic_access_privileges.sql");
     await db.query("select set_config('request.jwt.claims',$1,false)", [
       JSON.stringify({ role: "service_role" }),
     ]);
@@ -583,7 +583,7 @@ test("legacy safe updates, exact duration contract, FK behavior and secured writ
 test("same-named exclusion constraint must match actual definition and index metadata", async (t) => {
   const db = await createClinicDatabase();
   try {
-    await loadSql(db, "../tests/fixtures/10_clinic_access_privileges.sql");
+    await loadSql(db, "10_clinic_access_privileges.sql");
     for (const [name, definition] of [
       ["check instead of exclusion", "check (true)"],
       [

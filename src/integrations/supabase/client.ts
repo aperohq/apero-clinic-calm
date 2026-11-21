@@ -1,21 +1,21 @@
 // One shared Supabase client for the Apero frontend (external Supabase project).
 // Values come from frontend environment variables; only the publishable key is
 // ever used here — never a secret or service-role key.
-import { createClient } from '@supabase/supabase-js';
-import type { Database } from './types';
-import { brokeredPreviewStorage } from './previewAuthStorage';
+import { createClient } from "@supabase/supabase-js";
+import type { Database } from "./types";
+import { brokeredPreviewStorage } from "./previewAuthStorage";
 
 const SUPABASE_URL =
-  (import.meta.env['VITE_SUPABASE_URL'] as string | undefined) ??
-  (typeof process !== 'undefined' ? process.env['SUPABASE_URL'] : undefined);
+  (import.meta.env["VITE_SUPABASE_URL"] as string | undefined) ??
+  (typeof process !== "undefined" ? process.env["SUPABASE_URL"] : undefined);
 const SUPABASE_PUBLISHABLE_KEY =
-  (import.meta.env['VITE_SUPABASE_PUBLISHABLE_KEY'] as string | undefined) ??
-  (typeof process !== 'undefined' ? process.env['SUPABASE_PUBLISHABLE_KEY'] : undefined);
+  (import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"] as string | undefined) ??
+  (typeof process !== "undefined" ? process.env["SUPABASE_PUBLISHABLE_KEY"] : undefined);
 
 function createSupabaseFetch(supabaseKey: string): typeof fetch {
   return (input, init) => {
     const headers = new Headers(
-      typeof Request !== 'undefined' && input instanceof Request ? input.headers : undefined,
+      typeof Request !== "undefined" && input instanceof Request ? input.headers : undefined,
     );
 
     if (init?.headers) {
@@ -23,11 +23,11 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
     }
 
     // New Supabase API keys are opaque strings, not bearer JWTs.
-    if (headers.get('Authorization') === `Bearer ${supabaseKey}`) {
-      headers.delete('Authorization');
+    if (headers.get("Authorization") === `Bearer ${supabaseKey}`) {
+      headers.delete("Authorization");
     }
 
-    headers.set('apikey', supabaseKey);
+    headers.set("apikey", supabaseKey);
     return fetch(input, { ...init, headers });
   };
 }
@@ -35,7 +35,7 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
 function createSupabaseClient() {
   if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
     throw new Error(
-      'Missing VITE_SUPABASE_URL or VITE_SUPABASE_PUBLISHABLE_KEY environment variable.',
+      "Missing VITE_SUPABASE_URL or VITE_SUPABASE_PUBLISHABLE_KEY environment variable.",
     );
   }
   return createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {

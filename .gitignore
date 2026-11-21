@@ -48,3 +48,14 @@ database-backups/
 *.key
 *.json.age
 scripts/operations/__pycache__/
+
+# Keep local configuration private; commit only placeholders.
+.env
+.env.*
+!.env.example
+__pycache__/
+*.pyc
+supabase/.temp/
+
+# Private local recovery checkpoints, including local environment configuration.
+.local-recovery/

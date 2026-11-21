@@ -317,8 +317,22 @@ export function ClinicSettingsPanel() {
               {textField("fallback_phone", "Fallback / staff transfer phone", { type: "tel" })}
             </div>
             <label className="mt-4 flex items-center gap-2 text-sm">
-              <input id="settings-live-transfer" type="checkbox" checked={current.draft.live_transfer_enabled} disabled={busy}
-                onChange={(event) => setForm((previous) => previous ? {...previous,draft:{...previous.draft,live_transfer_enabled:event.target.checked}} : previous)} />
+              <input
+                id="settings-live-transfer"
+                type="checkbox"
+                checked={current.draft.live_transfer_enabled}
+                disabled={busy}
+                onChange={(event) =>
+                  setForm((previous) =>
+                    previous
+                      ? {
+                          ...previous,
+                          draft: { ...previous.draft, live_transfer_enabled: event.target.checked },
+                        }
+                      : previous,
+                  )
+                }
+              />
               Enable live staff transfer
             </label>
             <p className="mt-2 text-xs text-muted-foreground">
@@ -328,7 +342,8 @@ export function ClinicSettingsPanel() {
             </p>
             <p className="mt-4 text-xs text-muted-foreground">
               These details are saved for your clinic. Changes to information spoken in calls
-              require Apero to synchronize the receptionist configuration. Live transfer also requires the enabled setting, a valid destination, and configured clinic hours.
+              require Apero to synchronize the receptionist configuration. Live transfer also
+              requires the enabled setting, a valid destination, and configured clinic hours.
             </p>
           </Panel>
           {error && (
