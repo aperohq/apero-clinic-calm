@@ -1,3 +1,4 @@
+import { IntegrationsPanel } from "@/components/integrations-panel";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { notifyManager, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
@@ -3161,6 +3162,7 @@ export function AccountPage() {
             </Button>
           </div>
         </Panel>
+        <IntegrationsPanel />
         <Panel>
           <PanelTitle>Need help?</PanelTitle>
           <p className="text-sm text-muted-foreground">

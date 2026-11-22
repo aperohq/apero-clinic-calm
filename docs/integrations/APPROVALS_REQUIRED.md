@@ -1,0 +1,17 @@
+# Consolidated external actions and approvals
+
+All independent local engineering can proceed. Do not paste passwords, API keys, OAuth credentials or tokens into chat.
+
+| Action                              | Required participant / authorization | Exact scope                                                                                                                                                                                                                                                                                    |
+| ----------------------------------- | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Google project configuration        | Google project administrator         | Enable Calendar API, configure web OAuth/consent/verification and exact callback URI; install credentials through the server secret manager.                                                                                                                                                   |
+| Real test/clinic calendar           | Authorized clinic owner              | Complete Google consent in the initiating browser and choose a writable calendar/practitioner; approve records used for booking/reschedule/cancel acceptance.                                                                                                                                  |
+| Production release                  | Apero release owner                  | Authorize the reviewed candidate SHA, integration migration, three new functions, secret **names**, frontend/server flags, worker schedule and quota, production acceptance and incident rollback in RELEASE_RUNBOOK.md. This changes live booking availability only for selected connections. |
+| Named clinic-software connector     | Clinic/provider administrator        | Identify provider and approve account/API contract and access. Generic adapter infrastructure is complete; no vendor is assumed.                                                                                                                                                               |
+| Costs beyond current safe execution | Billing owner                        | Explicitly approve any paid provisioning, non-free runner, billable provider call or production invocation quota before it is triggered.                                                                                                                                                       |
+
+GitHub source/PR preparation uses the newly created feature branch and existing five protected checks. Repository visibility and standard runner billing were checked before publication; existing production schedule/manual workflows are not triggered by this feature push/PR. Do not merge if it would apply migrations, publish production or alter live appointment behavior outside the release authorization. Never bypass protections or rewrite Lovable history.
+
+**Not yet authorized or performed:** production migration/deployment, real Google authorization, live clinic appointment changes, live Retell calls, paid service provisioning. Exact deployment and real-account acceptance remain external blockers even after hosted CI passes.
+
+Money spent by this execution: **$0**.

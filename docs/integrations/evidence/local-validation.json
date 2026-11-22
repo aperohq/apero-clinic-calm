@@ -1,0 +1,163 @@
+{
+  "date": "2026-11-22",
+  "synthetic_only": true,
+  "production_deployed": false,
+  "google_authorized": false,
+  "provider_http_crypto_tests": 17,
+  "postgres_wasm_scenarios": 17,
+  "native_integration_races": 4,
+  "native_existing_appointment_races": "PASS",
+  "native_migrations_and_synthetic_restore": "PASS at preceding implementation iteration; exact-commit hosted validation required",
+  "typecheck": "PASS",
+  "integration_typecheck": "PASS",
+  "lint": "PASS",
+  "build": "PASS with VITE_APERO_INTEGRATIONS_ENABLED=true",
+  "release_initial": [
+    {
+      "suite": "test:integrations",
+      "status": "PASS",
+      "exit": 0
+    },
+    {
+      "suite": "test:stabilization",
+      "status": "FAIL",
+      "exit": 1
+    },
+    {
+      "suite": "test:auth",
+      "status": "PASS",
+      "exit": 0
+    },
+    {
+      "suite": "test:recordings",
+      "status": "PASS",
+      "exit": 0
+    },
+    {
+      "suite": "test:analytics",
+      "status": "PASS",
+      "exit": 0
+    },
+    {
+      "suite": "test:appointment-migration",
+      "status": "PASS",
+      "exit": 0
+    },
+    {
+      "suite": "test:appointment-conflicts",
+      "status": "PASS",
+      "exit": 0
+    },
+    {
+      "suite": "test:appointments",
+      "status": "PASS",
+      "exit": 0
+    },
+    {
+      "suite": "test:security",
+      "status": "PASS",
+      "exit": 0
+    },
+    {
+      "suite": "test:clinic-users",
+      "status": "PASS",
+      "exit": 0
+    },
+    {
+      "suite": "test:clinic-user-cli",
+      "status": "PASS",
+      "exit": 0
+    },
+    {
+      "suite": "test:permissions",
+      "status": "PASS",
+      "exit": 0
+    },
+    {
+      "suite": "test:permissions:ui",
+      "status": "PASS",
+      "exit": 0
+    },
+    {
+      "suite": "test:team",
+      "status": "PASS",
+      "exit": 0
+    },
+    {
+      "suite": "test:settings",
+      "status": "PASS",
+      "exit": 0
+    },
+    {
+      "suite": "test:navigation",
+      "status": "PASS",
+      "exit": 0
+    },
+    {
+      "suite": "test:invite-setup",
+      "status": "PASS",
+      "exit": 0
+    },
+    {
+      "suite": "test:booking-fallback",
+      "status": "PASS",
+      "exit": 0
+    },
+    {
+      "suite": "test:calendar-unavailable",
+      "status": "PASS",
+      "exit": 0
+    },
+    {
+      "suite": "test:unknown-answer",
+      "status": "PASS",
+      "exit": 0
+    },
+    {
+      "suite": "test:human-escalation",
+      "status": "PASS",
+      "exit": 0
+    },
+    {
+      "suite": "test:call-transfer",
+      "status": "PASS",
+      "exit": 0
+    },
+    {
+      "suite": "test:system-downtime",
+      "status": "PASS",
+      "exit": 0
+    },
+    {
+      "suite": "test:retention",
+      "status": "PASS",
+      "exit": 0
+    },
+    {
+      "suite": "test:demo",
+      "status": "PASS",
+      "exit": 0
+    },
+    {
+      "suite": "test:monitoring",
+      "status": "PASS",
+      "exit": 0
+    },
+    {
+      "suite": "python-operations",
+      "status": "PASS"
+    },
+    {
+      "suite": "python-utf8",
+      "status": "PASS"
+    }
+  ],
+  "reruns": [
+    {
+      "suite": "test:stabilization",
+      "status": "PASS",
+      "reason": "Mock the newly imported Supabase client in the Account lifecycle fixture; full suite rerun passed."
+    }
+  ],
+  "money_spent_usd": 0
+}

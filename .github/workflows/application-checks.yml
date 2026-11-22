@@ -23,6 +23,7 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm run typecheck:clinic-users-edge
+      - run: npm run typecheck:integrations
       - run: npm run typecheck:demo
       - name: Code lint
         run: npm run lint:code
@@ -92,6 +93,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Native integration API and calendar races
+        run: npm run test:integration-concurrency
       - name: Native migrations, pg_cron and genuine synthetic restore
         run: npm run test:native-migrations
   supabase-bootstrap:

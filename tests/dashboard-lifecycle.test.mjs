@@ -61,7 +61,7 @@ try {
           b.onResolve(
             {
               filter:
-                /^(@\/lib\/(auth|db)|@\/hooks\/use-retell-demo|@tanstack\/react-router|@\/components\/account-access-panel)$/,
+                /^(@\/lib\/(auth|db)|@\/integrations\/supabase\/client|@\/hooks\/use-retell-demo|@tanstack\/react-router|@\/components\/account-access-panel)$/,
             },
             (a) => ({ path: a.path, namespace: "fixture" }),
           );
@@ -69,15 +69,17 @@ try {
             loader: "js",
             resolveDir: process.cwd(),
             contents:
-              a.path === "@/lib/auth"
-                ? "export const useAuth=()=>globalThis.lifecycleFixture.auth;"
-                : a.path === "@/hooks/use-retell-demo"
-                  ? "export const demoRequest=(...args)=>globalThis.lifecycleFixture.demoRequest(...args);"
-                  : a.path === "@/components/account-access-panel"
-                    ? "export const AccountAccessPanel=()=>null;"
-                    : a.path === "@tanstack/react-router"
-                      ? 'import React from "react";export const useNavigate=()=>()=>{};export const Link=({children,...props})=>React.createElement("a",props,children);'
-                      : "export const db={from(){let v;const q={update(values){v=values;globalThis.lifecycleFixture.saved=values;return q},select(){return q},eq(){return q},async single(){return {data:v??globalThis.lifecycleFixture.saved,error:null}}};return q}};",
+              a.path === "@/integrations/supabase/client"
+                ? "export const supabase={functions:{}};"
+                : a.path === "@/lib/auth"
+                  ? "export const useAuth=()=>globalThis.lifecycleFixture.auth;"
+                  : a.path === "@/hooks/use-retell-demo"
+                    ? "export const demoRequest=(...args)=>globalThis.lifecycleFixture.demoRequest(...args);"
+                    : a.path === "@/components/account-access-panel"
+                      ? "export const AccountAccessPanel=()=>null;"
+                      : a.path === "@tanstack/react-router"
+                        ? 'import React from "react";export const useNavigate=()=>()=>{};export const Link=({children,...props})=>React.createElement("a",props,children);'
+                        : "export const db={from(){let v;const q={update(values){v=values;globalThis.lifecycleFixture.saved=values;return q},select(){return q},eq(){return q},async single(){return {data:v??globalThis.lifecycleFixture.saved,error:null}}};return q}};",
           }));
         },
       },

@@ -41,7 +41,10 @@
     "test:navigation": "node tests/run-clinic-permission-tests.mjs --navigation",
     "lint:code": "eslint . --rule \"prettier/prettier: off\"",
     "test:native-migrations": "node scripts/test-native-migrations.mjs",
-    "test:supabase-bootstrap": "node scripts/test-supabase-bootstrap.mjs"
+    "test:supabase-bootstrap": "node scripts/test-supabase-bootstrap.mjs",
+    "test:integrations": "node --experimental-transform-types tests/integrations.test.mjs && node --max-old-space-size=512 tests/integration-database.test.mjs && node tests/integrations-ui.test.mjs",
+    "typecheck:integrations": "tsc --noEmit -p tests/tsconfig.integrations.json",
+    "test:integration-concurrency": "node tests/integration-native.test.mjs"
   },
   "overrides": {
     "rolldown": "1.2.1"

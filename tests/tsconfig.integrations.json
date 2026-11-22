@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "strict": true,
+    "skipLibCheck": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": true
+  },
+  "include": [
+    "../supabase/functions/_shared/integrations/**/*.ts",
+    "../supabase/functions/integration-api/function.ts",
+    "../supabase/functions/integration-worker/function.ts",
+    "../supabase/functions/google-calendar-webhook/function.ts"
+  ]
+}

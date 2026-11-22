@@ -175,6 +175,13 @@ export type AperoDatabase = {
     };
     Views: Record<string, never>;
     Functions: {
+      integration_dashboard: { Args: Record<string, never>; Returns: Json };
+      integration_create_key: {
+        Args: { p_name: string; p_scopes: string[]; p_rotate_id: string | null };
+        Returns: Json;
+      };
+      integration_revoke_key: { Args: { p_id: string }; Returns: undefined };
+
       clinic_analytics: {
         Args: { p_clinic_id: string; p_start_date: string; p_end_date: string };
         Returns: Json;
