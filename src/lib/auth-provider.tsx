@@ -132,19 +132,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!next) setLoading(false);
     };
     setRecoveringPassword(sessionStorage.getItem("apero-password-recovery") === "1");
-    const { data: sub } = supabase.auth.onAuthStateChange((event, next) => {
-      if (!active) return;
-      authEvents++;
-      if (event === "PASSWORD_RECOVERY") {
-        sessionStorage.setItem("apero-password-recovery", "1");
-        setRecoveringPassword(true);
-      } else if (event === "SIGNED_OUT") {
-        sessionStorage.removeItem("apero-password-recovery");
-        setRecoveringPassword(false);
-      }
-      // Keep this callback synchronous. Profile reads run in their own effect.
-      applySession(next);
-    });
+    let sub: ReturnType<typeof supabase.auth.onAuthStateChange>["data"];
+    try {
+      sub = supabase.auth.onAuthStateChange((event, next) => {
+        if (!active) return;
+        authEvents++;
+        if (event === "PASSWORD_RECOVERY") {
+          sessionStorage.setItem("apero-password-recovery", "1");
+          setRecoveringPassword(true);
+        } else if (event === "SIGNED_OUT") {
+          sessionStorage.removeItem("apero-password-recovery");
+          setRecoveringPassword(false);
+        }
+        applySession(next);
+      }).data;
+    } catch {
+      // Missing connection settings: show the setup message instead of crashing.
+      setAuthError(true);
+      setLoading(false);
+      return () => {
+        active = false;
+      };
+    }
     const initialEvents = authEvents;
     void supabase.auth
       .getSession()
