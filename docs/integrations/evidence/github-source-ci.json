@@ -1,0 +1,38 @@
+{
+  "implementation_commit": "0bd9a868fdd00acf10c7816ef8d526c8cbbbb24a",
+  "pr": "https://github.com/aperohq/apero-clinic-calm/pull/6",
+  "checks": [
+    {
+      "name": "quality",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/aperohq/apero-clinic-calm/actions/runs/45060033768/job/137323674305"
+    },
+    {
+      "name": "windows-components",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/aperohq/apero-clinic-calm/actions/runs/45060033768/job/137323674272"
+    },
+    {
+      "name": "supabase-bootstrap",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/aperohq/apero-clinic-calm/actions/runs/45060033768/job/137323674229"
+    },
+    {
+      "name": "native-database",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/aperohq/apero-clinic-calm/actions/runs/45060033768/job/137323674206"
+    },
+    {
+      "name": "regression",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/aperohq/apero-clinic-calm/actions/runs/45060033768/job/137323674058"
+    }
+  ],
+  "production_deployed": false,
+  "money_spent_usd": 0
+}

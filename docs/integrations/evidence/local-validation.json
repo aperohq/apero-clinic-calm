@@ -7,7 +7,7 @@
   "postgres_wasm_scenarios": 17,
   "native_integration_races": 4,
   "native_existing_appointment_races": "PASS",
-  "native_migrations_and_synthetic_restore": "PASS at preceding implementation iteration; exact-commit hosted validation required",
+  "native_migrations_and_synthetic_restore": "PASS locally and in native-database at implementation SHA 0bd9a868fdd00acf10c7816ef8d526c8cbbbb24a",
   "typecheck": "PASS",
   "integration_typecheck": "PASS",
   "lint": "PASS",
@@ -159,5 +159,6 @@
       "reason": "Mock the newly imported Supabase client in the Account lifecycle fixture; full suite rerun passed."
     }
   ],
-  "money_spent_usd": 0
+  "money_spent_usd": 0,
+  "hosted_source_ci": "All five protected checks PASS; see github-source-ci.json"
 }

@@ -18,10 +18,14 @@ Comprehensive execution prompt and all fourteen roadmap entries are tracked. New
 
 ## GitHub / deployment state
 
-Read-only inspection: repository public, no repository webhooks, five required protected checks (`quality`, `regression`, `windows-components`, `native-database`, `supabase-bootstrap`), admin enforcement enabled. New feature branch is separate from existing main/Lovable sync branches. PR workflow uses free standard public hosted runners and no provider deployment. Existing scheduled production workflows were not modified. No push/PR/merge or production deployment has yet occurred in this execution; update this paragraph after publishing.
+Implementation commit: `0bd9a868fdd00acf10c7816ef8d526c8cbbbb24a`. PR: https://github.com/aperohq/apero-clinic-calm/pull/6. All five protected hosted checks passed at that implementation SHA: quality, regression, windows-components, native-database and supabase-bootstrap. Exact links are in `evidence/github-source-ci.json`. This documentation-only follow-up records the source validation; the protected workflow must also pass at the final PR head before an ordinary merge.
 
-## Immediate next executable work
+Repository public; no repository webhooks; admin enforcement and strict required checks remain enabled. No security check, protection or history was bypassed. GitHub feature push/PR ran only synthetic CI on standard free public runners. Source merge is authorized by the user's execution directive and is separate from production publication: release switches default off, no migration/function deployment or scheduler runs from these PR/main application checks, and Lovable publication is a separate action. Production backup/retention/recovery schedules were not modified.
 
-Read final test logs/summaries, rerun only unresolved failures, verify formatting/diff, commit only the isolated changes, push the new feature branch, open a draft PR and troubleshoot the required hosted checks. Record exact commit/PR/check status here. Do not weaken checks. Production deployment and real-account work need the consolidated authorization described in APPROVALS_REQUIRED.md and RELEASE_RUNBOOK.md.
+## Resume without repeating engineering
+
+Read PR #6's current state once. If it is merged, skip completed implementation, tests and GitHub work and proceed only with the external release prerequisites. If it remains open, finish its current required checks, resolve any genuine failure and merge normally after green checks, without bypasses or history rewrites. The implementation and acceptance package are complete locally; do not restart the roadmap or repeat completed investigations. The original checkout's copy of this state can contain a newer final merge result after this committed evidence snapshot.
+
+Production migration, three new function deployments, server secret installation, feature activation, worker scheduling, real Google consent and clinic/provider acceptance remain unperformed. The exact consolidated external prerequisites are in APPROVALS_REQUIRED.md and the validated sequence is in RELEASE_RUNBOOK.md. A named clinic software connector remains blocked on provider/account identification; the reusable adapter infrastructure is implemented.
 
 No Google credentials or real accounts were used. No live appointment, provider, Retell, database migration or secret installation occurred. Money spent: $0.
