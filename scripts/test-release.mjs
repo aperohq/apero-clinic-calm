@@ -5,6 +5,7 @@ import { writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 const suites = [
+  "test:integrations",
   "test:stabilization",
   "test:auth",
   "test:recordings",

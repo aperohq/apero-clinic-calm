@@ -1,0 +1,471 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Apero Clinic Integration API",
+    "version": "1.0.0",
+    "description": "Local implementation; production activation and real-account acceptance require release authorization. See README.md and RELEASE_RUNBOOK.md."
+  },
+  "servers": [
+    {
+      "url": "https://{project}.supabase.co/functions/v1/integration-api",
+      "variables": {
+        "project": {
+          "default": "YOUR_PROJECT"
+        }
+      }
+    }
+  ],
+  "security": [
+    {
+      "ClinicKey": []
+    }
+  ],
+  "paths": {
+    "/v1/appointments": {
+      "get": {
+        "summary": "List appointments starting within the bounded half-open date range",
+        "description": "Required key scope: appointments:read",
+        "responses": {
+          "200": {
+            "description": "Successful scoped result"
+          },
+          "400": {
+            "description": "Stable error code; provider/database messages omitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["code"],
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Stable error code; provider/database messages omitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["code"],
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Stable error code; provider/database messages omitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["code"],
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Stable error code; provider/database messages omitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["code"],
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Stable error code; provider/database messages omitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["code"],
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Stable error code; provider/database messages omitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["code"],
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "description": "ISO instant, inclusive",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "until",
+            "in": "query",
+            "required": true,
+            "description": "ISO instant, exclusive; range <=31 days",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "post": {
+        "summary": "Book, cancel or reschedule with durable idempotency",
+        "description": "Required key scope: appointments:write",
+        "responses": {
+          "200": {
+            "description": "Successful scoped result"
+          },
+          "400": {
+            "description": "Stable error code; provider/database messages omitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["code"],
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Stable error code; provider/database messages omitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["code"],
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Stable error code; provider/database messages omitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["code"],
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Stable error code; provider/database messages omitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["code"],
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Stable error code; provider/database messages omitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["code"],
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 128
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "action",
+                      "client_id",
+                      "staff_id",
+                      "service",
+                      "start_time",
+                      "end_time"
+                    ],
+                    "properties": {
+                      "action": {
+                        "const": "book"
+                      },
+                      "client_id": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "staff_id": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "service": {
+                        "type": "string",
+                        "maxLength": 120
+                      },
+                      "start_time": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "end_time": {
+                        "type": "string",
+                        "format": "date-time"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["action", "appointment_id"],
+                    "properties": {
+                      "action": {
+                        "const": "cancel"
+                      },
+                      "appointment_id": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["action", "appointment_id", "start_time", "end_time"],
+                    "properties": {
+                      "action": {
+                        "const": "reschedule"
+                      },
+                      "appointment_id": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "staff_id": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "start_time": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "end_time": {
+                        "type": "string",
+                        "format": "date-time"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/availability": {
+      "get": {
+        "summary": "Shared clinic-local availability, including selected calendar freshness and conflicts",
+        "description": "Required key scope: availability:read",
+        "responses": {
+          "200": {
+            "description": "Successful scoped result"
+          },
+          "400": {
+            "description": "Stable error code; provider/database messages omitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["code"],
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Stable error code; provider/database messages omitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["code"],
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Stable error code; provider/database messages omitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["code"],
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Stable error code; provider/database messages omitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["code"],
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Stable error code; provider/database messages omitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["code"],
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "staff_id",
+            "in": "query",
+            "required": true,
+            "description": "Clinic practitioner UUID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "service",
+            "in": "query",
+            "required": true,
+            "description": "Exact configured service",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": true,
+            "description": "Clinic-local date YYYY-MM-DD",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ClinicKey": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "apero_<256-bit random hex>",
+        "description": "Clinic-scoped API key. The optional project apikey gateway header is not clinic authority."
+      }
+    }
+  }
+}

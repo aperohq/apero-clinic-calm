@@ -22,3 +22,15 @@ verify_jwt = false
 [functions.demo-call]
 # Handler validates Auth bearer and live clinic Owner membership itself.
 verify_jwt = false
+
+[functions.integration-api]
+# Validates API key or user bearer; OAuth callback consumes single-use state.
+verify_jwt = false
+
+[functions.integration-worker]
+# Independent server-only worker secret. No scheduling is enabled here.
+verify_jwt = false
+
+[functions.google-calendar-webhook]
+# Validates channel token hash, resource identity, expiry and monotonic message number.
+verify_jwt = false

@@ -1,0 +1,30 @@
+{
+  "synthetic": true,
+  "production": false,
+  "viewports": [
+    {
+      "width": 320,
+      "horizontal_overflow": false,
+      "controls_visible": true,
+      "browser_errors": 0
+    },
+    {
+      "width": 375,
+      "horizontal_overflow": false,
+      "controls_visible": true,
+      "browser_errors": 0
+    },
+    {
+      "width": 768,
+      "horizontal_overflow": false,
+      "controls_visible": true,
+      "browser_errors": 0
+    },
+    {
+      "width": 1440,
+      "horizontal_overflow": false,
+      "controls_visible": true,
+      "browser_errors": 0
+    }
+  ]
+}
