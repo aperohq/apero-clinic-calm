@@ -1,10 +1,11 @@
 // Always builds an unlinked temporary project. Never reads repository .env,
 // copies .temp links, supplies --remote, or accepts a hosted URL.
 import { spawn } from "node:child_process";
-import { mkdtemp, mkdir, cp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, mkdir, cp, readFile, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import assert from "node:assert/strict";
+import { isolateSupabasePorts } from "./helpers/supabase-ports.mjs";
 const root = await mkdtemp(join(tmpdir(), "apero-supabase-ci-"));
 const environment = Object.fromEntries(
   Object.entries(process.env).filter(
@@ -50,6 +51,8 @@ try {
   const config = await readFile(join(root, "supabase", "config.toml"), "utf8");
   const project = config.match(/^project_id\s*=\s*"([a-zA-Z0-9_-]+)"/m)?.[1];
   assert.ok(project?.startsWith("apero-supabase-ci-"));
+  const isolated = await isolateSupabasePorts(config);
+  await writeFile(join(root, "supabase", "config.toml"), isolated.config);
   // CLI v3 defaults to local; removed v2 target flags are deliberately not used.
   await run("supabase", ["start"]);
   await run("supabase", ["db", "reset", "--no-seed"]);

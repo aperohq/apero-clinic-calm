@@ -35,3 +35,5 @@ The Account lifecycle fixture initially failed because the newly imported panel 
 ## Explicit limits
 
 Google and Apero cannot perform a distributed transaction. The local exclusion constraint and connection locking prevent local double bookings; provider-side changes after the last read are detected and surfaced, rather than promised impossible. Apero remains authoritative for patient appointments; external edits contribute busy time and trigger reconciliation, not silent patient-record mutations. Real Google/clinic-provider acceptance and production release cannot be completed using mocks.
+
+The documentation-only CI rerun also exposed a local Supabase host-port collision on 54324. The bootstrap harness now assigns distinct available host ports to each temporary stack; it retains all services and every existing managed database/cron assertion. This is fixture isolation, not a skipped or weakened check.
