@@ -1,4 +1,11 @@
-import { clients, config, accessToken, reply } from "../_shared/integrations/runtime.ts";
+import {
+  clients,
+  config,
+  accessToken,
+  reply,
+  uuid,
+  body,
+} from "../_shared/integrations/runtime.ts";
 import type { Env } from "../_shared/integrations/runtime.ts";
 import { equalSecret, randomSecret, sha256 } from "../_shared/integrations/crypto.ts";
 import { GoogleCalendarAdapter } from "../_shared/integrations/google.ts";
@@ -26,7 +33,22 @@ export function createIntegrationWorker(env: Env, fetcher: typeof fetch = fetch,
         const clean = await admin.rpc("integration_cleanup");
         if (clean.error) return reply(503, { code: "database_unavailable" });
       }
-      const claimed = await admin.rpc("integration_claim");
+      let target: string | undefined;
+      if (req.headers.get("content-type")?.split(";")[0] === "application/json") {
+        let input: Record<string, unknown>;
+        try {
+          input = await body(req.clone());
+        } catch {
+          return reply(400, { code: "invalid_input" });
+        }
+        if (input.connection_id !== undefined) {
+          if (!uuid(input.connection_id)) return reply(400, { code: "invalid_input" });
+          target = input.connection_id;
+        }
+      }
+      const claimed = target
+        ? await admin.rpc("integration_claim_connection", { p_connection: target })
+        : await admin.rpc("integration_claim");
       if (claimed.error) return reply(503, { code: "database_unavailable" });
       if (!claimed.data) return reply(200, { processed: 0 });
       const { connection: c, job, lease } = claimed.data;
@@ -111,68 +133,90 @@ export function createIntegrationWorker(env: Env, fetcher: typeof fetch = fetch,
             callback &&
             (!c.resource_id ||
               !c.channel_expires_at ||
-              Date.parse(c.channel_expires_at) < Date.now() + 3600000)
+              Date.parse(c.channel_expires_at) < Date.now() + 3600000) &&
+            (!c.watch_retry_at || Date.parse(c.watch_retry_at) <= Date.now())
           ) {
-            const expected = new URL(
-              (env("SUPABASE_URL") ?? "") + "/functions/v1/google-calendar-webhook",
-            );
-            if (new URL(callback).href !== expected.href || expected.protocol !== "https:")
-              throw new Error("webhook_not_configured");
-            const channel = crypto.randomUUID(),
-              channelSecret = randomSecret(),
-              expiration = Date.now() + 86400000;
-            const saved = await admin
-              .from("calendar_connections")
-              .update({
-                channel_id: channel,
-                channel_hash: await sha256(channelSecret),
-                channel_expires_at: new Date(expiration).toISOString(),
-                resource_id: null,
-                message_number: 0,
-              })
-              .eq("id", c.id)
-              .eq("lease_id", lease)
-              .neq("status", "disconnected");
-            if (saved.error) throw new Error("database_unavailable");
-            const response = await fetcher(
-              `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(c.calendar_id)}/events/watch`,
-              {
-                method: "POST",
-                headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
-                body: JSON.stringify({
-                  id: channel,
-                  type: "web_hook",
-                  address: callback,
-                  token: channelSecret,
-                  expiration: String(expiration),
-                }),
-                redirect: "error",
-                signal: AbortSignal.timeout(15000),
-              },
-            );
-            if (!response.ok)
-              throw new ProviderError(
-                `google_http_${response.status}`,
-                response.status === 429 || response.status >= 500,
+            try {
+              const expected = new URL(
+                (env("SUPABASE_URL") ?? "") + "/functions/v1/google-calendar-webhook",
               );
-            const watch = await response.json();
-            if (
-              typeof watch.resourceId !== "string" ||
-              !Number.isFinite(Number(watch.expiration)) ||
-              Number(watch.expiration) <= Date.now()
-            )
-              throw new Error("watch_invalid_response");
-            const updated = await admin
-              .from("calendar_connections")
-              .update({
-                resource_id: watch.resourceId,
-                channel_expires_at: new Date(Number(watch.expiration)).toISOString(),
-              })
-              .eq("id", c.id)
-              .eq("lease_id", lease)
-              .eq("channel_id", channel)
-              .neq("status", "disconnected");
-            if (updated.error) throw new Error("database_unavailable");
+              if (new URL(callback).href !== expected.href || expected.protocol !== "https:")
+                throw new Error("webhook_not_configured");
+              const channel = crypto.randomUUID(),
+                channelSecret = randomSecret(),
+                expiration = Date.now() + 86400000;
+              const saved = await admin
+                .from("calendar_connections")
+                .update({
+                  channel_id: channel,
+                  channel_hash: await sha256(channelSecret),
+                  channel_expires_at: new Date(expiration).toISOString(),
+                  resource_id: null,
+                  message_number: 0,
+                })
+                .eq("id", c.id)
+                .eq("lease_id", lease)
+                .neq("status", "disconnected");
+              if (saved.error) throw new Error("database_unavailable");
+              const response = await fetcher(
+                `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(c.calendar_id)}/events/watch`,
+                {
+                  method: "POST",
+                  headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+                  body: JSON.stringify({
+                    id: channel,
+                    type: "web_hook",
+                    address: callback,
+                    token: channelSecret,
+                    expiration: String(expiration),
+                  }),
+                  redirect: "error",
+                  signal: AbortSignal.timeout(15000),
+                },
+              );
+              if (!response.ok)
+                throw new ProviderError(
+                  `google_http_${response.status}`,
+                  response.status === 429 || response.status >= 500,
+                );
+              const watch = await response.json();
+              if (
+                typeof watch.resourceId !== "string" ||
+                !Number.isFinite(Number(watch.expiration)) ||
+                Number(watch.expiration) <= Date.now()
+              )
+                throw new Error("watch_invalid_response");
+              const updated = await admin
+                .from("calendar_connections")
+                .update({
+                  resource_id: watch.resourceId,
+                  watch_error: null,
+                  watch_retry_at: null,
+                  channel_expires_at: new Date(Number(watch.expiration)).toISOString(),
+                })
+                .eq("id", c.id)
+                .eq("lease_id", lease)
+                .eq("channel_id", channel)
+                .neq("status", "disconnected");
+              if (updated.error) throw new Error("database_unavailable");
+            } catch (watchFailure) {
+              // A successful availability snapshot remains authoritative when an
+              // optional watch is unavailable. Polling provides bounded recovery.
+              const warning =
+                watchFailure instanceof ProviderError
+                  ? watchFailure.code
+                  : "google_watch_unavailable";
+              const savedWarning = await admin
+                .from("calendar_connections")
+                .update({
+                  watch_error: warning,
+                  watch_retry_at: new Date(Date.now() + 3600000).toISOString(),
+                })
+                .eq("id", c.id)
+                .eq("lease_id", lease)
+                .neq("status", "disconnected");
+              if (savedWarning.error) throw new Error("database_unavailable");
+            }
           }
         }
       } catch (e) {

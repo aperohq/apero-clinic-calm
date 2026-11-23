@@ -1,3 +1,5 @@
+> Active correction, 2026-11-23: see CALENDAR_CONNECTION_FIX.md. The owner authorized the private Apero Integration Acceptance calendar under apero.hq@gmail.com. Preserve revoked history and all primary-calendar events. Lifecycle/sync corrections are under validation; production fix/publication and actual acceptance are not yet claimed. Do not restart the roadmap or repeat the completed initial deployment.
+
 # Resume state
 
 Updated 2026-11-22. Active implementation worktree: `/tmp/apero-integrations-worktree`, branch `feat/integration-system`, based on protected `origin/main` `ab7fc81711e9c66c45ae35f9b5d9efa5c51b7734`. The original `/home/nour/apero-clinic-calm` checkout contains substantial pre-existing changes and early integration copies; do not commit or overwrite its unrelated changes. Resume engineering in the isolated worktree. No history was rewritten.

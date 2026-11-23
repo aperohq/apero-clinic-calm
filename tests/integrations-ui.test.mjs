@@ -53,11 +53,26 @@ const db = {
   functions: {
     async invoke(path, { body }) {
       fixture.calls.push({ name: path, args: body });
+      if (path.endsWith("/oauth/start")) {
+        if (fixture.oauthGate) await fixture.oauthGate;
+        return {
+          data: {
+            url: "https://accounts.google.com/o/oauth2/v2/auth?state=" + "a".repeat(64),
+            state: "a".repeat(64),
+          },
+          error: null,
+        };
+      }
       return fixture.fail
         ? { error: new Error("INTERNAL_SECRET_SENTINEL") }
         : {
             data: path.endsWith("/calendars")
-              ? { calendars: [{ id: "calendar-a", name: "Clinic Calendar" }] }
+              ? {
+                  calendars: [
+                    { id: "calendar-a", name: "Clinic Calendar", primary: false },
+                    { id: "primary", name: "Primary account", primary: true },
+                  ],
+                }
               : { success: true },
             error: null,
           };
@@ -157,7 +172,20 @@ try {
     [...host.querySelectorAll("button")].find((b) => b.textContent === "Create API key").disabled,
     false,
   );
-  await click("Create API key");
+  const createdBefore = fixture.calls.filter((c) => c.name === "integration_create_key").length;
+  await React.act(async () => {
+    const button = [...host.querySelectorAll("button")].find(
+      (b) => b.textContent === "Create API key",
+    );
+    button.click();
+    button.click();
+    await new Promise((r) => setTimeout(r, 5));
+  });
+  assert.equal(
+    fixture.calls.filter((c) => c.name === "integration_create_key").length - createdBefore,
+    1,
+  );
+
   assert.match(text(), /apero_SYNTHETIC_SINGLE_USE/);
   await click("Hide key");
   assert.equal(text().includes("apero_SYNTHETIC_SINGLE_USE"), false);
@@ -196,6 +224,8 @@ try {
       select.dispatchEvent(new window.Event("change", { bubbles: true }));
     });
   };
+  await change("Calendar", "primary");
+  assert.match(text(), /primary calendar/);
   await change("Calendar", "calendar-a");
   await change("Practitioner", "staff-a");
   await click("Use calendar");
@@ -207,6 +237,30 @@ try {
         c.args.staff_id === "staff-a",
     ),
   );
+  fixture.data.connections = [
+    {
+      id: "active",
+      calendar_id: "calendar-a",
+      calendar_name: "Clinic Calendar",
+      google_account_id: "owner@synthetic.test",
+      practitioner_name: "Dr Synthetic",
+      staff_id: "staff-a",
+      status: "connected",
+      last_synced_at: new Date().toISOString(),
+      sync_state: "current",
+    },
+    {
+      id: "historical",
+      calendar_id: "old",
+      status: "disconnected",
+      staff_id: null,
+      last_synced_at: null,
+    },
+  ];
+  await click("Refresh status");
+  assert.match(text(), /Google account: owner@synthetic.test/);
+  assert.match(text(), /Practitioner: Dr Synthetic/);
+  assert.match(text(), /Historical connection/);
   await click("Rotate key");
   assert.match(text(), /previous key is revoked/);
   await click("Revoke key");
@@ -232,6 +286,45 @@ try {
     await new Promise((r) => setTimeout(r, 15));
   });
   assert.equal(text().includes("apero_SYNTHETIC_SINGLE_USE"), false);
+  let releaseOauth;
+  fixture.oauthGate = new Promise((r) => {
+    releaseOauth = r;
+  });
+  const assigned = [];
+  const originalAssign = window.location.assign;
+  window.location.assign = (url) => assigned.push(url);
+  const startsBefore = fixture.calls.filter((c) => c.name.endsWith("/oauth/start")).length;
+  await React.act(async () => {
+    const button = [...host.querySelectorAll("button")].find(
+      (b) => b.textContent === "Connect Google Calendar",
+    );
+    button.click();
+    button.click();
+    await new Promise((r) => setTimeout(r, 5));
+  });
+  assert.equal(
+    fixture.calls.filter((c) => c.name.endsWith("/oauth/start")).length - startsBefore,
+    1,
+  );
+  await React.act(async () => {
+    releaseOauth();
+    await new Promise((r) => setTimeout(r, 5));
+  });
+  assert.equal(assigned.length, 1);
+  assert.equal(
+    window.sessionStorage.getItem("apero-google-state:" + fixture.clinicId),
+    "a".repeat(64),
+  );
+  window.location.assign = originalAssign;
+  fixture.clinicId = "clinic-denied";
+  window.history.replaceState(null, "", "/account?integration_error=oauth_denied");
+  await render();
+  assert.match(text(), /authorization was not completed/);
+  assert.equal(
+    [...host.querySelectorAll("button")].find((b) => b.textContent === "Connect Google Calendar")
+      .disabled,
+    false,
+  );
   fixture.role = "staff";
   await render();
   assert.equal(text(), "");

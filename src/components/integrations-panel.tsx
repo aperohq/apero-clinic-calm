@@ -18,6 +18,12 @@ type ApiKey = {
 type Connection = {
   id: string;
   calendar_id: string | null;
+  google_account_id?: string | null;
+  calendar_name?: string | null;
+  calendar_is_primary?: boolean | null;
+  practitioner_name?: string | null;
+  sync_state?: string;
+  watch_error?: string | null;
   staff_id: string | null;
   status: string;
   last_synced_at: string | null;
@@ -36,6 +42,7 @@ export function IntegrationsPanel() {
 }
 function OwnerIntegrations({ clinicId }: { clinicId: string }) {
   const oauthCompletion = useRef<Promise<void> | null>(null);
+  const actionInFlight = useRef(false);
   const [data, setData] = useState<Dashboard | null>(null),
     [staff, setStaff] = useState<Staff[]>([]);
   const [error, setError] = useState(""),
@@ -44,9 +51,9 @@ function OwnerIntegrations({ clinicId }: { clinicId: string }) {
   const [secret, setSecret] = useState(""),
     [name, setName] = useState(""),
     [scopes, setScopes] = useState<string[]>(["availability:read"]);
-  const [calendars, setCalendars] = useState<Record<string, Array<{ id: string; name: string }>>>(
-    {},
-  );
+  const [calendars, setCalendars] = useState<
+    Record<string, Array<{ id: string; name: string; primary?: boolean }>>
+  >({});
   const [selectedCalendar, setSelectedCalendar] = useState<Record<string, string>>({}),
     [selectedStaff, setSelectedStaff] = useState<Record<string, string>>({});
   async function load() {
@@ -91,23 +98,20 @@ function OwnerIntegrations({ clinicId }: { clinicId: string }) {
         window.sessionStorage.removeItem("apero-google-state:" + clinicId);
         if (denied) {
           setError("Google authorization was not completed. Connect again when ready.");
-          return;
-        }
-        if (!state || !code || saved !== state) {
+        } else if (!state || !code || saved !== state) {
           setError(
             "This authorization did not start in this browser. Connect Google Calendar again.",
           );
-          return;
+        } else {
+          oauthCompletion.current = (async () => {
+            await manage("oauth/complete", { state, code });
+          })();
         }
-        oauthCompletion.current = (async () => {
-          await manage("oauth/complete", { state, code });
-        })();
       }
       try {
         if (oauthCompletion.current) await oauthCompletion.current;
       } catch {
         if (active) setError("Google authorization could not be completed. Connect again.");
-        return;
       }
       const result = await db.rpc("integration_dashboard");
       const members = await db
@@ -123,13 +127,21 @@ function OwnerIntegrations({ clinicId }: { clinicId: string }) {
         setStaff(members.data);
       }
     })();
+    const timer = window.setInterval(() => {
+      void (async () => {
+        const result = await db.rpc("integration_dashboard");
+        if (active && !result.error) setData(result.data as unknown as Dashboard);
+      })();
+    }, 15000);
     return () => {
       active = false;
+      window.clearInterval(timer);
     };
   }, [clinicId]);
 
   async function run(task: () => Promise<void>) {
-    if (busy) return;
+    if (actionInFlight.current) return;
+    actionInFlight.current = true;
     setBusy(true);
     setError("");
     setMessage("");
@@ -139,6 +151,7 @@ function OwnerIntegrations({ clinicId }: { clinicId: string }) {
     } catch (e) {
       setError(e instanceof Error ? e.message : "The action failed. Try again.");
     } finally {
+      actionInFlight.current = false;
       setBusy(false);
     }
   }
@@ -149,6 +162,16 @@ function OwnerIntegrations({ clinicId }: { clinicId: string }) {
     if (response.error)
       throw new Error("Could not update the integration. Check the connection and try again.");
     return response.data;
+  }
+  async function connect(connectionId?: string) {
+    const result = await manage("oauth/start", connectionId ? { connection_id: connectionId } : {});
+    const target = new URL(result.url);
+    if (target.origin !== "https://accounts.google.com")
+      throw new Error("Invalid authorization link.");
+    if (typeof result.state !== "string" || !/^[a-f0-9]{64}$/.test(result.state))
+      throw new Error("Invalid authorization state.");
+    window.sessionStorage.setItem("apero-google-state:" + clinicId, result.state);
+    window.location.assign(target.href);
   }
   async function keyAction(key?: ApiKey) {
     if (!name.trim() && !key) throw new Error("Enter a key name.");
@@ -177,21 +200,7 @@ function OwnerIntegrations({ clinicId }: { clinicId: string }) {
         <Button variant="outline" disabled={busy} onClick={() => void run(load)}>
           Refresh status
         </Button>
-        <Button
-          disabled={busy || !data}
-          onClick={() =>
-            void run(async () => {
-              const result = await manage("oauth/start", {});
-              const target = new URL(result.url);
-              if (target.origin !== "https://accounts.google.com")
-                throw new Error("Invalid authorization link.");
-              if (typeof result.state !== "string" || !/^[a-f0-9]{64}$/.test(result.state))
-                throw new Error("Invalid authorization state.");
-              window.sessionStorage.setItem("apero-google-state:" + clinicId, result.state);
-              window.location.assign(target.href);
-            })
-          }
-        >
+        <Button disabled={busy || !data} onClick={() => void run(() => connect())}>
           Connect Google Calendar
         </Button>
       </div>
@@ -220,7 +229,41 @@ function OwnerIntegrations({ clinicId }: { clinicId: string }) {
                 aria-label="Calendar connection"
                 className="rounded-xl border p-4 min-w-0"
               >
-                <p className="break-all font-medium">{c.calendar_id ?? "Choose a calendar"}</p>
+                <p className="break-words font-medium">
+                  {c.calendar_name ?? c.calendar_id ?? "Choose a calendar"}
+                </p>
+                {c.google_account_id && (
+                  <p className="break-all text-sm">Google account: {c.google_account_id}</p>
+                )}
+                {c.calendar_id && (
+                  <p className="break-all text-xs text-muted-foreground">
+                    Calendar ID: {c.calendar_id}
+                    {c.calendar_is_primary ? " · Primary calendar" : ""}
+                  </p>
+                )}
+                {c.staff_id && (
+                  <p className="text-sm">
+                    Practitioner:{" "}
+                    {c.practitioner_name ??
+                      staff.find((member) => member.id === c.staff_id)?.full_name ??
+                      "Unavailable practitioner"}
+                  </p>
+                )}
+                {c.status === "disconnected" && (
+                  <p className="text-sm text-muted-foreground">
+                    Historical connection. Credentials removed; synchronization stopped.
+                  </p>
+                )}
+                {c.sync_state === "selection_required" && (
+                  <p className="text-sm">Pending: choose a calendar and practitioner.</p>
+                )}
+                {(c.sync_state === "queued" || c.sync_state === "running") && (
+                  <p className="text-sm">
+                    {c.sync_state === "running"
+                      ? "Synchronization is running."
+                      : "Waiting for initial synchronization. Use Retry synchronization if it does not start."}
+                  </p>
+                )}
                 <p className="text-sm">
                   Status: {c.status}
                   {c.last_synced_at &&
@@ -231,6 +274,12 @@ function OwnerIntegrations({ clinicId }: { clinicId: string }) {
                     Synchronization needs attention: {c.last_error.replaceAll("_", " ")}.
                   </p>
                 )}
+                {c.watch_error && (
+                  <p className="text-sm text-muted-foreground">
+                    Google notifications are unavailable. Scheduled polling keeps availability
+                    current.
+                  </p>
+                )}
                 {c.calendar_id &&
                   c.status !== "disconnected" &&
                   (!c.last_synced_at || Date.now() - Date.parse(c.last_synced_at) > 300000) && (
@@ -239,77 +288,95 @@ function OwnerIntegrations({ clinicId }: { clinicId: string }) {
                       until synchronization recovers.
                     </p>
                   )}
-                {!c.calendar_id && c.status !== "disconnected" && (
-                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                {(!c.calendar_id || (!c.last_synced_at && c.sync_state !== "running")) &&
+                  c.status !== "disconnected" && (
+                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                      <Button
+                        variant="outline"
+                        disabled={busy}
+                        onClick={() =>
+                          void run(async () => {
+                            const result = await manage("calendars", { connection_id: c.id });
+                            setCalendars((old) => ({ ...old, [c.id]: result.calendars }));
+                          })
+                        }
+                      >
+                        Load writable calendars
+                      </Button>
+                      <label className="text-sm">
+                        Calendar
+                        <select
+                          aria-label="Calendar"
+                          className="mt-1 w-full rounded-md border bg-background p-2"
+                          value={selectedCalendar[c.id] ?? ""}
+                          onChange={(e) =>
+                            setSelectedCalendar((old) => ({ ...old, [c.id]: e.target.value }))
+                          }
+                        >
+                          <option value="">Select calendar</option>
+                          {(calendars[c.id] ?? []).map((item) => (
+                            <option key={item.id} value={item.id}>
+                              {item.name}
+                              {item.primary ? " (Primary calendar)" : ""}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="text-sm">
+                        Practitioner
+                        <select
+                          aria-label="Practitioner"
+                          className="mt-1 w-full rounded-md border bg-background p-2"
+                          value={selectedStaff[c.id] ?? ""}
+                          onChange={(e) =>
+                            setSelectedStaff((old) => ({ ...old, [c.id]: e.target.value }))
+                          }
+                        >
+                          <option value="">Select practitioner</option>
+                          {staff.map((s) => (
+                            <option key={s.id} value={s.id}>
+                              {s.full_name}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      {calendars[c.id]?.find((calendar) => calendar.id === selectedCalendar[c.id])
+                        ?.primary && (
+                        <p className="text-sm text-amber-700 sm:col-span-2">
+                          This is the primary calendar. Synthetic tests must use a dedicated private
+                          acceptance calendar.
+                        </p>
+                      )}
+                      <Button
+                        disabled={busy || !selectedCalendar[c.id] || !selectedStaff[c.id]}
+                        onClick={() =>
+                          void run(async () => {
+                            const selection = await manage("select", {
+                              connection_id: c.id,
+                              calendar_id: selectedCalendar[c.id],
+                              staff_id: selectedStaff[c.id],
+                            });
+                            setMessage(
+                              selection.synchronization === "processed"
+                                ? "Synchronization finished. Check the connection status below."
+                                : "Calendar selected. Synchronization queued; refresh status shortly.",
+                            );
+                          })
+                        }
+                      >
+                        Use calendar
+                      </Button>
+                    </div>
+                  )}
+                {c.status !== "disconnected" && (
+                  <div className="mt-3 flex flex-wrap gap-3">
                     <Button
                       variant="outline"
                       disabled={busy}
-                      onClick={() =>
-                        void run(async () => {
-                          const result = await manage("calendars", { connection_id: c.id });
-                          setCalendars((old) => ({ ...old, [c.id]: result.calendars }));
-                        })
-                      }
+                      onClick={() => void run(() => connect(c.id))}
                     >
-                      Load writable calendars
+                      Reconnect Google account
                     </Button>
-                    <label className="text-sm">
-                      Calendar
-                      <select
-                        aria-label="Calendar"
-                        className="mt-1 w-full rounded-md border bg-background p-2"
-                        value={selectedCalendar[c.id] ?? ""}
-                        onChange={(e) =>
-                          setSelectedCalendar((old) => ({ ...old, [c.id]: e.target.value }))
-                        }
-                      >
-                        <option value="">Select calendar</option>
-                        {(calendars[c.id] ?? []).map((item) => (
-                          <option key={item.id} value={item.id}>
-                            {item.name}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <label className="text-sm">
-                      Practitioner
-                      <select
-                        aria-label="Practitioner"
-                        className="mt-1 w-full rounded-md border bg-background p-2"
-                        value={selectedStaff[c.id] ?? ""}
-                        onChange={(e) =>
-                          setSelectedStaff((old) => ({ ...old, [c.id]: e.target.value }))
-                        }
-                      >
-                        <option value="">Select practitioner</option>
-                        {staff.map((s) => (
-                          <option key={s.id} value={s.id}>
-                            {s.full_name}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <Button
-                      disabled={busy || !selectedCalendar[c.id] || !selectedStaff[c.id]}
-                      onClick={() =>
-                        void run(async () => {
-                          await manage("select", {
-                            connection_id: c.id,
-                            calendar_id: selectedCalendar[c.id],
-                            staff_id: selectedStaff[c.id],
-                          });
-                          setMessage(
-                            "Calendar selected. Synchronization must finish before booking becomes available.",
-                          );
-                        })
-                      }
-                    >
-                      Use calendar
-                    </Button>
-                  </div>
-                )}
-                {c.status !== "disconnected" && (
-                  <div className="mt-3 flex flex-wrap gap-3">
                     {c.calendar_id && (
                       <Button
                         variant="outline"

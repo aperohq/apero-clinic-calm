@@ -44,6 +44,22 @@ try {
   await sql`insert into clients(id,clinic_id,full_name,phone) values(${client},${clinic},'Synthetic Patient','12345678')`;
   await sql`insert into staff(id,clinic_id,full_name,specialty,services) values(${staff},${clinic},'Synthetic Practitioner','Dentistry',array['Consultation'])`;
   await sql`insert into staff_availability(clinic_id,staff_id,day_of_week,start_time,end_time) select ${clinic},${staff},d,'00:00','23:59' from generate_series(0,6) d`;
+  const authorizations = await Promise.all(
+    Array.from({ length: 4 }, () =>
+      service(
+        (tx) =>
+          tx`select integration_prepare_connection(${clinic},${user},'owner@synthetic.test') id`,
+      ),
+    ),
+  );
+  assert.equal(new Set(authorizations.map((x) => x[0].id)).size, 1);
+  assert.equal(
+    (
+      await sql`select count(*)::int n from calendar_connections where google_account_id='owner@synthetic.test'`
+    )[0].n,
+    1,
+  );
+  console.log("PASS native concurrent OAuth preparation: one reusable active connection");
   const key = (
     await owner(
       (tx) => tx`select integration_create_key('Synthetic',array['appointments:write']) v`,
@@ -56,6 +72,23 @@ try {
   await owner(
     (tx) => tx`select integration_select_calendar(${connection},'synthetic@example.test',${staff})`,
   );
+  await Promise.all(
+    Array.from({ length: 4 }, () =>
+      owner(
+        (tx) =>
+          tx`select integration_select_calendar(${connection},'synthetic@example.test',${staff})`,
+      ),
+    ),
+  );
+  assert.equal(
+    Number(
+      (
+        await sql`select generation from integration_jobs where connection_id=${connection} and kind='pull'`
+      )[0].generation,
+    ),
+    1,
+  );
+  console.log("PASS native concurrent calendar selection: one unchanged initial sync job");
   const claim = (await service((tx) => tx`select integration_claim() v`))[0].v;
   await service(
     (tx) =>
