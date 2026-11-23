@@ -314,6 +314,9 @@ test("OAuth callback relays code; completion requires the initiating authenticat
         expires_in: 3600,
         scope: GOOGLE_SCOPES.join(" "),
       });
+    if (url.pathname === "/calendar/v3/users/me/calendarList")
+      return json({ items: [{ id: "owner@example.test", summary: "Primary", primary: true }] });
+    if (url.pathname.endsWith("/rpc/integration_prepare_connection")) return json(connection);
     if (url.pathname.endsWith("/rpc/integration_save_connection")) {
       const data = JSON.parse(init.body);
       assert.equal(data.p_clinic, clinic);
@@ -506,4 +509,162 @@ test("scheduled drain authenticates and stops on an idle queue", async () => {
   );
   assert.deepEqual(await response.json(), { processed: 0, failed: 0 });
   assert.equal(cleanup, 1);
+});
+
+test("selection immediately starts only the owner's connection worker and preserves calendar identity", async () => {
+  const ciphertext = await seal(
+    {
+      access_token: "synthetic-access",
+      refresh_token: "synthetic-refresh",
+      expires_at: Date.now() + 3600000,
+    },
+    settings.INTEGRATION_ENCRYPTION_KEY,
+    clinic + ":" + connection,
+  );
+  let kicks = 0,
+    selections = 0;
+  const transport = async (input, init) => {
+    const url = new URL(String(input));
+    if (url.pathname === "/auth/v1/user") return json({ id: actor });
+    if (url.pathname.endsWith("/profiles"))
+      return json({ clinic_id: clinic, role: "owner", revoked_at: null });
+    if (url.pathname.endsWith("/calendar_connections")) {
+      assert.equal(url.searchParams.get("clinic_id"), "eq." + clinic);
+      return json(
+        init.method === "PATCH"
+          ? null
+          : {
+              id: connection,
+              clinic_id: clinic,
+              credentials: ciphertext,
+              google_account_id: "owner@example.test",
+            },
+      );
+    }
+    if (url.pathname === "/calendar/v3/users/me/calendarList")
+      return json({
+        items: [
+          { id: "owner@example.test", summary: "Primary", primary: true },
+          {
+            id: "synthetic@group.calendar.google.com",
+            summary: "Private synthetic",
+            primary: false,
+          },
+        ],
+      });
+    if (url.pathname.endsWith("integration_select_calendar")) {
+      selections++;
+      return json(null);
+    }
+    if (url.pathname.endsWith("/functions/v1/integration-worker")) {
+      assert.deepEqual(JSON.parse(init.body), { connection_id: connection });
+      assert.equal(init.headers.authorization, "Bearer " + settings.INTEGRATION_WORKER_SECRET);
+      kicks++;
+      return json({ processed: 1, failed: 0 });
+    }
+    throw Error("Unexpected selection request " + url.pathname);
+  };
+  const handler = createIntegrationApi(env, transport);
+  for (let i = 0; i < 2; i++) {
+    const response = await handler(
+      req(
+        "/manage/select",
+        {
+          connection_id: connection,
+          calendar_id: "synthetic@group.calendar.google.com",
+          staff_id: appointment.staff_id,
+        },
+        { authorization: "Bearer owner" },
+      ),
+    );
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), { selected: true, synchronization: "processed" });
+  }
+  assert.equal(selections, 2);
+  assert.equal(kicks, 2);
+});
+
+test("scoped initial pull succeeds when an optional Google watch fails; provider errors remain retryable", async () => {
+  const ciphertext = await seal(
+    {
+      access_token: "synthetic-access",
+      refresh_token: "synthetic-refresh",
+      expires_at: Date.now() + 3600000,
+    },
+    settings.INTEGRATION_ENCRYPTION_KEY,
+    clinic + ":" + connection,
+  );
+  for (const providerStatus of [200, 503]) {
+    let snapshot = false,
+      warning = false,
+      finished = false;
+    const transport = async (input, init) => {
+      const url = new URL(String(input));
+      if (url.pathname.endsWith("integration_cleanup")) return json(null);
+      if (url.pathname.endsWith("integration_claim_connection")) {
+        assert.deepEqual(JSON.parse(init.body), { p_connection: connection });
+        return json({
+          connection: {
+            id: connection,
+            clinic_id: clinic,
+            calendar_id: "synthetic",
+            credentials: ciphertext,
+          },
+          job: { id: "job", kind: "pull", generation: 1, attempts: 1 },
+          lease: connection,
+        });
+      }
+      if (url.pathname.endsWith("integration_claim"))
+        throw Error("Unscoped worker claim forbidden");
+      if (url.pathname.endsWith("/calendar_connections")) {
+        if (init.method === "PATCH" && JSON.parse(init.body).watch_error) {
+          warning = true;
+          assert.equal(JSON.parse(init.body).watch_error, "google_http_403");
+        }
+        return json({ id: connection });
+      }
+      if (url.pathname.endsWith("/events"))
+        return json(
+          providerStatus === 200
+            ? { items: [] }
+            : { error: { errors: [{ reason: "backendError" }] } },
+          providerStatus,
+        );
+      if (url.pathname.endsWith("integration_replace_busy")) {
+        snapshot = true;
+        return json(null);
+      }
+      if (url.pathname.endsWith("/events/watch"))
+        return json({ error: { errors: [{ reason: "forbidden" }] } }, 403);
+      if (url.pathname.endsWith("integration_finish")) {
+        const data = JSON.parse(init.body);
+        assert.equal(data.p_error, providerStatus === 200 ? null : "google_http_503");
+        if (providerStatus === 503) assert.ok(data.p_delay > 0);
+        finished = true;
+        return json(null);
+      }
+      throw Error("Unexpected worker request " + url.pathname);
+    };
+    const response = await createIntegrationWorker(
+      (name) =>
+        name === "GOOGLE_WEBHOOK_URI"
+          ? settings.SUPABASE_URL + "/functions/v1/google-calendar-webhook"
+          : env(name),
+      transport,
+    )(
+      new Request("https://example.test", {
+        method: "POST",
+        headers: {
+          authorization: "Bearer " + settings.INTEGRATION_WORKER_SECRET,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ connection_id: connection }),
+      }),
+    );
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), { processed: 1, failed: providerStatus !== 200 });
+    assert.equal(snapshot, providerStatus === 200);
+    assert.equal(warning, providerStatus === 200);
+    assert.equal(finished, true);
+  }
 });

@@ -19,6 +19,20 @@ class CustodyTests(unittest.TestCase):
   self.assertTrue(backup.retention_cron_is_safe(expected))
   self.assertFalse(backup.retention_cron_is_safe(expected+[{'command':'arbitrary secret HTTP request'}]))
   self.assertFalse(backup.retention_cron_is_safe([{**expected[0],'command':'select unsafe()'}]))
+ def test_integration_cron_requires_exact_scoped_command_and_encrypted_recovery(self):
+  import database_backup as backup
+  retention={'name':'apero-retention-daily','schedule':'23 2 * * *','command':'select public.retention_daily()','active':True}
+  worker={'name':'apero-integrations-worker','schedule':'* * * * *','command':"select public.integration_scheduled_sync('00000000-0000-4000-8000-000000000001','abc123@group.calendar.google.com')",'active':True}
+  self.assertTrue(backup.integration_cron_is_safe([worker,retention]))
+  for command in [worker['command']+";select unsafe()", "select net.http_post('secret')",worker['command'].replace('abc123@group.calendar.google.com','primary@gmail.com')]:
+   self.assertFalse(backup.integration_cron_is_safe([retention,{**worker,'command':command}]))
+  self.assertFalse(backup.integration_cron_is_safe([retention,worker,worker]))
+  with tempfile.TemporaryDirectory() as folder:
+   path=Path(folder)/'config.age';path.write_text('plaintext-secret');path.chmod(0o600)
+   with self.assertRaises(ValueError):backup.integration_recovery_config(path)
+   path.write_bytes(b'age-encryption.org/v1\nsynthetic-ciphertext');self.assertEqual(backup.integration_recovery_config(path),path)
+   path.chmod(0o644)
+   with self.assertRaises(ValueError):backup.integration_recovery_config(path)
  def test_failed_upload_does_not_acknowledge_intents(self):
   class Connection:
    def execute(self,_):return self

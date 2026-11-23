@@ -21,6 +21,9 @@ try {
   await db.exec(
     await readFile("supabase/migrations/20261122120000_integration_system.sql", "utf8"),
   );
+  await db.exec(
+    await readFile("supabase/migrations/20261123210000_calendar_connection_lifecycle.sql", "utf8"),
+  );
   await db.query("select set_config('request.jwt.claims',$1,false)", [
     JSON.stringify({ role: "service_role" }),
   ]);
@@ -234,6 +237,226 @@ try {
       b.user,
       "encrypted",
     ]);
+  });
+  await test("repeated OAuth reuses the active account and reconnect preserves history and tenant boundaries", async () => {
+    await db.exec("begin");
+    try {
+      const prepare = async (clinic, actor, account, target = null) =>
+        (
+          await db.query("select integration_prepare_connection($1,$2,$3,$4) id", [
+            clinic,
+            actor,
+            account,
+            target,
+          ])
+        ).rows[0].id;
+      const id = await prepare(a.clinic, a.user, "owner@synthetic.test");
+      assert.equal(await prepare(a.clinic, a.user, "owner@synthetic.test"), id);
+      await db.query("select integration_save_connection($1,$2,$3,'encrypted-new')", [
+        id,
+        a.clinic,
+        a.user,
+      ]);
+      assert.equal(
+        (
+          await db.query(
+            "select count(*)::int n from calendar_connections where google_account_id='owner@synthetic.test' and status<>'disconnected'",
+          )
+        ).rows[0].n,
+        1,
+      );
+      await assert.rejects(
+        () => attempt(db, () => prepare(b.clinic, a.user, "owner@synthetic.test")),
+        /Not authorized/,
+      );
+      await assert.rejects(
+        () => attempt(db, () => prepare(b.clinic, b.user, "owner@synthetic.test", id)),
+        /Connection not found/,
+      );
+      await assert.rejects(
+        () => attempt(db, () => prepare(a.clinic, a.user, "other@synthetic.test", id)),
+        /does not match/,
+      );
+      await db.query("select set_config('request.jwt.claims',$1,true)", [
+        JSON.stringify({ role: "authenticated", sub: a.user }),
+      ]);
+      await db.query("select integration_disconnect($1)", [id]);
+      const next = await prepare(a.clinic, a.user, "owner@synthetic.test", id);
+      assert.notEqual(next, id);
+      assert.equal(await prepare(a.clinic, a.user, "owner@synthetic.test", id), next);
+      const history = (
+        await db.query("select status,credentials from calendar_connections where id=$1", [id])
+      ).rows[0];
+      assert.equal(history.status, "disconnected");
+      assert.equal(history.credentials, null);
+    } finally {
+      await db.exec("rollback");
+    }
+  });
+  await test("selection is idempotent, failed initial sync recovers, and scoped work cannot claim another connection", async () => {
+    await db.exec("begin");
+    try {
+      const id = (
+        await db.query(
+          "select integration_prepare_connection($1,$2,'recovery@synthetic.test') id",
+          [a.clinic, a.user],
+        )
+      ).rows[0].id;
+      await db.query("select integration_save_connection($1,$2,$3,'encrypted')", [
+        id,
+        a.clinic,
+        a.user,
+      ]);
+      await db.query("select set_config('request.jwt.claims',$1,true)", [
+        JSON.stringify({ role: "authenticated", sub: a.user }),
+      ]);
+      await db.query("select integration_select_calendar($1,'primary@synthetic.test',$2)", [
+        id,
+        a.staff,
+      ]);
+      const before = (
+        await db.query(
+          "select generation from integration_jobs where connection_id=$1 and kind='pull'",
+          [id],
+        )
+      ).rows[0].generation;
+      await db.query("select integration_select_calendar($1,'primary@synthetic.test',$2)", [
+        id,
+        a.staff,
+      ]);
+      assert.equal(
+        (
+          await db.query(
+            "select generation from integration_jobs where connection_id=$1 and kind='pull'",
+            [id],
+          )
+        ).rows[0].generation,
+        before,
+      );
+      await db.query(
+        "select integration_select_calendar($1,'acceptance@group.calendar.google.com',$2)",
+        [id, a.staff],
+      );
+      const claim = (await db.query("select integration_claim_connection($1) v", [id])).rows[0].v;
+      assert.equal(claim.connection.id, id);
+      const attempts = (
+        await db.query("select attempts,generation from integration_jobs where id=$1", [
+          claim.job.id,
+        ])
+      ).rows[0];
+      await db.query("select integration_retry($1)", [id]);
+      assert.deepEqual(
+        (
+          await db.query("select attempts,generation from integration_jobs where id=$1", [
+            claim.job.id,
+          ])
+        ).rows[0],
+        attempts,
+      );
+      assert.equal(
+        (await db.query("select integration_claim_connection($1) v", [id])).rows[0].v,
+        null,
+      );
+      await db.query("select integration_finish($1,$2,$3,'google_http_429',30)", [
+        claim.job.id,
+        claim.lease,
+        claim.job.generation,
+      ]);
+      assert.equal(
+        (await db.query("select status from calendar_connections where id=$1", [id])).rows[0]
+          .status,
+        "attention",
+      );
+      await db.query("select integration_retry($1)", [id]);
+      const retry = (await db.query("select integration_claim_connection($1) v", [id])).rows[0].v;
+      await db.query(
+        "select integration_replace_busy($1,$2,now()-interval '1 day',now()+interval '90 days','[]',$3)",
+        [id, retry.lease, retry.job.generation],
+      );
+      await db.query("select integration_finish($1,$2,$3)", [
+        retry.job.id,
+        retry.lease,
+        retry.job.generation,
+      ]);
+      let state = (
+        await db.query(
+          "select status,last_synced_at,last_error from calendar_connections where id=$1",
+          [id],
+        )
+      ).rows[0];
+      assert.equal(state.status, "connected");
+      assert.equal(state.last_error, null);
+      await db.query(
+        "select integration_select_calendar($1,'acceptance@group.calendar.google.com',$2)",
+        [id, a.staff],
+      );
+      assert.deepEqual(
+        (
+          await db.query(
+            "select status,last_synced_at,last_error from calendar_connections where id=$1",
+            [id],
+          )
+        ).rows[0],
+        state,
+      );
+      await assert.rejects(
+        () =>
+          attempt(db, () =>
+            db.query("select integration_select_calendar($1,'different-calendar',$2)", [
+              id,
+              a.staff,
+            ]),
+          ),
+        /Disconnect before replacing/,
+      );
+      await db.query(
+        "update calendar_connections set last_synced_at=now()-interval '6 minutes' where id=$1",
+        [id],
+      );
+      assert.equal(
+        (
+          await db.query(
+            "select integration_calendar_open($1,$2,now()+interval '3 days',now()+interval '3 days 45 minutes',null) v",
+            [a.clinic, a.staff],
+          )
+        ).rows[0].v,
+        false,
+      );
+      await db.query("select integration_save_connection($1,$2,$3,'refreshed')", [
+        id,
+        a.clinic,
+        a.user,
+      ]);
+      assert.equal(
+        (
+          await db.query(
+            "select count(*)::int n from calendar_connections where google_account_id='recovery@synthetic.test'",
+          )
+        ).rows[0].n,
+        1,
+      );
+      const fresh = (await db.query("select integration_claim_connection($1) v", [id])).rows[0].v;
+      await db.query(
+        "select integration_replace_busy($1,$2,now()-interval '1 day',now()+interval '90 days','[]',$3)",
+        [id, fresh.lease, fresh.job.generation],
+      );
+      await db.query("select integration_finish($1,$2,$3)", [
+        fresh.job.id,
+        fresh.lease,
+        fresh.job.generation,
+      ]);
+      assert.equal(
+        (
+          await db.query(
+            "select integration_calendar_open($1,$2,now()+interval '3 days',now()+interval '3 days 45 minutes',null) v",
+            [a.clinic, a.staff],
+          )
+        ).rows[0].v,
+        true,
+      );
+    } finally {
+      await db.exec("rollback");
+    }
   });
   await test("calendar selection rejects foreign practitioner and cross-clinic connection", async () => {
     await asUser(db, a.user, async () => {

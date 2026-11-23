@@ -1,3 +1,5 @@
+> Active correction, 2026-11-23: see CALENDAR_CONNECTION_FIX.md. The owner authorized the private Apero Integration Acceptance calendar under apero.hq@gmail.com. Preserve revoked history and all primary-calendar events. Lifecycle/sync corrections are under validation; production fix/publication and actual acceptance are not yet claimed. Do not restart the roadmap or repeat the completed initial deployment.
+
 # Integration execution tracker
 
 Updated 2026-11-22. Implementation is local until the release is authorized. Production/real-account acceptance remains explicitly separate.

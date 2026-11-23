@@ -1,18 +1,12 @@
--- RELEASE APPROVAL REQUIRED. This is an operator template, not a migration.
--- Prerequisites: integration-worker deployed and INTEGRATIONS_ENABLED=true;
--- vault entries named apero_integration_worker_url and apero_integration_worker_secret.
--- URL must be the reviewed project /functions/v1/integration-worker endpoint.
--- pg_net calls may consume billable Edge quota. Do not execute without release approval.
+-- Operator template: release authorization and successful synthetic acceptance required.
+-- Replace CONNECTION_UUID and SYNTHETIC_CALENDAR_ID with the approved mapping.
+-- Never include a bearer token in cron.command. Vault holds the existing worker URL/secret.
+-- Free included invocation quota and Google daily request threshold must be checked first.
 begin;
 create extension if not exists pg_net with schema extensions;
-select cron.schedule('apero-integrations-worker','* * * * *', $job$
- select net.http_post(
-  url := (select decrypted_secret from vault.decrypted_secrets where name='apero_integration_worker_url'),
-  headers := jsonb_build_object('Content-Type','application/json','Authorization','Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name='apero_integration_worker_secret')),
-  body := '{}'::jsonb,
-  timeout_milliseconds := 55000
- );
-$job$);
+select cron.schedule('apero-integrations-worker','* * * * *', $job$select public.integration_scheduled_sync('CONNECTION_UUID','SYNTHETIC_CALENDAR_ID')$job$);
 commit;
--- Stop scheduling first during rollback:
--- select cron.unschedule('apero-integrations-worker');
+-- Pause first during rollback: select cron.unschedule('apero-integrations-worker');
+-- Encrypted recovery requires INTEGRATION_RECOVERY_CONFIG pointing to the verified
+-- age-encrypted integration settings; Vault/net transient queues are reconstructed,
+-- never silently omitted. See CALENDAR_CONNECTION_FIX.md.

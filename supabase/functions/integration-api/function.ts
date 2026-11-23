@@ -24,6 +24,28 @@ export function createIntegrationApi(env: Env, fetcher: typeof fetch = fetch) {
       headers["access-control-allow-methods"] = "GET,POST,OPTIONS";
     }
     const send = (status: number, data: unknown) => reply(status, data, headers);
+    // Calendar selection and retry must not depend on an already-running cron.
+    // Scope the authenticated worker to this owner's validated connection.
+    const synchronize = async (connectionId: string) => {
+      const secret = env("INTEGRATION_WORKER_SECRET"),
+        url = env("SUPABASE_URL");
+      if (!secret || !url) return "queued";
+      try {
+        const result = await fetcher(url + "/functions/v1/integration-worker", {
+          method: "POST",
+          headers: { authorization: "Bearer " + secret, "content-type": "application/json" },
+          body: JSON.stringify({ connection_id: connectionId }),
+          redirect: "error",
+          signal: AbortSignal.timeout(55000),
+        });
+        if (!result.ok) return "queued";
+        const data = await result.json();
+        return data.failed ? "attention" : data.processed ? "processed" : "queued";
+      } catch {
+        return "queued";
+      }
+    };
+
     if (req.method === "OPTIONS") return new Response(null, { status: 204, headers });
     if (env("INTEGRATIONS_ENABLED") !== "true") return send(503, { code: "integrations_disabled" });
     const path = new URL(req.url).pathname.split("/integration-api")[1] || "/";
@@ -67,6 +89,18 @@ export function createIntegrationApi(env: Env, fetcher: typeof fetch = fetch) {
           const settings = config(env);
           if (!/^[a-f0-9]{64}$/i.test(env("INTEGRATION_ENCRYPTION_KEY") ?? ""))
             return send(503, { code: "not_configured" });
+          const target = input["connection_id"];
+          if (target !== undefined) {
+            if (!uuid(target)) return send(400, { code: "invalid_input" });
+            const existing = await admin
+              .from("calendar_connections")
+              .select("id")
+              .eq("id", target)
+              .eq("clinic_id", actor.clinic)
+              .maybeSingle();
+            if (existing.error || !existing.data)
+              return send(404, { code: "connection_not_found" });
+          }
           const state = randomSecret(),
             verifier = randomSecret();
           const result = await admin.rpc("integration_start_oauth", {
@@ -76,6 +110,15 @@ export function createIntegrationApi(env: Env, fetcher: typeof fetch = fetch) {
             p_verifier: verifier,
           });
           if (result.error) return send(409, { code: "oauth_limit" });
+          if (target) {
+            const bound = await admin
+              .from("integration_oauth_states")
+              .update({ target_connection: target })
+              .eq("state_hash", await sha256(state))
+              .eq("clinic_id", actor.clinic)
+              .eq("actor_id", actor.actor);
+            if (bound.error) return send(503, { code: "unavailable" });
+          }
           return send(200, { url: oauthUrl(settings, state, await challenge(verifier)), state });
         }
         if (path === "/manage/oauth/complete") {
@@ -106,7 +149,21 @@ export function createIntegrationApi(env: Env, fetcher: typeof fetch = fetch) {
             { grant_type: "authorization_code", code, code_verifier: saved.verifier },
             fetcher,
           );
-          const id = crypto.randomUUID();
+          const calendars = await new GoogleCalendarAdapter(
+            tokens.access_token,
+            fetcher,
+          ).calendars();
+          const primary = calendars.find((calendar) => calendar.primary);
+          if (!primary) return send(409, { code: "google_account_unidentified" });
+          const prepared = await admin.rpc("integration_prepare_connection", {
+            p_clinic: actor.clinic,
+            p_actor: actor.actor,
+            p_account: primary.id,
+            p_target: saved.target_connection ?? null,
+          });
+          if (prepared.error || typeof prepared.data !== "string")
+            return send(409, { code: "connection_not_ready" });
+          const id = prepared.data;
           const result = await admin.rpc("integration_save_connection", {
             p_id: id,
             p_clinic: actor.clinic,
@@ -137,6 +194,18 @@ export function createIntegrationApi(env: Env, fetcher: typeof fetch = fetch) {
             fetcher,
           );
           const calendars = await adapter.calendars();
+          const primary = calendars.find((calendar) => calendar.primary);
+          if (primary) {
+            if (connection.google_account_id && connection.google_account_id !== primary.id)
+              return send(409, { code: "google_account_changed" });
+            const identified = await admin
+              .from("calendar_connections")
+              .update({ google_account_id: primary.id })
+              .eq("id", connection.id)
+              .eq("clinic_id", actor.clinic)
+              .neq("status", "disconnected");
+            if (identified.error) return send(503, { code: "unavailable" });
+          }
           if (path === "/manage/calendars") return send(200, { calendars });
           if (
             !uuid(input["staff_id"]) ||
@@ -150,7 +219,19 @@ export function createIntegrationApi(env: Env, fetcher: typeof fetch = fetch) {
             p_staff: input["staff_id"],
           });
           if (selected.error) return send(409, { code: "calendar_selection_failed" });
-          return send(200, { selected: true });
+          const calendar = calendars.find((c) => c.id === input["calendar_id"])!;
+          const labeled = await admin
+            .from("calendar_connections")
+            .update({
+              calendar_name: calendar.name.slice(0, 1024),
+              calendar_is_primary: calendar.primary,
+            })
+            .eq("id", connection.id)
+            .eq("clinic_id", actor.clinic)
+            .eq("calendar_id", calendar.id)
+            .eq("staff_id", input["staff_id"]);
+          if (labeled.error) return send(503, { code: "unavailable" });
+          return send(200, { selected: true, synchronization: await synchronize(connection.id) });
         }
         if (path === "/manage/disconnect" || path === "/manage/retry") {
           const updated = await user.rpc(
@@ -158,7 +239,12 @@ export function createIntegrationApi(env: Env, fetcher: typeof fetch = fetch) {
             { p_id: connection.id },
           );
           if (updated.error) return send(409, { code: "connection_update_failed" });
-          return send(200, { success: true });
+          return send(200, {
+            success: true,
+            ...(path.endsWith("retry")
+              ? { synchronization: await synchronize(connection.id) }
+              : {}),
+          });
         }
         return send(404, { code: "not_found" });
       }

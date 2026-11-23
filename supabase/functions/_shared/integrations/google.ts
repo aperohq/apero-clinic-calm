@@ -140,14 +140,14 @@ export class GoogleCalendarAdapter implements ClinicSystemAdapter {
     });
   }
   async calendars() {
-    const result: Array<{ id: string; name: string }> = [];
+    const result: Array<{ id: string; name: string; primary: boolean; timezone?: string }> = [];
     let page = "";
     for (let n = 0; n < 20; n++) {
       const data = await responseJson(
         await this.request(
           "users/me/calendarList?" +
             new URLSearchParams({
-              fields: "items(id,summary),nextPageToken",
+              fields: "items(id,summary,primary,timeZone),nextPageToken",
               minAccessRole: "writer",
               maxResults: "250",
               ...(page ? { pageToken: page } : {}),
@@ -159,6 +159,8 @@ export class GoogleCalendarAdapter implements ClinicSystemAdapter {
         if (typeof c["id"] === "string")
           result.push({
             id: c["id"],
+            primary: c["primary"] === true,
+            ...(typeof c["timeZone"] === "string" ? { timezone: c["timeZone"] } : {}),
             name: typeof c["summary"] === "string" ? c["summary"] : c["id"],
           });
       page = typeof data["nextPageToken"] === "string" ? data["nextPageToken"] : "";
