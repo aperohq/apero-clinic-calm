@@ -76,6 +76,45 @@ export function PrivacyPage() {
         </p>
       </section>
       <section>
+        <h2>Google Calendar connections</h2>
+        <p>
+          When an authorized clinic owner connects Google Calendar, Apero uses the selected
+          calendar’s identifier, event identifiers, event times, and timezone information to account
+          for busy periods and synchronize appointments. Calendar names are shown during selection.
+          Google grants calendar permissions for the account; Apero uses the calendar explicitly
+          selected for that clinic and practitioner.
+        </p>
+        <p>
+          Apero sends Google a generic “Reserved appointment” event with its start and end times.
+          Patient names, telephone numbers, appointment notes, and invitations are not included.
+          Appointment changes are managed in Apero; external calendar events affect availability,
+          and conflicting changes are surfaced for review.
+        </p>
+        <p>
+          Access and refresh credentials are encrypted on the server and used for the scheduling
+          connection. Calendar availability metadata is stored with the clinic’s access controls.
+          Google Calendar data is not used for advertising or general-purpose AI model training.
+          Google and Apero’s application-hosting and data providers process information as needed to
+          deliver synchronization.
+        </p>
+        <p>
+          Disconnecting in Apero removes stored connection credentials and cached busy intervals and
+          stops new synchronization. Existing Google events remain for the calendar owner to review.
+          You can also remove Apero’s grant in{" "}
+          <a href="https://myaccount.google.com/connections">Google account connections</a>.
+          Restricted audit records and encrypted backups may remain according to applicable
+          retention, legal-hold, and recovery policies. For access, deletion, or connection
+          questions, contact <a href="mailto:apero.hq@gmail.com">apero.hq@gmail.com</a>.
+        </p>
+        <p>
+          Apero’s use and transfer of information received from Google APIs must adhere to the{" "}
+          <a href="https://developers.google.com/terms/api-services-user-data-policy">
+            Google API Services User Data Policy
+          </a>
+          , including Limited Use requirements.
+        </p>
+      </section>
+      <section>
         <h2>Access and security</h2>
         <p>
           Account access requires authentication. Clinic data is intended to be limited to
