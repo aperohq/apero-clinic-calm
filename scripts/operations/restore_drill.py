@@ -14,7 +14,7 @@ import subprocess
 import sys
 import time
 import uuid
-from database_backup import private,digest
+from database_backup import private,digest,expected_backup_files
 from recovery_catalog import STRUCTURE_SQL, structures_match
 
 
@@ -28,6 +28,9 @@ def stream(identity,path,command):
     decrypt=subprocess.Popen(['age','-d','-i',str(identity),str(path)],stdout=subprocess.PIPE,stderr=subprocess.DEVNULL)
     try:
         restored=subprocess.run(command,stdin=decrypt.stdout,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+        # A section restore may stop before the encrypted archive's end.
+        for _ in iter(lambda: decrypt.stdout.read(1024 * 1024), b''):
+            pass
         decrypt.stdout.close()
         if restored.returncode or decrypt.wait():raise ValueError('drill_restore_failed')
     finally:
@@ -72,13 +75,16 @@ def main():
     try:
         private(args.bundle,directory=True);private(args.identity)
         manifest=json.loads(execute(['age','-d','-i',str(args.identity),str(args.bundle/'manifest.json.age')]))
+        expected_files=expected_backup_files(manifest)
         for name,info in manifest['files'].items():
-            if name not in {'database.dump.age','roles.sql.age'}:raise ValueError('invalid_manifest')
             path=args.bundle/name
             if path.is_symlink() or digest(path)!=info['sha256'] or path.stat().st_size!=info['bytes']:
                 raise ValueError('drill_checksum_failure')
-        if set(manifest['files'])!={'database.dump.age','roles.sql.age'} or not manifest.get('snapshot_catalog'):
+        if not manifest.get('snapshot_catalog'):
             raise ValueError('snapshot_catalog_required')
+        if 'integration-settings.json.age' in expected_files:
+            valid=subprocess.run(['age','-d','-i',str(args.identity),str(args.bundle/'integration-settings.json.age')],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+            if valid.returncode:raise ValueError('integration_config_decryption_failed')
         # Image download happens BEFORE any patient data is present.
         execute(['docker','pull',args.image])
         os.environ['POSTGRES_PASSWORD']=uuid.uuid4().hex

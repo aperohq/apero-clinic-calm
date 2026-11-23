@@ -3,6 +3,7 @@ Never accepts a backup path, credentials, DATABASE_URL, TCP host or production D
 """
 import json
 import os
+import shutil
 from pathlib import Path
 import subprocess
 import tempfile
@@ -34,6 +35,9 @@ def main():
     run(['age-keygen', '-o', str(identity)])
     recipient = run(['age-keygen', '-y', str(identity)]).decode().strip()
     psql(source, "create schema if not exists extensions; create table native_restore_slots(kind uuid, period tstzrange, exclude using gist(kind with =,period with &&)); insert into native_restore_slots values('00000000-0000-4000-8000-000000009999',tstzrange('2040-01-01 09:00Z','2040-01-01 10:00Z','[)'));")
+    # Incompressible payload exceeds pipe capacity: pg_restore --list must not
+    # truncate age authentication after reading just the archive catalog.
+    psql(source, "create table native_backup_payload as select g as id,string_agg(md5((g*10000+j)::text),'') payload from generate_series(1,32) g cross join generate_series(1,512) j group by g;")
     results = []
     for schema in ('public', 'extensions'):
         if schema == 'extensions':
@@ -50,6 +54,23 @@ def main():
             if dump.poll() is None:
                 dump.kill()
             dump.wait()
+        if schema == 'public':
+            from database_backup import verify, digest
+            check = work / 'verification'
+            check.mkdir(mode=0o700)
+            identity.chmod(0o600)
+            shutil.copyfile(archive, check / 'database.dump.age')
+            roles = run([str(binary / 'pg_dumpall'), *connection, '--roles-only', '--no-role-passwords'])
+            run(['age','-r',recipient,'-o',str(check / 'roles.sql.age')],input=roles)
+            run(['age','-r',recipient,'-o',str(check / 'integration-settings.json.age')],input=b'{"INTEGRATION_WORKER_SECRET":"synthetic-fixture"}')
+            files = {file.name:{'bytes':file.stat().st_size,'sha256':digest(file)} for file in check.iterdir()}
+            (check / 'manifest.json').write_text(json.dumps({'files':files,'catalog':{'integration_runtime_recovery':True}}),encoding='utf-8')
+            previous_path = os.environ.get('PATH','')
+            try:
+                os.environ['PATH'] = str(binary) + os.pathsep + previous_path
+                verify(check,identity)
+            finally:
+                os.environ['PATH'] = previous_path
         restored = 'apero_restore_' + schema
         run([str(binary / 'createdb'), *connection, restored])
         target = [str(binary / 'psql'), *connection, '-d', restored, '-XAt', '-v', 'ON_ERROR_STOP=1']

@@ -97,7 +97,7 @@ def run(mode):
                 manifest['source_commit']=os.environ.get('GITHUB_SHA');manifest['ci_private_key_persisted']=False
                 encrypted_manifest=output/'manifest.json.age'
                 storage.encrypt_json(manifest,encrypted_manifest,recipients)
-                files=[bundle/'database.dump.age',bundle/'roles.sql.age',encrypted_manifest]
+                files=[bundle/name for name in sorted(db.expected_backup_files(manifest))]+[encrypted_manifest]
             else:
                 mappings=integration_snapshot(connection)
                 if not mappings: raise ValueError('no_active_agents')

@@ -28,11 +28,16 @@ class CustodyTests(unittest.TestCase):
    self.assertFalse(backup.integration_cron_is_safe([retention,{**worker,'command':command}]))
   self.assertFalse(backup.integration_cron_is_safe([retention,worker,worker]))
   with tempfile.TemporaryDirectory() as folder:
-   path=Path(folder)/'config.age';path.write_text('plaintext-secret');path.chmod(0o600)
+   path=Path(folder)/'config.age';path.write_text('plaintext-secret',encoding='utf-8');path.chmod(0o600)
    with self.assertRaises(ValueError):backup.integration_recovery_config(path)
    path.write_bytes(b'age-encryption.org/v1\nsynthetic-ciphertext');self.assertEqual(backup.integration_recovery_config(path),path)
    path.chmod(0o644)
    with self.assertRaises(ValueError):backup.integration_recovery_config(path)
+  manifest={'files':{'database.dump.age':{},'roles.sql.age':{},'integration-settings.json.age':{}},'catalog':{'integration_runtime_recovery':True}}
+  self.assertEqual(len(backup.expected_backup_files(manifest)),3)
+  manifest['files']['../credentials']={}
+  with self.assertRaises(ValueError):backup.expected_backup_files(manifest)
+
  def test_failed_upload_does_not_acknowledge_intents(self):
   class Connection:
    def execute(self,_):return self

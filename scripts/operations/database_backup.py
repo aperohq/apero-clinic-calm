@@ -200,17 +200,22 @@ def backup(destination, recipients, snapshot=None, snapshot_catalog=None):
         raise
 
 
+def expected_backup_files(manifest):
+    expected = {'database.dump.age', 'roles.sql.age'}
+    if manifest.get('catalog', {}).get('integration_runtime_recovery'):
+        expected.add('integration-settings.json.age')
+    if set(manifest['files']) != expected:
+        raise ValueError('invalid_manifest')
+    return expected
+
+
 def verify(bundle, identity):
     private(bundle, directory=True)
     private(identity)
     if not identity.is_file():
         raise ValueError('identity_required')
     manifest = json.loads((bundle / 'manifest.json').read_text(encoding="utf-8"))
-    expected = {'database.dump.age', 'roles.sql.age'}
-    if manifest.get('catalog', {}).get('integration_runtime_recovery'):
-        expected.add('integration-settings.json.age')
-    if set(manifest['files']) != expected:
-        raise ValueError('invalid_manifest')
+    expected = expected_backup_files(manifest)
     for name, info in manifest['files'].items():
         path = bundle / name
         if path.is_symlink() or path.stat().st_size != info['bytes'] or digest(path) != info['sha256']:
@@ -222,6 +227,10 @@ def verify(bundle, identity):
         try:
             result = subprocess.run(command, stdin=decrypt.stdout, stdout=subprocess.DEVNULL,
                                     stderr=subprocess.DEVNULL)
+            # --list can stop after the archive catalog. Drain the encrypted
+            # stream so age authenticates its final chunk instead of SIGPIPE.
+            for _ in iter(lambda: decrypt.stdout.read(1024 * 1024), b''):
+                pass
             decrypt.stdout.close()
             if result.returncode or decrypt.wait():
                 raise ValueError('archive_validation_failed')
