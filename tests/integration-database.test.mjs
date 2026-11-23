@@ -24,6 +24,9 @@ try {
   await db.exec(
     await readFile("supabase/migrations/20261123210000_calendar_connection_lifecycle.sql", "utf8"),
   );
+  await db.exec(
+    await readFile("supabase/migrations/20261123220000_calendar_watch_initial_ack.sql", "utf8"),
+  );
   await db.query("select set_config('request.jwt.claims',$1,false)", [
     JSON.stringify({ role: "service_role" }),
   ]);
@@ -638,6 +641,80 @@ try {
         .length,
       1,
     );
+  });
+  await test("watch startup sync before or after registration never invalidates a fresh snapshot", async () => {
+    await db.exec("begin");
+    try {
+      const channel = uuid(882);
+      await db.query(
+        "update calendar_connections set channel_id=$2,channel_hash='watch-hash',resource_id=null,channel_expires_at=now()+interval '1 day',message_number=0,last_synced_at=now(),status='connected' where id=$1",
+        [c, channel],
+      );
+      const initial = (
+        await db.query("select last_synced_at from calendar_connections where id=$1", [c])
+      ).rows[0].last_synced_at;
+      const jobsBefore = (
+        await db.query("select count(*)::int n from integration_jobs where connection_id=$1", [c])
+      ).rows[0].n;
+      const notify = async (hash, resource, number, state) =>
+        (
+          await db.query("select integration_notify($1,$2,$3,$4,$5) v", [
+            channel,
+            hash,
+            resource,
+            number,
+            state,
+          ])
+        ).rows[0].v;
+      assert.equal(await notify("watch-hash", "watch-resource", 1, "sync"), true);
+      assert.deepEqual(
+        (await db.query("select last_synced_at from calendar_connections where id=$1", [c])).rows[0]
+          .last_synced_at,
+        initial,
+      );
+      await db.query("update calendar_connections set resource_id='watch-resource' where id=$1", [
+        c,
+      ]);
+      assert.equal(await notify("watch-hash", "wrong-resource", 1, "sync"), false);
+      assert.equal(await notify("wrong-hash", "watch-resource", 1, "sync"), false);
+      assert.equal(await notify("watch-hash", "watch-resource", 2, "sync"), false);
+      assert.equal(await notify("watch-hash", "watch-resource", 1, "sync"), true);
+      assert.equal(await notify("watch-hash", "watch-resource", 1, "sync"), true);
+      assert.deepEqual(
+        (await db.query("select last_synced_at from calendar_connections where id=$1", [c])).rows[0]
+          .last_synced_at,
+        initial,
+      );
+      assert.equal(
+        (await db.query("select count(*)::int n from integration_jobs where connection_id=$1", [c]))
+          .rows[0].n,
+        jobsBefore,
+      );
+      assert.equal(await notify("watch-hash", "watch-resource", 4, "exists"), true);
+      assert.deepEqual(
+        (await db.query("select last_synced_at from calendar_connections where id=$1", [c])).rows[0]
+          .last_synced_at,
+        null,
+      );
+      const generation = (
+        await db.query(
+          "select generation from integration_jobs where connection_id=$1 and kind='pull'",
+          [c],
+        )
+      ).rows[0].generation;
+      assert.equal(await notify("watch-hash", "watch-resource", 1, "sync"), true);
+      assert.equal(
+        (
+          await db.query(
+            "select generation from integration_jobs where connection_id=$1 and kind='pull'",
+            [c],
+          )
+        ).rows[0].generation,
+        generation,
+      );
+    } finally {
+      await db.exec("rollback");
+    }
   });
   await test("webhook token/resource validation and replay acknowledgement", async () => {
     const channel = uuid(850);
