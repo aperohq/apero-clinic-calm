@@ -79,6 +79,26 @@ class BackupSafetyTests(unittest.TestCase):
         self.assertIn('--no-role-passwords', commands[1][0])
         self.assertNotIn('DO_NOT_LOG_PASSWORD', str(commands))
 
+    def test_reviewed_runtime_bundle_manifest_covers_encrypted_configuration(self):
+        config = self.root / 'runtime-config.age'
+        config.write_bytes(b'age-encryption.org/v1\nsynthetic-encrypted-settings')
+        config.chmod(0o600)
+        os.environ['INTEGRATION_RECOVERY_CONFIG'] = str(config)
+        catalog = {'schemas':['public','auth','storage','supabase_migrations','extensions','vault','realtime','net'],
+            'vault_count':2,'vault_names':['apero_integration_worker_secret','apero_integration_worker_url'],
+            'integration_vault_valid':True,'net_tables_reviewed':True,'extensions':['pgcrypto','pg_cron','pg_net'],'server_version':'17.6'}
+        jobs = [{'name':'apero-retention-daily','schedule':'23 2 * * *','command':'select public.retention_daily()','active':True},
+            {'name':'apero-integrations-worker','schedule':'* * * * *','command':"select public.integration_scheduled_sync('00000000-0000-4000-8000-000000000001','abc123@group.calendar.google.com')",'active':True}]
+        results = [type('Result',(),{'returncode':0,'stdout':json.dumps(value).encode()})() for value in [catalog,jobs]]
+        with patch.object(backup.subprocess,'run',side_effect=results), patch.object(backup,'pipeline',side_effect=lambda commands,path:path.write_bytes(b'synthetic ciphertext')), contextlib.redirect_stdout(io.StringIO()):
+            bundle = backup.backup(self.root,self.recipients)
+        manifest = json.loads((bundle/'manifest.json').read_text(encoding='utf-8'))
+        artifacts = {path.name for path in bundle.glob('*.age')}
+        self.assertEqual(backup.expected_backup_files(manifest), artifacts)
+        self.assertEqual(len(artifacts),3)
+        self.assertEqual((bundle/'integration-settings.json.age').read_bytes(),config.read_bytes())
+        self.assertEqual(manifest['files']['integration-settings.json.age']['sha256'],backup.digest(config))
+
     def test_tampered_ciphertext_refused_before_decrypt(self):
         with patch.object(backup, 'pipeline', side_effect=lambda commands,path:path.write_bytes(b'ciphertext')), contextlib.redirect_stdout(io.StringIO()):
             bundle = backup.backup(self.root, self.recipients)

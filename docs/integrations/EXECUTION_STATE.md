@@ -1,35 +1,38 @@
-> Active correction, 2026-11-23: see CALENDAR_CONNECTION_FIX.md. The owner authorized the private Apero Integration Acceptance calendar under apero.hq@gmail.com. Preserve revoked history and all primary-calendar events. Lifecycle/sync corrections are under validation; production fix/publication and actual acceptance are not yet claimed. Do not restart the roadmap or repeat the completed initial deployment.
+# Integration execution state
 
-# Resume state
+Updated 2026-11-24 UTC. The approved synthetic Google Calendar release is live and acceptance passed. Do not restart development, rerun OAuth, reconnect the primary calendar, or replace the active mapping.
 
-Updated 2026-11-22. Active implementation worktree: `/tmp/apero-integrations-worktree`, branch `feat/integration-system`, based on protected `origin/main` `ab7fc81711e9c66c45ae35f9b5d9efa5c51b7734`. The original `/home/nour/apero-clinic-calm` checkout contains substantial pre-existing changes and early integration copies; do not commit or overwrite its unrelated changes. Resume engineering in the isolated worktree. No history was rewritten.
+## Live state
 
-## Completed implementation
+- One active **Connected** connection: private **Apero Integration Acceptance**, Google account apero.hq@gmail.com, practitioner **Dr. Ahmed Qandil**. Revoked Disconnected history remains intentionally visible and has no credentials. There is no duplicate active mapping.
+- Actual Google initial pull, watch startup/change delivery, access-token refresh, booking, replay, rescheduling, cancellation and external busy/free recovery passed. Automatic once/minute scoped polling continued successfully overnight. No pending/dead jobs at the final audit; freshness is current, and connection/watch errors are null.
+- API and worker are ACTIVE **version 3**; google-calendar-webhook remains ACTIVE **version 2**. Existing other Edge Function versions, Retell configuration and clinical records were preserved.
+- Lovable publication was performed by the owner, who confirmed **“Published and shows Connected”**. Production UI assets and browser checks verify the focused controls. No further publication action is required for the SQL or recovery-only follow-ups.
+- Both temporary acceptance API keys are revoked. All created synthetic Google events are removed/cancelled; no primary-calendar event was written. The cancelled synthetic appointment/client remain as audit history.
 
-Comprehensive execution prompt and all fourteen roadmap entries are tracked. New integration migration, clinic key lifecycle, API, Google OAuth/token lifecycle, calendar selection, synchronization/outbox, webhook/poll recovery, conflicts, reusable adapters, dashboard, auditing/retention/offboarding, tests and release documentation are implemented. Google/worker frontend and backend release switches default off. No scheduler was enabled. Retell source and live configuration are unchanged.
+## Protected source and migrations
 
-## Validation
+- PR #8: https://github.com/aperohq/apero-clinic-calm/pull/8. Lifecycle commit `220e305`, recovery commit `ce60f0d`, normal merge `4c0f316700f2adf3b6e37965f293966e4472dfaa`.
+- PR #9: https://github.com/aperohq/apero-clinic-calm/pull/9. Watch startup correction `120b8c4`, normal merge `3ccb8b36b957617b58f7dbce08ffc9ca5a2a3bb8`.
+- All five protected checks passed for both PRs and their main merges: quality, regression, windows-components, native-database and supabase-bootstrap. Protections and admin enforcement remain intact.
+- Lifecycle source `20261123210000_calendar_connection_lifecycle.sql` is recorded in production ledger as `20261123205654`; SHA256 `b1eb8f244c81d3479debe3701d7b2b5054bd8049ae787f51cb2ae19b04240b65`.
+- Watch source `20261123220000_calendar_watch_initial_ack.sql` is recorded as `20261123211023`; SHA256 `75711126c280649d53adb44953cb670d0d2aa622abc190e455fc52f480c5609e`. Actual function body, grants and owner were verified. Do not reapply a migration solely because the managed ledger timestamp differs from its source filename.
+- The final handoff includes the runtime backup manifest correction: all three encrypted artifacts, including integration configuration, receive checksums. Its regression reproduces the previous invalid-manifest failure and passes with the correction. No product redeploy is needed for that operations-only change.
 
-- `test:integrations`: 17 provider/HTTP/crypto tests, 17 real PostgreSQL/WASM security/behavior scenarios and rendered React controls.
-- Native integration races: duplicate idempotency, competing bookings, snapshot-before-booking and booking-before-snapshot all pass.
-- Original native appointment race acceptance passed.
-- Full native migration chain passed fresh, existing-upgrade and restricted-owner modes; pg_cron and encrypted synthetic restore passed in public/extension schema layouts.
-- TypeScript, integration handler typecheck, lint and production build passed. The final enabled-flag production build also passed.
-- Chromium with synthetic data and production CSS passed 320/375/768/1440 widths; screenshots/results under `evidence/`.
-- The full release run passed 27 of 28 suites; its sole Account lifecycle fixture failure (new unmocked Supabase import) was corrected. The entire targeted stabilization suite then passed, including the Account lifecycle and demo offboarding tests. Combined local evidence covers all 28 suites. The post-fix hosted regression check must still pass at the pushed SHA.
+## Recovery and safeguards
 
-## GitHub / deployment state
+Fresh encrypted snapshot checkpoint **2026-11-24 06:58:42 UTC** passed full-stream integrity authentication and actual isolated restoration: 74 tables, 747 logical columns, 119 functions, 28 policies and 275 constraints. Additional comparisons matched 74 RLS flags, 49 triggers, 223 indexes and 37 column ACLs. Managed Auth's two dropped column slots were explicitly accounted for; all logical column order/properties and effective privileges matched. Seven integration settings and two Vault settings are recoverable in separately authenticated ciphertext. No credentials or database row contents are committed.
 
-Implementation commit: `0bd9a868fdd00acf10c7816ef8d526c8cbbbb24a`. PR: https://github.com/aperohq/apero-clinic-calm/pull/6. All five protected hosted checks passed at that implementation SHA: quality, regression, windows-components, native-database and supabase-bootstrap. Exact links are in `evidence/github-source-ci.json`. This documentation-only follow-up records the source validation; the protected workflow must also pass at the final PR head before an ordinary merge.
+Private recovery location on the operator host: `/home/nour/apero-production-recovery/integration-20261124T065842Z/`. The existing age identity remains separate under `/home/nour/.local/share/apero-recovery-keys/`; keep it private. Detailed private operator result: `/tmp/apero-calendar-release/final-recovery/production-backup-result.json`. The temporary plaintext restored copies were stopped and removed. Restore with integration flags and cron disabled; reinstate only the recorded scoped mapping after a fresh successful pull and acceptance.
 
-Repository public; no repository webhooks; admin enforcement and strict required checks remain enabled. No security check, protection or history was bypassed. GitHub feature push/PR ran only synthetic CI on standard free public runners. Source merge is authorized by the user's execution directive and is separate from production publication: release switches default off, no migration/function deployment or scheduler runs from these PR/main application checks, and Lovable publication is a separate action. Production backup/retention/recovery schedules were not modified.
+Rollback: first pause the integration cron, retain stale-booking gates, then restore the saved prior Edge bundles and reviewed SQL bodies if needed. Preserve added metadata, connection history, credentials and outbox; never delete production connections to hide history. The existing retention job remains dry_run and both booking exclusion constraints remain intact. See CALENDAR_CONNECTION_FIX.md and RELEASE_RUNBOOK.md for the reviewed procedure.
 
-## Resume without repeating engineering
+The worker cron contains only the pinned non-primary connection/calendar IDs. Bearer secrets are stored in Vault. API exposure of net/Vault schemas and browser execution of the secret scheduler were tested and denied; managed Supabase-internal pg_net grants were not weakened or escalated. An unknown schema, cron, Vault setting or durable net table still fails backup preflight closed.
 
-Read PR #6's current state once. If it is merged, skip completed implementation, tests and GitHub work and proceed only with the external release prerequisites. If it remains open, finish its current required checks, resolve any genuine failure and merge normally after green checks, without bypasses or history rewrites. Final CI on documentation commit `5a3dfd0` exposed an unrelated default-port collision starting the local Supabase Inbucket container (host port 54324 already occupied). The bootstrap harness now allocates distinct available host ports for every numeric port setting; all services, managed migrations, Auth, exclusion and real cron checks remain enabled. Two allocator contract tests cover service preservation, duplicates and failure bounds. This CI harness correction must pass the current required checks before merging.
+## Resume guidance and remaining scope
 
-The implementation and acceptance package are complete locally; do not restart the roadmap or repeat completed investigations. The original checkout's copy of this state can contain a newer final merge result after this committed evidence snapshot.
+No owner action remains for this authorized synthetic connection. Use LIVE_CALENDAR_ACCEPTANCE.md and evidence/calendar-live-release.json as the final acceptance record. If resuming, perform a read-only health check; do not repeat live writes or open a second connection. A future real-clinic rollout, different calendar/provider, paid resource or destructive operation requires its own authorization.
 
-Production migration, three new function deployments, server secret installation, feature activation, worker scheduling, real Google consent and clinic/provider acceptance remain unperformed. The exact consolidated external prerequisites are in APPROVALS_REQUIRED.md and the validated sequence is in RELEASE_RUNBOOK.md. A named clinic software connector remains blocked on provider/account identification; the reusable adapter infrastructure is implemented.
+The original checkout has unrelated pre-existing staged/untracked changes; preserve them. Integration corrections were made in isolated worktrees; no published history was rewritten. The final recovery/docs branch uses `/tmp/apero-calendar-handoff` and the existing protected workflow.
 
-No Google credentials or real accounts were used. No live appointment, provider, Retell, database migration or secret installation occurred. Money spent: $0.
+Money spent: **$0**. No Retell calls or real-clinic/primary-calendar event writes were made.

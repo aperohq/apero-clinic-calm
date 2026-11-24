@@ -1,0 +1,277 @@
+{
+  "verified_at": "2026-11-24T07:05:26.955701+00:00",
+  "scope": "private Apero Integration Acceptance / Dr. Ahmed Qandil",
+  "one_active_connection": true,
+  "status": "connected",
+  "last_synced_at": "2026-11-24 07:04:02.642952+00",
+  "freshness": {
+    "fresh": true,
+    "watch_valid": true
+  },
+  "jobs": {
+    "pending": 0,
+    "dead": 0
+  },
+  "historical_revoked_connection_retained": true,
+  "actual_live_checks": [
+    {
+      "name": "Initial real Google sync succeeds for private calendar",
+      "passed": true
+    },
+    {
+      "name": "Live booking availability offers valid practitioner slots",
+      "passed": true
+    },
+    {
+      "name": "Live synthetic appointment booking accepted",
+      "passed": true
+    },
+    {
+      "name": "Identical API replay creates no second appointment",
+      "passed": true
+    },
+    {
+      "name": "Double booking is rejected with active Google mapping",
+      "passed": true
+    },
+    {
+      "name": "Booking outbox drained and connection remains healthy",
+      "passed": true
+    },
+    {
+      "name": "Google book event has exact identity and times",
+      "passed": true
+    },
+    {
+      "name": "Google event contains generic text and no patient details/attendees",
+      "passed": true
+    },
+    {
+      "name": "Exactly one owned Google event exists after book",
+      "passed": true
+    },
+    {
+      "name": "Live API move accepted",
+      "passed": true
+    },
+    {
+      "name": "Connection healthy after move",
+      "passed": true
+    },
+    {
+      "name": "Google move event has exact identity and times",
+      "passed": true
+    },
+    {
+      "name": "Google event contains generic text and no patient details/attendees",
+      "passed": true
+    },
+    {
+      "name": "Exactly one owned Google event exists after move",
+      "passed": true
+    },
+    {
+      "name": "Live API cancel accepted",
+      "passed": true
+    },
+    {
+      "name": "Connection healthy after cancel",
+      "passed": true
+    },
+    {
+      "name": "Google cancellation removed the owned event",
+      "passed": true
+    },
+    {
+      "name": "External busy fixture created only in private calendar",
+      "passed": true
+    },
+    {
+      "name": "External Google busy interval removes the booking slot",
+      "passed": true
+    },
+    {
+      "name": "Booking against current external Google busy is rejected",
+      "passed": true
+    },
+    {
+      "name": "Only the created synthetic busy event was removed",
+      "passed": true
+    },
+    {
+      "name": "Removing the synthetic busy event restores booking availability",
+      "passed": true
+    },
+    {
+      "name": "Stale snapshot hides booking slots without disabling protection",
+      "passed": true
+    },
+    {
+      "name": "Stale snapshot blocks a real booking request",
+      "passed": true
+    },
+    {
+      "name": "Actual resynchronization restores current availability",
+      "passed": true
+    },
+    {
+      "name": "Synthetic token expiry staged without exposing or changing refresh grant",
+      "passed": true
+    },
+    {
+      "name": "Connection healthy after actual Google token refresh",
+      "passed": true
+    },
+    {
+      "name": "Actual Google refresh produced a current access token and retained refresh token",
+      "passed": true
+    },
+    {
+      "name": "Repeated account preparation reuses the existing active connection",
+      "passed": true
+    },
+    {
+      "name": "Cross-clinic owner cannot change the practitioner/calendar mapping",
+      "passed": true
+    },
+    {
+      "name": "Browser owner cannot invoke privileged account preparation",
+      "passed": true
+    },
+    {
+      "name": "Cross-clinic API key cannot mutate the synthetic appointment",
+      "passed": true
+    },
+    {
+      "name": "Concurrent scoped workers respect leases and complete synchronization",
+      "passed": true
+    },
+    {
+      "name": "No duplicate active mapping or failed jobs after concurrent sync",
+      "passed": true
+    },
+    {
+      "name": "Private-calendar watch renewal staged under the corrected notification lifecycle",
+      "passed": true
+    },
+    {
+      "name": "Actual Google watch startup callback leaves synchronized availability healthy",
+      "passed": true
+    },
+    {
+      "name": "Replaced private-calendar watch stopped without touching any primary resource",
+      "passed": true
+    },
+    {
+      "name": "Cancellation of an already removed synthetic event is retry safe",
+      "passed": true
+    },
+    {
+      "name": "Runtime network, secret scheduler and Vault boundaries deny anonymous and browser clients",
+      "passed": true
+    },
+    {
+      "name": "External busy fixture created only in private calendar",
+      "passed": true
+    },
+    {
+      "name": "Scheduled synchronization automatically blocks external busy availability",
+      "passed": true
+    },
+    {
+      "name": "Only the created synthetic busy event was removed",
+      "passed": true
+    },
+    {
+      "name": "External busy fixture created only in private calendar",
+      "passed": true
+    },
+    {
+      "name": "Scheduled synchronization automatically blocks external busy availability",
+      "passed": true
+    },
+    {
+      "name": "Only the created synthetic busy event was removed",
+      "passed": true
+    },
+    {
+      "name": "Scheduled synchronization automatically restores availability after external event removal",
+      "passed": true
+    },
+    {
+      "name": "All temporary acceptance API keys are revoked",
+      "passed": true
+    }
+  ],
+  "final_fixture_cleanup_passed": true,
+  "acceptance_keys_revoked": 2,
+  "automatic_sync": {
+    "schedule": "* * * * *",
+    "scoped_private_calendar": true,
+    "busy_and_free_recovery_passed": true,
+    "agent_worker_invocations_during_observation": 0
+  },
+  "backend_versions": {
+    "integration-worker": {
+      "version": 3,
+      "status": "ACTIVE"
+    },
+    "integration-api": {
+      "version": 3,
+      "status": "ACTIVE"
+    },
+    "google-calendar-webhook": {
+      "version": 2,
+      "status": "ACTIVE"
+    }
+  },
+  "existing_other_function_versions_preserved": true,
+  "frontend_owner_attestation": "Published and shows Connected",
+  "frontend_assets_and_browser_verified": true,
+  "clinical_data_preservation": {
+    "verified_existing_tables": 9,
+    "original_data_unchanged": true,
+    "changes": [],
+    "only_exact_created_synthetic_ids_excluded": true,
+    "checked_at": "2026-11-24T07:00:12.463409+00:00"
+  },
+  "backup": {
+    "backup_timestamp": "20261124T065842Z",
+    "encrypted": true,
+    "snapshot_consistent": true,
+    "integrity_verified": true,
+    "restore_tested": true
+  },
+  "restore": {
+    "restore_completed": true,
+    "same_snapshot_row_counts_match": true,
+    "tables_verified": 74,
+    "columns_verified": 747,
+    "exact_logical_column_sequence_and_properties_match": true,
+    "ordinal_differences_explained_only_by_recorded_source_dropped_slots": true,
+    "structure_and_effective_acl_match": true,
+    "functions_verified": 119,
+    "policies_verified": 28,
+    "constraints_verified": 275,
+    "tcp_disabled": true,
+    "data_in_tmpfs": true
+  },
+  "additional_recovery": {
+    "rls_match": 74,
+    "triggers_match": 49,
+    "indexes_match": 223,
+    "column_acls_match": 37
+  },
+  "configuration_recovery": {
+    "checked_at": "2026-11-24T07:06:22.616458+00:00",
+    "authenticated_encrypted_configuration_readable": true,
+    "supabase_settings_match_approved_active_release": 7,
+    "vault_settings_match_securely_installed_values": 2,
+    "scope_matches_live_schedule": true,
+    "restore_hold_preserved": true
+  },
+  "primary_event_writes": 0,
+  "retell_calls": 0,
+  "money_spent_usd": 0,
+  "owner_actions_remaining": []
+}

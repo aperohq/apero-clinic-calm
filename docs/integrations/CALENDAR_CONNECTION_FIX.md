@@ -1,5 +1,7 @@
 # Google Calendar lifecycle correction
 
+Release completed: see [LIVE_CALENDAR_ACCEPTANCE.md](LIVE_CALENDAR_ACCEPTANCE.md) for actual production results and [EXECUTION_STATE.md](EXECUTION_STATE.md) for the current deployment. The investigation and procedure below describe the reviewed changes.
+
 Production diagnosis, 2026-11-23: the disconnected row is revoked history, not an active duplicate. The active Dr. Ahmed Qandil mapping selected `apero.hq@gmail.com`, which Google identifies as primary. Its initial pull had zero attempts: the worker schedule was intentionally held pending acceptance and selection/retry only queued work. No synchronization had succeeded. Do not process that primary mapping.
 
 The account owner has created and authorized the private **Apero Integration Acceptance** calendar. Google lists it as non-primary with owner access; the returned timezone Asia/Riyadh is UTC+03, equivalent to Asia/Kuwait for this acceptance. Preserve historical records and credentials; correct only the unstarted mapping after verifying the returned calendar ID.
