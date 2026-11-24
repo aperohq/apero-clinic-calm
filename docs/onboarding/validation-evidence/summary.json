@@ -1,0 +1,109 @@
+{
+  "observed_at_utc": "2026-11-24T13:37:35.735236+00:00",
+  "status": "VERIFIED local / IMPLEMENTED / NOT DEPLOYED",
+  "validated_code_revision": "284e600b3f5d0e6f813f647c2d5345ee4835f1f6",
+  "upstream_base": "4d076546de1744c6e8845edc2e19df3f769d1f40",
+  "branch": "feat/clinic-onboarding-hardening",
+  "checks": [
+    {
+      "command": "node scripts/onboarding/test-local.mjs",
+      "result": "PASS",
+      "scope": "six DB/CLI files; readiness UI; Team UI 19/19",
+      "evidence": "portable-scope.txt"
+    },
+    {
+      "command": "node --test tests/onboarding-native.test.mjs",
+      "result": "PASS",
+      "scope": "10/10; 33 migrations; native transactions, legacy enrollment/offboarding and erasure",
+      "evidence": "native-postgres.txt"
+    },
+    {
+      "command": "node tests/onboarding-responsive.test.mjs",
+      "result": "PASS",
+      "scope": "real Chromium synthetic panels at 375/768/1440, keyboard/overflow/error/retry; zero external requests",
+      "evidence": "responsive-browser.txt"
+    },
+    {
+      "command": "node tests/onboarding-e2e.test.mjs",
+      "result": "PASS",
+      "scope": "real browser + Supabase SDK + native RPC/RLS; synthetic Auth issuance/transport; zero external requests",
+      "evidence": "integrated-e2e.txt"
+    },
+    {
+      "command": "npm run typecheck && npm run typecheck:clinic-users-edge",
+      "result": "PASS",
+      "evidence": "typecheck.txt"
+    },
+    {
+      "command": "npm run build (public fixture environment)",
+      "result": "PASS",
+      "evidence": "build.txt"
+    },
+    {
+      "command": "focused changed-source/tests/scripts eslint",
+      "result": "PASS",
+      "evidence": "changed-code-eslint.txt"
+    },
+    {
+      "command": "node tests/onboarding-integration-boundaries.test.mjs",
+      "result": "PASS",
+      "scope": "21/21",
+      "evidence": "credential-boundaries.txt"
+    },
+    {
+      "command": "node tests/onboarding-cli.test.mjs",
+      "result": "PASS",
+      "scope": "private artifact permissions/quoting/rollback/new and existing mode; invalid mode rejected",
+      "evidence": "private-intake-cli.txt"
+    },
+    {
+      "command": "npm audit --omit=dev --json",
+      "result": "PASS",
+      "scope": "three high findings before scoped patches; zero reported vulnerabilities after",
+      "evidence": ["dependency-audit-before.json", "dependency-audit-after.json"]
+    }
+  ],
+  "code_sha256": {
+    ".github/workflows/clinic-onboarding-checks.yml": "87722b4350e4826d07b5ce27c5db7148cb29b15d7db512d60771d96102566daf",
+    "scripts/onboarding/prepare-intake.mjs": "9f0ca59336beb4d0441857feb0da066e72797db042e150e01d35528851c9e8e4",
+    "scripts/onboarding/test-local.mjs": "fed05f1cd7bdcacb8ca4724a1e92c3c81a0f6d5c44e5b2e913ff9c71afd7b081",
+    "src/components/account-access-panel.tsx": "a366f4be1b7d8d53544076d8131f4304e58edc1015f8680dadfc342edf42388f",
+    "src/components/clinic-readiness-panel.tsx": "25b5af294d46daf65f1a0a454afa5f10dca3fe2f928f43e35767a50bbf76b942",
+    "src/lib/clinic-readiness.ts": "20502a9e360ccd6e833dd2ed6bc868a75aacbc3e0a9afa182e6da36137d37c4a",
+    "src/lib/db-types.ts": "43956682c549dc0fa3e17c8428cd685993d9cfb412505e96cb6e0c5ebf403d21",
+    "src/routes/account.tsx": "3b57cc34108e4a189e0ead2c11a4e4f2cb10bd5fdde7c0f6a10c34077cc27c78",
+    "supabase/migrations/20261124100000_clinic_onboarding.sql": "60e880e7b8b2761199da1a1c9634fb699c1aceb7456a5f345eb4d4b797c0899b",
+    "supabase/migrations/20261124102000_clinic_activation.sql": "f701ef8c464ed8dc3f894d4b6c058af00f5b6623c9582d38a920f7b65e2fe5c9",
+    "supabase/migrations/20261124110000_clinic_member_reactivation.sql": "effc1e3c9539cd95a7fac4d5cfcd0b6c3e432ed233c26516d68d623c1a90d4a6",
+    "supabase/migrations/20261124111000_suspended_team_management.sql": "26774404d6c8a9936260b11dbd835f00132147cfcaa921b13a3f444c4d781b99",
+    "supabase/migrations/20261124112000_integration_access_lifecycle.sql": "ecf7c84936ba2dab20ce2e26a02e7a05d73bfe4092afd5486ac5a96d6f1dec9b",
+    "tests/clinic-readiness-ui.test.mjs": "ff5a607ea0c2e4ea41e8e518a72092ab728a3fd5252a653173ea9ecbe2d32267",
+    "tests/member-reactivation.test.mjs": "67b6bb26443c8c2f80c7ed0f42f35035fd958e8a9bfda6c49a3b4ed7e4c699ba",
+    "tests/onboarding-access.test.mjs": "a9e98e27dbdcf156b3d04c79ef3eeffedf4a7cef0bcb1273056a075a1084f4f5",
+    "tests/onboarding-cli.test.mjs": "0455a4050dfb339462a75c5d86e5fd13ea97f02cf56f173cd49d54718e5a9faa",
+    "tests/onboarding-e2e.test.mjs": "70ac3636da9fa1d3b474e6e4056f33136529e33f902dcee2abbc3de1e1471655",
+    "tests/onboarding-integration-boundaries.test.mjs": "19d24c6fe56dce8932f9622a62094d076c2d7d151b4538758dd5b987f4f285e1",
+    "tests/onboarding-lifecycle.test.mjs": "2a72d06556cc3deec1d2c269a02be524d66737b614f23c3950a19a5260cd6b2e",
+    "tests/onboarding-native.test.mjs": "a5689516e6bff92383a81fb57b782db904ae34c0684ac3f08601bb97205aa925",
+    "tests/onboarding-provisioning.test.mjs": "07365a3e4eea67cc70a19bedd338334f7f1846bbcc06a518f6c09518cae3d4b5",
+    "tests/onboarding-responsive.test.mjs": "89e968db0251ad7a0a7af226726c9d8ac963d337a26a6fde99d77f2eb8f3a5d5",
+    "tests/run-clinic-permission-tests.mjs": "1605eb11582682c2f699a9138c79338a206fdf99ef330edce643f125fb026fdf",
+    "tests/team-management-ui.test.tsx": "60344266aea3f00f3f79b8b209306d63a4993860ae942073453cd407de9096aa",
+    "package.json": "c8e028126ecdec6ec15c91ed9ee62f558a600890eed6df25ee10070e50ebbf83",
+    "package-lock.json": "2e7b756f4d69867fe20ec225f4cf347b507c2710ffc2998fdcdf93bc222c8e41"
+  },
+  "production_modified": false,
+  "real_patient_data_used": false,
+  "real_messages_or_calls_sent": false,
+  "new_paid_services_or_accounts": false,
+  "remote_ci_status": "UNKNOWN / NOT RUN",
+  "deployment_status": "IMPLEMENTED / NOT DEPLOYED",
+  "remaining": [
+    "production/staging approval and deployed Auth/RLS acceptance",
+    "actual MFA/recovery policy rehearsal",
+    "real Tally mapping and clinic schedule/duration acceptance",
+    "external voice/telephone/integration readiness",
+    "representative UAT",
+    "publication safety/CI cost approval"
+  ]
+}

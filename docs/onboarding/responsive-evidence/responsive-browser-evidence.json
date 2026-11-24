@@ -1,0 +1,72 @@
+{
+  "runtime": "Chromium / Playwright",
+  "browser_version": "159.0.8154.6",
+  "playwright_version": "1.65.1",
+  "synthetic_only": true,
+  "external_requests": [],
+  "scenarios": [
+    {
+      "width": 375,
+      "height": 900,
+      "page_scroll_width": 375,
+      "dialog": {
+        "x": 16.643917083740234,
+        "y": 309.5293884277344,
+        "width": 341.71216201782227,
+        "height": 280.9411926269531
+      },
+      "status": "VERIFIED",
+      "checks": [
+        "real CSS page overflow",
+        "restore confirmation",
+        "keyboard Enter/Tab/Escape",
+        "error sanitization",
+        "restoration success",
+        "readiness error/recovery",
+        "manager/staff UI boundaries"
+      ]
+    },
+    {
+      "width": 768,
+      "height": 900,
+      "page_scroll_width": 768,
+      "dialog": {
+        "x": 128.96559143066406,
+        "y": 343.4035949707031,
+        "width": 510.06883239746094,
+        "height": 213.19284057617188
+      },
+      "status": "VERIFIED",
+      "checks": [
+        "real CSS page overflow",
+        "restore confirmation",
+        "keyboard Enter/Tab/Escape",
+        "error sanitization",
+        "restoration success",
+        "readiness error/recovery",
+        "manager/staff UI boundaries"
+      ]
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "page_scroll_width": 1440,
+      "dialog": {
+        "x": 467.765380859375,
+        "y": 348.5149841308594,
+        "width": 504.46923828125,
+        "height": 202.97006225585938
+      },
+      "status": "VERIFIED",
+      "checks": [
+        "real CSS page overflow",
+        "restore confirmation",
+        "keyboard Enter/Tab/Escape",
+        "error sanitization",
+        "restoration success",
+        "readiness error/recovery",
+        "manager/staff UI boundaries"
+      ]
+    }
+  ]
+}

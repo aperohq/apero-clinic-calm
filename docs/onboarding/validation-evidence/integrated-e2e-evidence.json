@@ -1,0 +1,18 @@
+{
+  "synthetic_only": true,
+  "auth_issuance": "Local test adapter; hosted GoTrue/JWT policy remains external",
+  "database": "Native PostgreSQL, Unix socket only",
+  "external_requests": [],
+  "checks": [
+    "Native cross-clinic reads denied",
+    "Staff role escalation denied",
+    "Browser provisioning and activation denied",
+    "Database-backed readiness stages do not auto-activate",
+    "UI revocation persists and retained JWT loses RLS access",
+    "Explicit UI restoration persists and restores authorized access",
+    "UI role change persists; Manager directory remains read-only",
+    "Clinic suspension denies existing browser identities"
+  ],
+  "postgres_version": "16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)",
+  "browser_version": "159.0.8154.6"
+}

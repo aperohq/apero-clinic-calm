@@ -188,6 +188,8 @@ export type AperoDatabase = {
       };
       update_clinic_settings: { Args: { p_patch: Json; p_expected: Json }; Returns: ClinicRow[] };
       clinic_team_members: { Args: Record<string, never>; Returns: TeamMemberRow[] };
+      clinic_activation_readiness: { Args: { p_clinic_id?: string }; Returns: Json };
+      reactivate_clinic_member: { Args: { p_profile_id: string }; Returns: string };
       revoke_clinic_member: { Args: { p_profile_id: string }; Returns: string };
       appointment_available_slots: {
         Args: {
