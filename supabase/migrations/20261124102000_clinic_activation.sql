@@ -1,20 +1,28 @@
 begin;
 -- Existing clinics without intake records retain their access contract. Suspended
 -- and closed clinics lose portal authorization immediately, even with old JWTs.
-create or replace function public.current_clinic_id() returns uuid language sql stable security definer set search_path=pg_catalog,public as $$
+create or replace function public.current_clinic_id() returns uuid language sql stable security definer set search_path=pg_catalog,public,pg_temp as $$
  select p.clinic_id from public.profiles p join auth.users u on u.id=p.auth_user_id where p.auth_user_id=auth.uid() and p.revoked_at is null
  and (to_jsonb(u)->>'deleted_at') is null and coalesce((to_jsonb(u)->>'banned_until')::timestamptz,'-infinity'::timestamptz)<=now()
  and public.clinic_lifecycle_allows_access(p.clinic_id) limit 1 $$;
-create or replace function public.current_profile_id() returns uuid language sql stable security definer set search_path=pg_catalog,public as $$
+create or replace function public.current_profile_id() returns uuid language sql stable security definer set search_path=pg_catalog,public,pg_temp as $$
  select id from public.profiles where auth_user_id=auth.uid() and revoked_at is null and clinic_id=public.current_clinic_id() limit 1 $$;
-create or replace function public.current_profile_role() returns public.profile_role language sql stable security definer set search_path=pg_catalog,public as $$
+create or replace function public.current_profile_role() returns public.profile_role language sql stable security definer set search_path=pg_catalog,public,pg_temp as $$
  select role from public.profiles where auth_user_id=auth.uid() and revoked_at is null and clinic_id=public.current_clinic_id() limit 1 $$;
+
+-- Review fingerprints protect stale configuration/data approvals. Use the
+-- built-in SHA-256 function without depending on an extension schema location.
+create function public.clinic_review_digest(p_text text) returns text
+language sql immutable set search_path=pg_catalog,public,pg_temp as $$
+ select encode(sha256(convert_to(p_text,'UTF8')),'hex')
+$$;
+revoke all on function public.clinic_review_digest(text) from public,anon,authenticated,service_role;
 
 -- Configuration alone cannot certify readiness if core database enforcement is
 -- disabled or trusted provisioning becomes browser-callable. This is a catalog
 -- admission check; deployment/UAT evidence remains a separate external gate.
 create function public.clinic_security_contract() returns jsonb
-language plpgsql stable security definer set search_path=pg_catalog,public as $$
+language plpgsql stable security definer set search_path=pg_catalog,public,pg_temp as $$
 declare failures jsonb:='[]'; relation text; signature text;
 begin
  foreach relation in array array['clinics','profiles','clients','staff','staff_availability','staff_time_off','appointments','conversations','client_notes','notifications','clinic_onboarding','clinic_onboarding_audit'] loop
@@ -41,7 +49,7 @@ end $$;
 revoke all on function public.clinic_security_contract() from public,anon,authenticated,service_role;
 
 create function public.clinic_activation_readiness(p_clinic_id uuid default null) returns jsonb
-language plpgsql volatile security definer set search_path=pg_catalog,public as $$
+language plpgsql volatile security definer set search_path=pg_catalog,public,pg_temp as $$
 declare cid uuid:=coalesce(p_clinic_id,public.current_clinic_id()); o public.clinic_onboarding; c public.clinics;
  errors jsonb:='[]'; stage text; item jsonb; live_payload jsonb; field text; fingerprint text; data_fingerprint text;
 begin
@@ -67,7 +75,7 @@ begin
  if exists(select 1 from public.staff s,unnest(s.services) v where s.clinic_id=cid and s.active
  and not exists(select 1 from jsonb_array_elements(o.payload->'services') x where x->>'name'=v)) then
  errors:=errors||jsonb_build_array('Practitioner services differ from reviewed duration catalog');end if;
- data_fingerprint:=md5(jsonb_build_object('clients',(select coalesce(jsonb_agg(to_jsonb(clinical_client) order by clinical_client.id),'[]') from public.clients clinical_client where clinic_id=cid),
+ data_fingerprint:=public.clinic_review_digest(jsonb_build_object('clients',(select coalesce(jsonb_agg(to_jsonb(clinical_client) order by clinical_client.id),'[]') from public.clients clinical_client where clinic_id=cid),
  'appointments',(select coalesce(jsonb_agg(to_jsonb(a) order by a.id),'[]') from public.appointments a where clinic_id=cid))::text);
  if o.lifecycle<>'activated' and o.data_review_fingerprint is distinct from data_fingerprint and (exists(select 1 from public.clients where clinic_id=cid) or exists(select 1 from public.appointments where clinic_id=cid)) then
  errors:=errors||jsonb_build_array('Existing clinical records require a reviewed synthetic-data cleanup assessment');end if;
@@ -89,7 +97,7 @@ begin
  or exists(select 1 from public.profiles where clinic_id=cid and role='owner' and revoked_at is null and length(btrim(full_name))=0) then
  errors:=errors||jsonb_build_array('Complete active practitioner names, specialties and owner name');end if;
  if exists(select 1 from public.profiles p join auth.users u on u.id=p.auth_user_id where p.clinic_id=cid and p.revoked_at is null and u.email_confirmed_at is null) then errors:=errors||jsonb_build_array('Confirm pending team accounts or revoke unused invitations');end if;
- fingerprint:=md5(jsonb_build_object('clinic',to_jsonb(c),'intake',o.payload,
+ fingerprint:=public.clinic_review_digest(jsonb_build_object('clinic',to_jsonb(c),'intake',o.payload,
  'reviewed_data',data_fingerprint,'staff',(select coalesce(jsonb_agg(to_jsonb(s) order by s.id),'[]') from public.staff s where clinic_id=cid),
  'availability',(select coalesce(jsonb_agg(to_jsonb(a) order by a.id),'[]') from public.staff_availability a where clinic_id=cid),
  'time_off',(select coalesce(jsonb_agg(to_jsonb(t) order by t.id),'[]') from public.staff_time_off t where clinic_id=cid),
@@ -111,7 +119,7 @@ revoke all on function public.clinic_activation_readiness(uuid) from public,anon
 grant execute on function public.clinic_activation_readiness(uuid) to authenticated,service_role;
 
 create function public.decide_clinic_lifecycle(p_clinic_id uuid,p_action text,p_reason text,p_consent_revision text default null,p_external_approved boolean default false)
-returns void language plpgsql security definer set search_path=pg_catalog,public set lock_timeout='5s' as $$
+returns void language plpgsql security definer set search_path=pg_catalog,public,pg_temp set lock_timeout='5s' as $$
 declare o public.clinic_onboarding; readiness jsonb; ev text;
 begin
  if coalesce(auth.jwt()->>'role','')<>'service_role' then raise exception 'Trusted lifecycle decision required' using errcode='42501';end if;
@@ -122,7 +130,7 @@ begin
  select * into o from public.clinic_onboarding where clinic_id=p_clinic_id for update;
  if o.clinic_id is null or o.lifecycle='closed' then raise exception 'Clinic is unavailable or closed' using errcode='22023';end if;
  if p_action='review_data' then
- update public.clinic_onboarding set data_reviewed_at=now(),data_review_fingerprint=md5(jsonb_build_object(
+ update public.clinic_onboarding set data_reviewed_at=now(),data_review_fingerprint=public.clinic_review_digest(jsonb_build_object(
  'clients',(select coalesce(jsonb_agg(to_jsonb(clinical_client) order by clinical_client.id),'[]') from public.clients clinical_client where clinic_id=p_clinic_id),
  'appointments',(select coalesce(jsonb_agg(to_jsonb(a) order by a.id),'[]') from public.appointments a where clinic_id=p_clinic_id))::text),review_fingerprint=null,external_review_started_at=null where clinic_id=p_clinic_id;ev:='data_reviewed';
  elsif p_action in ('review_technical','await_external') then
@@ -151,7 +159,7 @@ revoke all on function public.decide_clinic_lifecycle(uuid,text,text,text,boolea
 grant execute on function public.decide_clinic_lifecycle(uuid,text,text,text,boolean) to service_role;
 -- Scheduling/configuration edits share the clinic lock used by release decisions.
 create function public.lock_clinic_configuration() returns trigger
-language plpgsql security definer set search_path=pg_catalog,public as $$
+language plpgsql security definer set search_path=pg_catalog,public,pg_temp as $$
 declare cid uuid; actor public.profiles%rowtype;
 begin
  if tg_op='UPDATE' and new.clinic_id is distinct from old.clinic_id then

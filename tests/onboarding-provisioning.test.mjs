@@ -211,6 +211,7 @@ test("activation fails closed; explicit trusted approval; suspension and closure
       id = (await provision(db)).rows[0].id;
       let r = (await readiness(db, id)).rows[0].r;
       assert.equal(r.state, "configuration_complete");
+      assert.match(r.review_fingerprint, /^[0-9a-f]{64}$/);
       assert.equal(r.external_dependencies.length, 4);
       await assert.rejects(
         attempt(db, () => decide(db, id, "activate")),
@@ -516,6 +517,17 @@ test("disabled database enforcement blocks readiness and explicit activation", a
       await decide(db, id, "review_technical");
     });
     await db.exec("alter table public.clients disable row level security");
+    await asUser(db, uuid(910), async () => {
+      // Temporary names must not hide a disabled real catalog entry inside a
+      // privileged readiness check. The whole fault is in a disposable DB.
+      await db.exec(
+        "create temp table pg_class as select * from pg_catalog.pg_class;update pg_temp.pg_class set relrowsecurity=true",
+      );
+      const r = (await readiness(db, id)).rows[0].r;
+      assert.equal(r.configuration_complete, false);
+      assert.match(JSON.stringify(r.failures), /row security.*clients/);
+    });
+
     await trusted(db, async () => {
       const r = (await readiness(db, id)).rows[0].r;
       assert.equal(r.configuration_complete, false);

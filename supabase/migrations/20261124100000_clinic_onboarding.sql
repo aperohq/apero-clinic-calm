@@ -34,7 +34,7 @@ create policy "owner reads own onboarding" on public.clinic_onboarding for selec
 -- Existing retention/offboarding remains authoritative even for legacy clinics
 -- with no intake record. The optional lookup supports independent schema tests.
 create function public.clinic_lifecycle_allows_access(p_clinic uuid) returns boolean
-language plpgsql stable security definer set search_path=pg_catalog,public as $$
+language plpgsql stable security definer set search_path=pg_catalog,public,pg_temp as $$
 declare old_state text;
 begin
  if exists(select 1 from public.clinic_onboarding where clinic_id=p_clinic and lifecycle in ('suspended','closed')) then return false;end if;
@@ -46,7 +46,7 @@ end $$;
 revoke all on function public.clinic_lifecycle_allows_access(uuid) from public,anon,authenticated,service_role;
 
 create function public.validate_clinic_intake(p jsonb) returns void
-language plpgsql set search_path=pg_catalog,public as $$
+language plpgsql set search_path=pg_catalog,public,pg_temp as $$
 declare k text; s jsonb; person jsonb; names text[]:='{}'; staff_names text[]:='{}'; v text; day jsonb; period jsonb; seen int[]:='{}'; previous_end text; dow int; schedule jsonb;
 begin
  if p is null or jsonb_typeof(p)<>'object' or octet_length(p::text)>262144
@@ -139,7 +139,7 @@ end $$;
 revoke all on function public.validate_clinic_intake(jsonb) from public,anon,authenticated,service_role;
 
 create function public.provision_clinic(p_submission_key text,p_payload jsonb) returns uuid
-language plpgsql security definer set search_path=pg_catalog,public set lock_timeout='5s' as $$
+language plpgsql security definer set search_path=pg_catalog,public,pg_temp set lock_timeout='5s' as $$
 declare prior public.clinic_onboarding; c public.clinics; u auth.users; person jsonb; day jsonb; sid uuid; result uuid; closure jsonb;
 begin
  if coalesce(auth.jwt()->>'role','')<>'service_role' then raise exception 'Trusted provisioning required' using errcode='42501';end if;
@@ -183,7 +183,7 @@ grant execute on function public.provision_clinic(text,jsonb) to service_role;
 -- Explicitly register reviewed intake for an existing clinic without creating,
 -- replacing or moving any clinic, practitioner, membership or scheduling rows.
 create function public.register_existing_clinic_intake(p_clinic_id uuid,p_submission_key text,p_payload jsonb,p_reason text) returns uuid
-language plpgsql security definer set search_path=pg_catalog,public set lock_timeout='5s' as $$
+language plpgsql security definer set search_path=pg_catalog,public,pg_temp set lock_timeout='5s' as $$
 declare c public.clinics; owner_profile public.profiles; prior public.clinic_onboarding; field text; person jsonb;
 begin
  if coalesce(auth.jwt()->>'role','')<>'service_role' then raise exception 'Trusted intake registration required' using errcode='42501';end if;
