@@ -257,6 +257,21 @@ const localFetch = async (req) => {
     fixture.teamRevocations.push(body);
     return reply(200, target.profileId);
   }
+  if (url.pathname === "/rest/v1/rpc/reactivate_clinic_member") {
+    const body = await req.json();
+    const target = accounts.find((item) => item.profileId === body.p_profile_id);
+    if (
+      fixture.teamRestoreFailure ||
+      account?.role !== "owner" ||
+      account.revokedAt ||
+      !target ||
+      target.clinicId !== resolvedClinicId ||
+      target.role === "owner"
+    )
+      return reply(403, { code: "42501", message: "PRIVATE_RESTORE_DIAGNOSTIC" });
+    target.revokedAt = null;
+    return reply(200, target.profileId);
+  }
   if (url.pathname === "/rest/v1/rpc/set_clinic_member_role") {
     const body = await req.json();
     const target = accounts.find((item) => item.profileId === body.p_profile_id);

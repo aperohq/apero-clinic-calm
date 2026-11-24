@@ -127,6 +127,27 @@ test("Team UI uses real Auth context, SDK, Owner controls and explicit revocatio
       assert.ok(!document.querySelector('select[aria-label="Access for Clinic User"]'));
     },
   );
+  await t.test(
+    "Owner MFA readiness reports missing and enrolled factors without claiming recovery completion",
+    async () => {
+      await waitFor(() => text().includes("MFA is not configured"), "MFA missing");
+      fixture.accounts[0].user.factors = [
+        {
+          id: "factor-local",
+          factor_type: "totp",
+          status: "verified",
+          created_at: "2026-11-24T00:00:00Z",
+          updated_at: "2026-11-24T00:00:00Z",
+        },
+      ];
+      await click("Refresh MFA status");
+      await waitFor(
+        () => text().includes("This session still requires MFA verification"),
+        "MFA session status",
+      );
+      delete fixture.accounts[0].user.factors;
+    },
+  );
   for (const next of ["manager", "staff"])
     await t.test("Owner invites " + next + " with no practitioner creation", async () => {
       await click("Invite user");
@@ -240,6 +261,27 @@ test("Team UI uses real Auth context, SDK, Owner controls and explicit revocatio
     assert.equal(fixture.teamRevocations.length, 1);
     assert.ok(!document.querySelector('[aria-label="Revoke access for Clinic A second user"]'));
   });
+  await t.test(
+    "Owner restoration requires confirmation and preserves revoked state on failure",
+    async () => {
+      await click("Restore access for Clinic A second user");
+      assert.ok(text().includes("Restore clinic access?"));
+      await click("Keep revoked");
+      assert.ok(fixture.accounts[1].revokedAt);
+      await click("Restore access for Clinic A second user");
+      fixture.teamRestoreFailure = true;
+      await click("Confirm restoration");
+      await waitFor(() => text().includes("Could not restore clinic access"), "restoration error");
+      assert.ok(!text().includes("PRIVATE_RESTORE"));
+      fixture.teamRestoreFailure = false;
+      await click("Confirm restoration");
+      await waitFor(
+        () => !document.querySelector('[role="dialog"]') && !fixture.accounts[1].revokedAt,
+        "restoration success",
+      );
+      assert.ok(document.querySelector('[aria-label="Revoke access for Clinic A second user"]'));
+    },
+  );
   await t.test("Loading, empty and directory error states remain usable", async () => {
     fixture.teamEmpty = true;
     await refresh();
@@ -273,6 +315,7 @@ test("Team UI uses real Auth context, SDK, Owner controls and explicit revocatio
         ),
       );
       assert.ok(!document.querySelector("select"));
+      assert.ok(!text().includes("Owner MFA readiness"));
     },
   );
   await t.test("Staff cannot enter Team and sees no private directory on Account", async () => {

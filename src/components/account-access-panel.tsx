@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { supabase } from "@/integrations/supabase/client";
 import { hasPermission, ROLE_LABELS } from "@/lib/permissions";
 import { loadTeam, sendTeamInvitation } from "@/lib/team-management";
 import type { TeamMemberRow } from "@/lib/db-types";
@@ -38,11 +39,29 @@ export function AccountAccessPanel() {
   const [inviteError, setInviteError] = useState("");
   const [revokeTarget, setRevokeTarget] = useState<TeamMemberRow | null>(null);
   const [revokeError, setRevokeError] = useState("");
+  const [restoreTarget, setRestoreTarget] = useState<TeamMemberRow | null>(null);
+  const [restoreError, setRestoreError] = useState("");
   const members = useQuery({
     queryKey: ["clinic_accounts", clinicId, role],
     enabled: !!clinicId && canView,
     refetchInterval: 30_000,
     queryFn: loadTeam,
+  });
+  const ownerMfa = useQuery({
+    queryKey: ["owner_mfa", profile?.id],
+    enabled: canManage && !!profile,
+    staleTime: 30_000,
+    retry: false,
+    queryFn: async () => {
+      const factors = await supabase.auth.mfa.listFactors();
+      if (factors.error) throw new Error("Could not verify owner MFA.");
+      const assurance = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (assurance.error) throw new Error("Could not verify owner MFA.");
+      return {
+        enrolled: factors.data.all.some((factor) => factor.status === "verified"),
+        verifiedSession: assurance.data.currentLevel === "aal2",
+      };
+    },
   });
   const invalidate = () =>
     queryClient.invalidateQueries({ queryKey: ["clinic_accounts", clinicId] });
@@ -104,7 +123,31 @@ export function AccountAccessPanel() {
       setRevokeTarget(null);
     },
   });
-  const busy = change.isPending || invite.isPending || revoke.isPending;
+  const restore = useMutation({
+    mutationFn: async (target: TeamMemberRow) => {
+      if (!canManage || !clinicId || target.role === "owner" || target.id === profile?.id)
+        throw new Error("Not authorized.");
+      const { data, error } = await db.rpc("reactivate_clinic_member", { p_profile_id: target.id });
+      if (error || data !== target.id)
+        throw new Error(
+          "Could not restore clinic access. Verify the account is confirmed and try again.",
+        );
+      const { data: saved, error: readError } = await db
+        .from("profiles")
+        .select("revoked_at")
+        .eq("id", target.id)
+        .eq("clinic_id", clinicId)
+        .single();
+      if (readError || !saved || saved.revoked_at !== null)
+        throw new Error("Could not verify restored access. Refresh the team.");
+    },
+    onSuccess: async () => {
+      await invalidate();
+      toast.success("Clinic access restored");
+      setRestoreTarget(null);
+    },
+  });
+  const busy = change.isPending || invite.isPending || revoke.isPending || restore.isPending;
   if (!canView || !clinicId) return null;
   return (
     <>
@@ -135,6 +178,34 @@ export function AccountAccessPanel() {
             : "Only clinic owners can change account permissions or invite and revoke users."}{" "}
           Portal accounts are separate from practitioner records and schedules.
         </p>
+        {canManage && (
+          <div
+            className="mb-4 rounded-xl border border-border p-3 text-sm"
+            aria-label="Owner MFA readiness"
+          >
+            <p className="font-medium">Owner MFA readiness</p>
+            <p role="status" className="mt-1 text-muted-foreground">
+              {ownerMfa.isPending
+                ? "Checking owner MFA…"
+                : ownerMfa.isError
+                  ? "MFA status could not be verified. Retry before launch."
+                  : !ownerMfa.data?.enrolled
+                    ? "MFA is not configured. Owner enrollment and recovery verification are required before launch."
+                    : ownerMfa.data.verifiedSession
+                      ? "A verified MFA factor and an MFA-verified session are present. Recovery readiness still requires review."
+                      : "An MFA factor is enrolled. This session still requires MFA verification before launch."}
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-2"
+              disabled={ownerMfa.isFetching}
+              onClick={() => void ownerMfa.refetch()}
+            >
+              Refresh MFA status
+            </Button>
+          </div>
+        )}
         {members.isPending ? (
           <p role="status">Loading clinic accounts…</p>
         ) : members.isError ? (
@@ -216,6 +287,23 @@ export function AccountAccessPanel() {
                         Resend invitation
                       </Button>
                     )}
+                    {canManage &&
+                      member.revoked_at &&
+                      member.role !== "owner" &&
+                      member.id !== profile?.id && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={busy}
+                          aria-label={`Restore access for ${member.full_name}`}
+                          onClick={() => {
+                            setRestoreError("");
+                            setRestoreTarget(member);
+                          }}
+                        >
+                          Restore access
+                        </Button>
+                      )}
                     {editable && (
                       <Button
                         size="sm"
@@ -331,6 +419,49 @@ export function AccountAccessPanel() {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+      <Dialog
+        open={!!restoreTarget && canManage}
+        onOpenChange={(open) => {
+          if (!open && !restore.isPending) setRestoreTarget(null);
+        }}
+      >
+        <DialogContent className="rounded-2xl">
+          <DialogHeader>
+            <DialogTitle>Restore clinic access?</DialogTitle>
+            <DialogDescription>
+              {restoreTarget?.full_name} ({restoreTarget?.email}) will regain{" "}
+              {restoreTarget ? ROLE_LABELS[restoreTarget.role] : ""} access to this clinic. Only
+              confirmed accounts can be restored. Review the account before continuing.
+            </DialogDescription>
+          </DialogHeader>
+          {restoreError && (
+            <p role="alert" className="text-sm text-destructive">
+              {restoreError}
+            </p>
+          )}
+          <DialogFooter>
+            <Button variant="outline" disabled={busy} onClick={() => setRestoreTarget(null)}>
+              Keep revoked
+            </Button>
+            <Button
+              disabled={busy}
+              onClick={async () => {
+                if (!restoreTarget || busy) return;
+                setRestoreError("");
+                try {
+                  await restore.mutateAsync(restoreTarget);
+                } catch (error) {
+                  setRestoreError(
+                    error instanceof Error ? error.message : "Could not restore access.",
+                  );
+                }
+              }}
+            >
+              {restore.isPending ? "Restoring…" : "Confirm restoration"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
       <Dialog

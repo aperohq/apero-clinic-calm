@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AccountPage } from "@/components/clinic-pages";
 import { RouteShell } from "@/components/route-shell";
+import { ClinicReadinessPanel } from "@/components/clinic-readiness-panel";
 export const Route = createFileRoute("/account")({
   head: () => ({
     meta: [
@@ -15,6 +16,9 @@ export const Route = createFileRoute("/account")({
   component: () => (
     <RouteShell>
       <AccountPage />
+      <div className="mt-6">
+        <ClinicReadinessPanel />
+      </div>
     </RouteShell>
   ),
 });

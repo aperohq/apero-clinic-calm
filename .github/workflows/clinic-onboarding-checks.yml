@@ -1,0 +1,100 @@
+name: Clinic onboarding contracts
+on:
+  pull_request:
+    paths:
+      - "src/components/account-access-panel.tsx"
+      - "src/components/clinic-readiness-panel.tsx"
+      - "src/lib/clinic-readiness.ts"
+      - "src/lib/db-types.ts"
+      - "src/lib/auth*.ts*"
+      - "src/lib/team-management.ts"
+      - "tests/run-clinic-permission-tests.mjs"
+      - "src/routes/account.tsx"
+      - "supabase/migrations/**"
+      - "scripts/onboarding/**"
+      - "tests/onboarding-*.mjs"
+      - "tests/member-reactivation.test.mjs"
+      - "tests/clinic-readiness-ui.test.mjs"
+      - "tests/team-management-ui.test.tsx"
+      - "tests/helpers/clinic-database.mjs"
+      - "package*.json"
+      - ".github/workflows/clinic-onboarding-checks.yml"
+permissions:
+  contents: read
+concurrency:
+  group: clinic-onboarding-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - name: Synthetic SQL contracts and account UI
+        run: node scripts/onboarding/test-local.mjs
+  native:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - name: Install disposable native database tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends postgresql-16 postgresql-client-16 postgresql-16-cron
+      - name: Native migrations, suspension races and synthetic erasure
+        env:
+          APERO_TEST_PG_BIN: /usr/lib/postgresql/16/bin
+        run: node --test tests/onboarding-native.test.mjs
+  browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - name: Install disposable database tools for integrated acceptance
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends postgresql-16 postgresql-client-16 postgresql-16-cron
+      - name: Install isolated browser acceptance tools
+        run: |
+          npm install --prefix "$RUNNER_TEMP/apero-browser" --no-save --no-audit --no-fund playwright@1.65.1
+          PLAYWRIGHT_BROWSERS_PATH="$RUNNER_TEMP/apero-browsers" node "$RUNNER_TEMP/apero-browser/node_modules/playwright/cli.js" install --with-deps chromium
+      - name: Synthetic responsive account acceptance
+        env:
+          APERO_BROWSER_EVIDENCE_DIR: ${{ runner.temp }}/apero-browser-evidence
+          APERO_PLAYWRIGHT_MODULE: ${{ runner.temp }}/apero-browser/node_modules/playwright/index.mjs
+          PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/apero-browsers
+        run: node tests/onboarding-responsive.test.mjs
+      - name: Integrated browser SDK and native database acceptance
+        env:
+          APERO_E2E_EVIDENCE_DIR: ${{ runner.temp }}/apero-browser-evidence
+          APERO_PLAYWRIGHT_MODULE: ${{ runner.temp }}/apero-browser/node_modules/playwright/index.mjs
+          PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/apero-browsers
+          APERO_TEST_PG_BIN: /usr/lib/postgresql/16/bin
+        run: node tests/onboarding-e2e.test.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: synthetic-clinic-responsive-evidence
+          path: ${{ runner.temp }}/apero-browser-evidence
+          if-no-files-found: error
