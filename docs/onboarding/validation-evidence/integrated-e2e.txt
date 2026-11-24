@@ -1,0 +1,1 @@
+PASS integrated Chromium -> real Supabase SDK -> native PostgreSQL onboarding/account lifecycle; zero external requests

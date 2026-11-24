@@ -1,0 +1,20 @@
+Native PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); 33 local migrations applied
+▶ Native onboarding migrations and concurrent lifecycle admission
+  ✔ Complete migration chain applies to real PostgreSQL (6.186686ms)
+  ✔ Trusted intake provisions atomically with native retry and Unicode preservation (92.920998ms)
+  ✔ Owner-first lifecycle locks avoid inversion with an in-flight team role change (70.239232ms)
+  ✔ In-flight API mutation finishes before suspension without deadlock (47.723341ms)
+  ✔ API mutation waiting behind suspension rechecks revoked credential (47.122169ms)
+  ✔ Authenticated configuration write rechecks lifecycle after stale RLS snapshot (43.342598ms)
+  ✔ Operator invitation waiting behind suspension cannot reserve identity (48.734737ms)
+  ✔ Legacy offboarding denies active identities, operator enrollment and in-flight API admission (19.958321ms)
+  ✔ Demo FKs, note attribution and approved erasure preserve new audits (106.666935ms)
+✔ Native onboarding migrations and concurrent lifecycle admission (5726.207395ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6119.63357
