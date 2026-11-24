@@ -176,7 +176,8 @@ def backup(destination, recipients, snapshot=None, snapshot_catalog=None):
         if recovery_config:
             shutil.copyfile(recovery_config, pending / 'integration-settings.json.age')
             (pending / 'integration-settings.json.age').chmod(0o600)
-        files = {p.name: {'bytes': p.stat().st_size, 'sha256': digest(p)} for p in (archive, roles)}
+        artifacts = [archive, roles] + ([pending / 'integration-settings.json.age'] if recovery_config else [])
+        files = {p.name: {'bytes': p.stat().st_size, 'sha256': digest(p)} for p in artifacts}
         manifest = {'format_version': 1, 'started_at': started.isoformat(),
                     'completed_at': dt.datetime.now(dt.timezone.utc).isoformat(),
                     'schemas': SCHEMAS, 'files': files, 'catalog': catalog,
