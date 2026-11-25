@@ -7,7 +7,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 PACKET = ROOT / 'docs/release/2026-11-24'
 EVIDENCE = PACKET / 'evidence'
-rows = json.loads((EVIDENCE / 'account-scenarios.json').read_text())
+rows = json.loads((EVIDENCE / 'account-scenarios.json').read_text(encoding="utf-8"))
 
 
 def add(sid, tasks, requirement, priority, environment, preconditions, expected, actual, status, evidence, dependency=''):
@@ -19,7 +19,7 @@ def add(sid, tasks, requirement, priority, environment, preconditions, expected,
 
 for filename, prefix, env in [('browser-results.json', 'UI', 'Isolated Chromium / actual components, synthetic Auth/database'),
                               ('browser-production-public.json', 'PUBLIC', 'Production Chromium / fresh anonymous context')]:
-    result = json.loads((EVIDENCE / filename).read_text())
+    result = json.loads((EVIDENCE / filename).read_text(encoding="utf-8"))
     assert not result.get('fatal') and not result['errors'], filename
     for index, check in enumerate(result['tests'], 1):
         assert check['status'] in ['PASS', 'FAIL']
@@ -30,12 +30,12 @@ for filename, prefix, env in [('browser-results.json', 'UI', 'Isolated Chromium 
 
 superseded_harness_assertions = []
 focus_path = EVIDENCE / 'browser-hosted-logout-focus.json'
-focus = json.loads(focus_path.read_text()) if focus_path.exists() else None
+focus = json.loads(focus_path.read_text(encoding="utf-8")) if focus_path.exists() else None
 for filename, prefix in [('browser-hosted-results.json', 'HOSTED'), ('browser-hosted-logout-focus.json', 'LOGOUT')]:
     hosted_path = EVIDENCE / filename
     if not hosted_path.exists():
         continue
-    result = json.loads(hosted_path.read_text())
+    result = json.loads(hosted_path.read_text(encoding="utf-8"))
     assert result.get('finished_at') and not result['page_errors'], filename
     for index, check in enumerate(result['tests'], 1):
         if (filename == 'browser-hosted-results.json' and check['status'] == 'FAIL'
@@ -52,7 +52,7 @@ for filename, prefix in [('browser-hosted-results.json', 'HOSTED'), ('browser-ho
 
 mfa_path = EVIDENCE / 'mfa-runtime.json'
 if mfa_path.exists():
-    mfa = json.loads(mfa_path.read_text())
+    mfa = json.loads(mfa_path.read_text(encoding="utf-8"))
     assert mfa['status'] == 'PASS' and mfa.get('finished_at') and len(mfa['tests']) == 21
     for check in mfa['tests']:
         add(check['id'], 'T-064,T-073', 'Actual standalone Auth protocol: ' + check['id'], 'P1',
@@ -70,7 +70,7 @@ if mfa_path.exists():
         json.dumps(cleanup), 'PASS', 'evidence/mfa-runtime.json')
 
 for filename in ['recovery-rollback.txt', 'recovery-runtime.txt']:
-    result = json.loads((EVIDENCE / filename).read_text())
+    result = json.loads((EVIDENCE / filename).read_text(encoding="utf-8"))
     for check in result['results']:
         add(check['scenario'], 'T-077', 'Isolated rollback/recovery: ' + check['scenario'], 'P1',
             'Disposable local source/config/native DB or compiled runtime',
@@ -110,7 +110,7 @@ for case in cases:
 
 expiry_path = EVIDENCE / 'hosted-session-expiry.json'
 if expiry_path.exists():
-    expiry = json.loads(expiry_path.read_text())
+    expiry = json.loads(expiry_path.read_text(encoding="utf-8"))
     completed = expiry.get('phase') == 'passed' and expiry.get('finished_at') and expiry.get('cleanup', {}).get('http') == 204 and expiry.get('cleanup', {}).get('refresh_rejected')
     entry = next(row for row in rows if row['scenario_id'] == 'AUTH-NATURAL-EXPIRY')
     if completed:
@@ -138,8 +138,8 @@ for row in rows:
     assert all(row[key] for key in ['scenario_id','requirement','priority','environment','preconditions','expected_outcome','actual_outcome','status','evidence_reference'])
     if row['status'] != 'PASS':
         assert row['remaining_dependency'], row['scenario_id']
-(PACKET / 'matrix.json').write_text(json.dumps(rows, indent=2, ensure_ascii=False) + '\n')
-with (PACKET / 'matrix.csv').open('w', newline='') as stream:
+(PACKET / 'matrix.json').write_text(json.dumps(rows, indent=2, ensure_ascii=False) + '\n', encoding="utf-8")
+with (PACKET / 'matrix.csv').open('w', newline='', encoding='utf-8') as stream:
     writer = csv.DictWriter(stream, fieldnames=list(rows[0]), lineterminator='\n')
     writer.writeheader()
     for row in rows:
@@ -148,5 +148,5 @@ counts = dict(Counter(row['status'] for row in rows))
 (EVIDENCE / 'matrix-validation.json').write_text(json.dumps({'rows': len(rows), 'statuses': counts,
     'assigned_tasks': sorted(tasks), 'unique_ids': True, 'all_required_fields_present': True,
     'superseded_harness_assertions': superseded_harness_assertions,
-    'note': 'Matrix rows include grouped acceptance, individual browser assertions, historical evidence and gaps. They are not additive unit-test counts.'}, indent=2) + '\n')
+    'note': 'Matrix rows include grouped acceptance, individual browser assertions, historical evidence and gaps. They are not additive unit-test counts.'}, indent=2) + '\n', encoding="utf-8")
 print(json.dumps({'rows': len(rows), 'statuses': counts, 'task_ids': len(tasks)}))

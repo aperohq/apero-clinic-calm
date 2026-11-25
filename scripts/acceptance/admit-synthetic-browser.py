@@ -8,7 +8,7 @@ import uuid
 from pathlib import Path
 
 fixture_path = Path(os.environ.get('APERO_SYNTHETIC_FIXTURE_MANIFEST', '/tmp/apero-integration-release/private/synthetic-fixtures.json'))
-fixture = json.loads(fixture_path.read_text())
+fixture = json.loads(fixture_path.read_text(encoding="utf-8"))
 assert fixture['fixtures_ready'] is True
 quote_id = lambda value: "'" + str(uuid.UUID(value)) + "'::uuid"
 clinic = quote_id(fixture['clinic_a'])
@@ -32,7 +32,7 @@ query = f"""select json_build_object(
 if '--query-only' in sys.argv:
     print(query)
     raise SystemExit(0)
-token = (Path.home() / '.supabase/access-token').read_text().strip()
+token = (Path.home() / '.supabase/access-token').read_text(encoding="utf-8").strip()
 request = urllib.request.Request('https://api.supabase.com/v1/projects/svoybvzvmygszklcmudh/database/query/read-only',
     data=json.dumps({'query': query}).encode(), headers={'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'}, method='POST')
 with urllib.request.urlopen(request, timeout=35) as response:
@@ -41,5 +41,5 @@ result = {'observed_at': datetime.datetime.now(datetime.timezone.utc).isoformat(
           'scope': 'Existing private manifest exact clinic/client/practitioner/Auth ID allowlists; metadata booleans only, no clinical fields read/exported',
           'checks': checks, 'admitted': all(checks.values()), 'production_business_writes': 0}
 out = Path('docs/release/2026-11-24/evidence/browser-hosted-fixture-admission.json')
-out.write_text(json.dumps(result, indent=2) + '\n')
+out.write_text(json.dumps(result, indent=2) + '\n', encoding="utf-8")
 print(json.dumps(result))

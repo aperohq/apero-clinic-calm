@@ -51,10 +51,10 @@ class DatabaseRuntimeCI(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         os.environ.pop('INTEGRATION_RECOVERY_CONFIG', None)
         self.recipients = self.root / 'recipients'
-        self.recipients.write_text('age1synthetic\n')
+        self.recipients.write_text('age1synthetic\n', encoding="utf-8")
         self.recipients.chmod(0o600)
         self.identity = self.root / 'identity'
-        self.identity.write_text('synthetic')
+        self.identity.write_text('synthetic', encoding="utf-8")
         self.identity.chmod(0o600)
 
     def run_database(self):
@@ -78,7 +78,7 @@ class DatabaseRuntimeCI(unittest.TestCase):
                 files[name] = {'bytes': config.stat().st_size, 'sha256': ci.db.digest(config)}
             (bundle / 'manifest.json').write_text(json.dumps({
                 'files': files, 'catalog': {'integration_runtime_recovery': 'synthetic review'},
-            }))
+            }), encoding="utf-8")
             return bundle
 
         def encrypt(value, output, _):
@@ -185,7 +185,7 @@ class DatabaseRuntimeCI(unittest.TestCase):
             recipient = subprocess.check_output(['age-keygen', '-y', str(identity)], stderr=subprocess.DEVNULL).decode().strip()
             identities.append(identity)
             recipients.append(recipient)
-        self.recipients.write_text('\n'.join(recipients) + '\n')
+        self.recipients.write_text('\n'.join(recipients) + '\n', encoding="utf-8")
         raw = json.dumps(fixture())
         with contextlib.redirect_stdout(io.StringIO()) as logs:
             with self.assertRaisesRegex(RuntimeError, 'synthetic interrupted backup'):

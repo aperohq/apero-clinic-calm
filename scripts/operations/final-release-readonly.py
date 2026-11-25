@@ -25,14 +25,14 @@ def request(url, token=None):
 
 
 def save(name, value):
-    (OUT / name).write_text(json.dumps(value, indent=2) + '\n')
+    (OUT / name).write_text(json.dumps(value, indent=2) + '\n', encoding="utf-8")
 
 
 observed = datetime.datetime.now(datetime.timezone.utc).isoformat()
 token_path = Path.home() / '.supabase/access-token'
 metadata = {'observed_at': observed, 'production_writes': 0}
 if token_path.exists():
-    token = token_path.read_text().strip()
+    token = token_path.read_text(encoding="utf-8").strip()
     status, body, _ = request('https://api.supabase.com/v1/projects/' + REF + '/config/auth', token)
     metadata['auth_config_http'] = status
     if status == 200:
@@ -68,7 +68,7 @@ save('published-frontend.json', published)
 historical_markers = OUT / 'historical-live-markers.json'
 if historical_markers.exists():
     verified = []
-    for asset in json.loads(historical_markers.read_text())['routes']:
+    for asset in json.loads(historical_markers.read_text(encoding="utf-8"))['routes']:
         asset_status, content, _ = request('https://aperodashboard.lovable.app' + asset['path'])
         actual_hash = hashlib.sha256(content).hexdigest()
         verified.append({'path': asset['path'], 'http': asset_status, 'sha256': actual_hash,
