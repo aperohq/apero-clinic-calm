@@ -97,6 +97,7 @@ jobs:
           PGUSER: ${{ vars.BACKUP_DB_USER }}
           BACKUP_DB_PASSWORD: ${{ secrets.BACKUP_DB_PASSWORD }}
           BACKUP_DB_CA_CERT: ${{ secrets.BACKUP_DB_CA_CERT }}
+          BACKUP_INTEGRATION_RECOVERY_JSON: ${{ inputs.mode == 'database' && secrets.BACKUP_INTEGRATION_RECOVERY_JSON || '' }}
           RETELL_API_KEY: ${{ secrets.BACKUP_RETELL_API_KEY }}
           BACKUP_MODE: ${{ inputs.mode }}
         run: |
