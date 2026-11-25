@@ -1,0 +1,47 @@
+{
+  "run_id": "apero-closure-20261125T084139Z",
+  "mode": "lifecycle",
+  "started_at": "2026-11-25T13:14:30.678Z",
+  "tests": [
+    {
+      "id": "HOSTED-BANNED-RETAINED-JWT-DENIED",
+      "status": "PASS"
+    },
+    {
+      "id": "HOSTED-ACCOUNT-RESTORED",
+      "status": "PASS"
+    },
+    {
+      "id": "HOSTED-REVOKED-RETAINED-JWT-DENIED",
+      "status": "PASS"
+    },
+    {
+      "id": "HOSTED-ROLE-PRESERVING-RESTORATION",
+      "status": "PASS"
+    },
+    {
+      "id": "HOSTED-CLINIC-SUSPEND-RETAINED-JWT-DENIED",
+      "status": "PASS"
+    },
+    {
+      "id": "HOSTED-CLINIC-RESTORE",
+      "status": "PASS"
+    }
+  ],
+  "business_scope": "Exact new synthetic IDs only",
+  "emails": 0,
+  "calendar_writes": 0,
+  "retell_operations": 0,
+  "status": "COMPLETE",
+  "auth_session_cleanup": [
+    {
+      "local": true,
+      "success": true
+    },
+    {
+      "local": true,
+      "success": true
+    }
+  ],
+  "finished_at": "2026-11-25T13:14:40.025Z"
+}

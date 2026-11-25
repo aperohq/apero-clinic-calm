@@ -1,0 +1,39 @@
+{
+  "run_id": "apero-closure-20261125T084139Z",
+  "mode": "isolation",
+  "started_at": "2026-11-25T13:20:22.743Z",
+  "tests": [
+    {
+      "id": "HOSTED-EXISTING-APPOINTMENT-FOREIGN-READ-DENIED",
+      "status": "PASS"
+    },
+    {
+      "id": "HOSTED-EXISTING-APPOINTMENT-FOREIGN-UPDATE-DENIED",
+      "status": "PASS"
+    },
+    {
+      "id": "HOSTED-FOREIGN-REJECTION-PRESERVES-STATE",
+      "status": "PASS"
+    }
+  ],
+  "business_scope": "Exact new synthetic IDs only",
+  "emails": 0,
+  "calendar_writes": 0,
+  "retell_operations": 0,
+  "status": "COMPLETE",
+  "auth_session_cleanup": [
+    {
+      "local": true,
+      "success": true
+    },
+    {
+      "local": true,
+      "success": true
+    },
+    {
+      "local": true,
+      "success": true
+    }
+  ],
+  "finished_at": "2026-11-25T13:20:28.345Z"
+}

@@ -1,0 +1,31 @@
+{
+  "run_id": "apero-closure-20261125T084139Z",
+  "mode": "setup",
+  "started_at": "2026-11-25T13:11:30.914Z",
+  "tests": [
+    {
+      "id": "HOSTED-TRUSTED-SYNTHETIC-SETUP",
+      "status": "PASS",
+      "clinics": 2,
+      "accounts": 5,
+      "clients": 2,
+      "practitioners": 2
+    }
+  ],
+  "business_scope": "Exact new synthetic IDs only",
+  "emails": 0,
+  "calendar_writes": 0,
+  "retell_operations": 0,
+  "status": "COMPLETE",
+  "auth_session_cleanup": [
+    {
+      "local": true,
+      "success": true
+    },
+    {
+      "local": true,
+      "success": true
+    }
+  ],
+  "finished_at": "2026-11-25T13:11:47.852Z"
+}

@@ -1,0 +1,51 @@
+{
+  "run_id": "apero-closure-20261125T084139Z",
+  "mode": "cleanup",
+  "started_at": "2026-11-25T13:25:07.880Z",
+  "tests": [
+    {
+      "id": "CLEANUP-CLINIC-a",
+      "status": "PASS"
+    },
+    {
+      "id": "CLEANUP-CLINIC-b",
+      "status": "PASS"
+    },
+    {
+      "id": "CLEANUP-AUTH-owner-a",
+      "status": "PASS"
+    },
+    {
+      "id": "CLEANUP-AUTH-manager-a",
+      "status": "PASS"
+    },
+    {
+      "id": "CLEANUP-AUTH-staff-a",
+      "status": "PASS"
+    },
+    {
+      "id": "CLEANUP-AUTH-owner-b",
+      "status": "PASS"
+    },
+    {
+      "id": "CLEANUP-AUTH-manager-b",
+      "status": "PASS"
+    }
+  ],
+  "business_scope": "Exact new synthetic IDs only",
+  "emails": 0,
+  "calendar_writes": 0,
+  "retell_operations": 0,
+  "status": "COMPLETE",
+  "auth_session_cleanup": [
+    {
+      "local": true,
+      "success": true
+    },
+    {
+      "local": true,
+      "success": true
+    }
+  ],
+  "finished_at": "2026-11-25T13:25:26.253Z"
+}

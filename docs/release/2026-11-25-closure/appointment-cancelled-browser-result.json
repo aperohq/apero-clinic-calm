@@ -1,0 +1,73 @@
+{
+  "run_id": "apero-closure-20261125T084139Z",
+  "mode": "appointment",
+  "phase": "cancelled",
+  "started_at": "2026-11-25T13:24:30.438Z",
+  "tests": [
+    {
+      "id": "MANAGER-LOGIN:manager-a",
+      "status": "PASS"
+    },
+    {
+      "id": "MANAGER-IDENTITY:manager-a",
+      "status": "PASS"
+    },
+    {
+      "id": "APPOINTMENT-cancelled-PERSISTED",
+      "status": "PASS"
+    },
+    {
+      "id": "APPOINTMENT-cancelled-CALENDAR-REMOVED",
+      "status": "PASS"
+    },
+    {
+      "id": "APPOINTMENT-cancelled-HISTORY-RETAINED",
+      "status": "PASS"
+    }
+  ],
+  "page_errors": [],
+  "blocked_requests": [
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    }
+  ],
+  "auth_signins": 1,
+  "auth_refreshes": 0,
+  "session_cleanup": [
+    {
+      "label": "manager-a",
+      "scope": "local",
+      "http": 204
+    }
+  ],
+  "recording_transport_interceptions": 0,
+  "audio_transport_interceptions": 0,
+  "provider_requests_forwarded": 0,
+  "recording_scope": "Actual published UI/HTMLAudioElement with generated WAV supplied by browser-only transport; upstream provider/recording retrieval TRANSFERRED",
+  "browser_version": "159.0.8154.6",
+  "finished_at": "2026-11-25T13:24:43.344Z",
+  "pass": 5,
+  "fail": 0
+}

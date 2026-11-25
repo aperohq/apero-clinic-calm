@@ -1,0 +1,101 @@
+{
+  "observed_at": "2026-11-25T13:27:37.532339+00:00",
+  "production_project": "svoybvzvmygszklcmudh",
+  "password_min_length": 8,
+  "github_main_sha": "c9e551904d206eae3a7b0d815dd22cb3ef0b8d60",
+  "merged_pr": 12,
+  "main_required_ci": [
+    {
+      "name": "regression",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/aperohq/apero-clinic-calm/actions/runs/45620803876/job/139228112640"
+    },
+    {
+      "name": "supabase-bootstrap",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/aperohq/apero-clinic-calm/actions/runs/45620803876/job/139228112469"
+    },
+    {
+      "name": "windows-components",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/aperohq/apero-clinic-calm/actions/runs/45620803876/job/139228112448"
+    },
+    {
+      "name": "native-database",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/aperohq/apero-clinic-calm/actions/runs/45620803876/job/139228112349"
+    },
+    {
+      "name": "quality",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/aperohq/apero-clinic-calm/actions/runs/45620803876/job/139228112272"
+    }
+  ],
+  "application_source_change": false,
+  "production_frontend_or_edge_deployments": 0,
+  "hosted_checkpoints": {
+    "appointment-booked-browser-result.json": {
+      "pass": 5,
+      "fail": 0
+    },
+    "appointment-cancelled-browser-result.json": {
+      "pass": 5,
+      "fail": 0
+    },
+    "appointment-rescheduled-browser-result.json": {
+      "pass": 5,
+      "fail": 0
+    },
+    "book-result.json": {
+      "pass": 2,
+      "fail": 0
+    },
+    "browser-result.json": {
+      "pass": 104,
+      "fail": 0
+    },
+    "cancel-result.json": {
+      "pass": 1,
+      "fail": 0
+    },
+    "cleanup-result.json": {
+      "pass": 7,
+      "fail": 0
+    },
+    "isolation-result.json": {
+      "pass": 3,
+      "fail": 0
+    },
+    "lifecycle-result.json": {
+      "pass": 6,
+      "fail": 0
+    },
+    "mfa-result.json": {
+      "pass": 7,
+      "fail": 0
+    },
+    "policy-result.json": {
+      "pass": 0,
+      "fail": 0
+    },
+    "recording-result.json": {
+      "pass": 11,
+      "fail": 0
+    },
+    "reschedule-result.json": {
+      "pass": 1,
+      "fail": 0
+    },
+    "setup-result.json": {
+      "pass": 1,
+      "fail": 0
+    }
+  },
+  "hosted_checkpoints_total": 158,
+  "cleanup_verified": true
+}

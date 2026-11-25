@@ -340,6 +340,8 @@ async function recording(page, account) {
     await page.getByRole("button", { name: /^(Load recording|Try again)$/ }).click();
     const element = page.locator('audio[aria-label="Call recording"]');
     await element.waitFor();
+    // The published player deliberately uses preload=none; request media as a user would.
+    await element.evaluate((audio) => audio.load());
     await page.waitForFunction(() => {
       const a = document.querySelector("audio");
       return a && a.readyState >= 1 && a.duration > 1;
@@ -379,6 +381,7 @@ async function recording(page, account) {
   recordingFailure = true;
   await page.goto(route);
   await page.getByRole("button", { name: "Load recording", exact: true }).click();
+  await page.locator('audio[aria-label="Call recording"]').evaluate((audio) => audio.load());
   await page.getByText("Recording unavailable.", { exact: true }).waitFor();
   await check(
     "RECORDING-SAFE-MEDIA-ERROR",
@@ -430,6 +433,19 @@ async function appointment(page, account) {
     .locator("button[aria-label]")
     .filter({ hasText: clientName })
     .filter({ hasText: "Consultation" });
+  if (phase === "cancelled") {
+    // Cancelled appointments intentionally leave the active calendar grid.
+    await page.getByText("No appointments scheduled for this week.", { exact: true }).waitFor();
+    await check("APPOINTMENT-cancelled-CALENDAR-REMOVED", (await event.count()) === 0);
+    await page.goto(BASE + "/clients/" + clients.a);
+    await page.getByText("Cancelled", { exact: true }).waitFor();
+    const history = await page.locator("main").innerText();
+    await check(
+      "APPOINTMENT-cancelled-HISTORY-RETAINED",
+      history.includes("Consultation") && history.includes("Cancelled"),
+    );
+    return;
+  }
   await event.waitFor();
   await event.click();
   const dialog = page.getByRole("dialog");
@@ -444,7 +460,8 @@ async function appointment(page, account) {
     `APPOINTMENT-${phase}-DASHBOARD-STATE`,
     text.includes(status) && text.replace(/\s+/g, " ").includes(format(start).replace(/\s+/g, " ")),
   );
-  await dialog.getByRole("button", { name: "Close", exact: true }).click();
+  await dialog.getByRole("button", { name: "Close", exact: true }).first().click();
+  await dialog.waitFor({ state: "hidden" });
   await check(`APPOINTMENT-${phase}-DIALOG-CLOSE`, (await dialog.count()) === 0);
 }
 
@@ -632,7 +649,14 @@ try {
         id: `BROWSER-EXECUTION:${account.label}`,
         status: "FAIL",
         error_class: error.name,
+        path: new URL(page.url()).pathname,
+        reason: error.message.split("\n")[0],
       });
+      await writeFile(
+        `/tmp/apero-technical-closure/private/browser-failure-${mode}.txt`,
+        await page.locator("body").innerText(),
+        { mode: 0o600 },
+      );
       process.exitCode = 1;
     } finally {
       const session = sessions.get(account.label);
