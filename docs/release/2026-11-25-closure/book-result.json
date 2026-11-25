@@ -1,0 +1,31 @@
+{
+  "run_id": "apero-closure-20261125T084139Z",
+  "mode": "book",
+  "started_at": "2026-11-25T13:14:40.121Z",
+  "tests": [
+    {
+      "id": "HOSTED-DUPLICATE-CONFLICT-DENIED",
+      "status": "PASS"
+    },
+    {
+      "id": "HOSTED-APPOINTMENT-BOOK",
+      "status": "PASS"
+    }
+  ],
+  "business_scope": "Exact new synthetic IDs only",
+  "emails": 0,
+  "calendar_writes": 0,
+  "retell_operations": 0,
+  "status": "COMPLETE",
+  "auth_session_cleanup": [
+    {
+      "local": true,
+      "success": true
+    },
+    {
+      "local": true,
+      "success": true
+    }
+  ],
+  "finished_at": "2026-11-25T13:14:44.029Z"
+}

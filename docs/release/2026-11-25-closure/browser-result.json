@@ -1,0 +1,1066 @@
+{
+  "run_id": "apero-closure-20261125T084139Z",
+  "mode": "manager",
+  "started_at": "2026-11-25T13:11:57.139Z",
+  "tests": [
+    {
+      "id": "MANAGER-LOGIN:manager-a",
+      "status": "PASS"
+    },
+    {
+      "id": "MANAGER-IDENTITY:manager-a",
+      "status": "PASS"
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-a:1440:/home",
+      "status": "PASS",
+      "route": "/home",
+      "width": 1440,
+      "expected_denied": false,
+      "scroll": 1440
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-a:1440:/calendar",
+      "status": "PASS",
+      "route": "/calendar",
+      "width": 1440,
+      "expected_denied": false,
+      "scroll": 1440
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-a:1440:/clients",
+      "status": "PASS",
+      "route": "/clients",
+      "width": 1440,
+      "expected_denied": false,
+      "scroll": 1440
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-a:1440:/staff",
+      "status": "PASS",
+      "route": "/staff",
+      "width": 1440,
+      "expected_denied": false,
+      "scroll": 1440
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-a:1440:/conversations",
+      "status": "PASS",
+      "route": "/conversations",
+      "width": 1440,
+      "expected_denied": false,
+      "scroll": 1440
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-a:1440:/requests",
+      "status": "PASS",
+      "route": "/requests",
+      "width": 1440,
+      "expected_denied": false,
+      "scroll": 1440
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-a:1440:/analytics",
+      "status": "PASS",
+      "route": "/analytics",
+      "width": 1440,
+      "expected_denied": false,
+      "scroll": 1440
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-a:1440:/account",
+      "status": "PASS",
+      "route": "/account",
+      "width": 1440,
+      "expected_denied": false,
+      "scroll": 1440
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-a:1440:/account/team",
+      "status": "PASS",
+      "route": "/account/team",
+      "width": 1440,
+      "expected_denied": false,
+      "scroll": 1440
+    },
+    {
+      "id": "MANAGER-READONLY-TEAM:manager-a:1440",
+      "status": "PASS"
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-a:1440:/account/settings",
+      "status": "PASS",
+      "route": "/account/settings",
+      "width": 1440,
+      "expected_denied": true,
+      "scroll": 1440
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-a:768:/home",
+      "status": "PASS",
+      "route": "/home",
+      "width": 768,
+      "expected_denied": false,
+      "scroll": 768
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-a:768:/calendar",
+      "status": "PASS",
+      "route": "/calendar",
+      "width": 768,
+      "expected_denied": false,
+      "scroll": 768
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-a:768:/clients",
+      "status": "PASS",
+      "route": "/clients",
+      "width": 768,
+      "expected_denied": false,
+      "scroll": 768
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-a:768:/staff",
+      "status": "PASS",
+      "route": "/staff",
+      "width": 768,
+      "expected_denied": false,
+      "scroll": 768
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-a:768:/conversations",
+      "status": "PASS",
+      "route": "/conversations",
+      "width": 768,
+      "expected_denied": false,
+      "scroll": 768
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-a:768:/requests",
+      "status": "PASS",
+      "route": "/requests",
+      "width": 768,
+      "expected_denied": false,
+      "scroll": 768
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-a:768:/analytics",
+      "status": "PASS",
+      "route": "/analytics",
+      "width": 768,
+      "expected_denied": false,
+      "scroll": 768
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-a:768:/account",
+      "status": "PASS",
+      "route": "/account",
+      "width": 768,
+      "expected_denied": false,
+      "scroll": 768
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-a:768:/account/team",
+      "status": "PASS",
+      "route": "/account/team",
+      "width": 768,
+      "expected_denied": false,
+      "scroll": 768
+    },
+    {
+      "id": "MANAGER-READONLY-TEAM:manager-a:768",
+      "status": "PASS"
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-a:768:/account/settings",
+      "status": "PASS",
+      "route": "/account/settings",
+      "width": 768,
+      "expected_denied": true,
+      "scroll": 768
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-a:390:/home",
+      "status": "PASS",
+      "route": "/home",
+      "width": 390,
+      "expected_denied": false,
+      "scroll": 390
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-a:390:/calendar",
+      "status": "PASS",
+      "route": "/calendar",
+      "width": 390,
+      "expected_denied": false,
+      "scroll": 390
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-a:390:/clients",
+      "status": "PASS",
+      "route": "/clients",
+      "width": 390,
+      "expected_denied": false,
+      "scroll": 390
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-a:390:/staff",
+      "status": "PASS",
+      "route": "/staff",
+      "width": 390,
+      "expected_denied": false,
+      "scroll": 390
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-a:390:/conversations",
+      "status": "PASS",
+      "route": "/conversations",
+      "width": 390,
+      "expected_denied": false,
+      "scroll": 390
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-a:390:/requests",
+      "status": "PASS",
+      "route": "/requests",
+      "width": 390,
+      "expected_denied": false,
+      "scroll": 390
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-a:390:/analytics",
+      "status": "PASS",
+      "route": "/analytics",
+      "width": 390,
+      "expected_denied": false,
+      "scroll": 390
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-a:390:/account",
+      "status": "PASS",
+      "route": "/account",
+      "width": 390,
+      "expected_denied": false,
+      "scroll": 390
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-a:390:/account/team",
+      "status": "PASS",
+      "route": "/account/team",
+      "width": 390,
+      "expected_denied": false,
+      "scroll": 390
+    },
+    {
+      "id": "MANAGER-READONLY-TEAM:manager-a:390",
+      "status": "PASS"
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-a:390:/account/settings",
+      "status": "PASS",
+      "route": "/account/settings",
+      "width": 390,
+      "expected_denied": true,
+      "scroll": 390
+    },
+    {
+      "id": "MANAGER-HORIZONTAL-UI:manager-a:clients",
+      "status": "PASS"
+    },
+    {
+      "id": "MANAGER-HORIZONTAL-UI:manager-a:staff",
+      "status": "PASS"
+    },
+    {
+      "id": "MANAGER-HORIZONTAL-READ:manager-a:clients",
+      "status": "PASS",
+      "http": 200
+    },
+    {
+      "id": "MANAGER-HORIZONTAL-READ:manager-a:staff",
+      "status": "PASS",
+      "http": 200
+    },
+    {
+      "id": "MANAGER-HORIZONTAL-READ:manager-a:appointments",
+      "status": "PASS",
+      "http": 200
+    },
+    {
+      "id": "MANAGER-HORIZONTAL-READ:manager-a:profiles",
+      "status": "PASS",
+      "http": 200
+    },
+    {
+      "id": "MANAGER-HORIZONTAL-READ:manager-a:conversations",
+      "status": "PASS",
+      "http": 200
+    },
+    {
+      "id": "MANAGER-OWN-CLIENT:manager-a",
+      "status": "PASS"
+    },
+    {
+      "id": "MANAGER-HORIZONTAL-UPDATE:manager-a",
+      "status": "PASS",
+      "http": 200
+    },
+    {
+      "id": "MANAGER-OWNER-CONFIG-DENIED:manager-a",
+      "status": "PASS",
+      "http": 200
+    },
+    {
+      "id": "MANAGER-PRIVILEGED-RPC:manager-a:staff-a:set_clinic_member_role",
+      "status": "PASS",
+      "http": 403
+    },
+    {
+      "id": "MANAGER-PRIVILEGED-RPC:manager-a:staff-a:revoke_clinic_member",
+      "status": "PASS",
+      "http": 403
+    },
+    {
+      "id": "MANAGER-PRIVILEGED-RPC:manager-a:staff-a:reactivate_clinic_member",
+      "status": "PASS",
+      "http": 403
+    },
+    {
+      "id": "MANAGER-PRIVILEGED-RPC:manager-a:manager-b:set_clinic_member_role",
+      "status": "PASS",
+      "http": 403
+    },
+    {
+      "id": "MANAGER-PRIVILEGED-RPC:manager-a:manager-b:revoke_clinic_member",
+      "status": "PASS",
+      "http": 403
+    },
+    {
+      "id": "MANAGER-PRIVILEGED-RPC:manager-a:manager-b:reactivate_clinic_member",
+      "status": "PASS",
+      "http": 403
+    },
+    {
+      "id": "MANAGER-HORIZONTAL-RPC:manager-a",
+      "status": "PASS",
+      "http": 403
+    },
+    {
+      "id": "MANAGER-LOGIN:manager-b",
+      "status": "PASS"
+    },
+    {
+      "id": "MANAGER-IDENTITY:manager-b",
+      "status": "PASS"
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-b:1440:/home",
+      "status": "PASS",
+      "route": "/home",
+      "width": 1440,
+      "expected_denied": false,
+      "scroll": 1440
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-b:1440:/calendar",
+      "status": "PASS",
+      "route": "/calendar",
+      "width": 1440,
+      "expected_denied": false,
+      "scroll": 1440
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-b:1440:/clients",
+      "status": "PASS",
+      "route": "/clients",
+      "width": 1440,
+      "expected_denied": false,
+      "scroll": 1440
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-b:1440:/staff",
+      "status": "PASS",
+      "route": "/staff",
+      "width": 1440,
+      "expected_denied": false,
+      "scroll": 1440
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-b:1440:/conversations",
+      "status": "PASS",
+      "route": "/conversations",
+      "width": 1440,
+      "expected_denied": false,
+      "scroll": 1440
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-b:1440:/requests",
+      "status": "PASS",
+      "route": "/requests",
+      "width": 1440,
+      "expected_denied": false,
+      "scroll": 1440
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-b:1440:/analytics",
+      "status": "PASS",
+      "route": "/analytics",
+      "width": 1440,
+      "expected_denied": false,
+      "scroll": 1440
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-b:1440:/account",
+      "status": "PASS",
+      "route": "/account",
+      "width": 1440,
+      "expected_denied": false,
+      "scroll": 1440
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-b:1440:/account/team",
+      "status": "PASS",
+      "route": "/account/team",
+      "width": 1440,
+      "expected_denied": false,
+      "scroll": 1440
+    },
+    {
+      "id": "MANAGER-READONLY-TEAM:manager-b:1440",
+      "status": "PASS"
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-b:1440:/account/settings",
+      "status": "PASS",
+      "route": "/account/settings",
+      "width": 1440,
+      "expected_denied": true,
+      "scroll": 1440
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-b:768:/home",
+      "status": "PASS",
+      "route": "/home",
+      "width": 768,
+      "expected_denied": false,
+      "scroll": 768
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-b:768:/calendar",
+      "status": "PASS",
+      "route": "/calendar",
+      "width": 768,
+      "expected_denied": false,
+      "scroll": 768
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-b:768:/clients",
+      "status": "PASS",
+      "route": "/clients",
+      "width": 768,
+      "expected_denied": false,
+      "scroll": 768
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-b:768:/staff",
+      "status": "PASS",
+      "route": "/staff",
+      "width": 768,
+      "expected_denied": false,
+      "scroll": 768
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-b:768:/conversations",
+      "status": "PASS",
+      "route": "/conversations",
+      "width": 768,
+      "expected_denied": false,
+      "scroll": 768
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-b:768:/requests",
+      "status": "PASS",
+      "route": "/requests",
+      "width": 768,
+      "expected_denied": false,
+      "scroll": 768
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-b:768:/analytics",
+      "status": "PASS",
+      "route": "/analytics",
+      "width": 768,
+      "expected_denied": false,
+      "scroll": 768
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-b:768:/account",
+      "status": "PASS",
+      "route": "/account",
+      "width": 768,
+      "expected_denied": false,
+      "scroll": 768
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-b:768:/account/team",
+      "status": "PASS",
+      "route": "/account/team",
+      "width": 768,
+      "expected_denied": false,
+      "scroll": 768
+    },
+    {
+      "id": "MANAGER-READONLY-TEAM:manager-b:768",
+      "status": "PASS"
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-b:768:/account/settings",
+      "status": "PASS",
+      "route": "/account/settings",
+      "width": 768,
+      "expected_denied": true,
+      "scroll": 768
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-b:390:/home",
+      "status": "PASS",
+      "route": "/home",
+      "width": 390,
+      "expected_denied": false,
+      "scroll": 390
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-b:390:/calendar",
+      "status": "PASS",
+      "route": "/calendar",
+      "width": 390,
+      "expected_denied": false,
+      "scroll": 390
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-b:390:/clients",
+      "status": "PASS",
+      "route": "/clients",
+      "width": 390,
+      "expected_denied": false,
+      "scroll": 390
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-b:390:/staff",
+      "status": "PASS",
+      "route": "/staff",
+      "width": 390,
+      "expected_denied": false,
+      "scroll": 390
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-b:390:/conversations",
+      "status": "PASS",
+      "route": "/conversations",
+      "width": 390,
+      "expected_denied": false,
+      "scroll": 390
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-b:390:/requests",
+      "status": "PASS",
+      "route": "/requests",
+      "width": 390,
+      "expected_denied": false,
+      "scroll": 390
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-b:390:/analytics",
+      "status": "PASS",
+      "route": "/analytics",
+      "width": 390,
+      "expected_denied": false,
+      "scroll": 390
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-b:390:/account",
+      "status": "PASS",
+      "route": "/account",
+      "width": 390,
+      "expected_denied": false,
+      "scroll": 390
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-b:390:/account/team",
+      "status": "PASS",
+      "route": "/account/team",
+      "width": 390,
+      "expected_denied": false,
+      "scroll": 390
+    },
+    {
+      "id": "MANAGER-READONLY-TEAM:manager-b:390",
+      "status": "PASS"
+    },
+    {
+      "id": "MANAGER-ROUTE:manager-b:390:/account/settings",
+      "status": "PASS",
+      "route": "/account/settings",
+      "width": 390,
+      "expected_denied": true,
+      "scroll": 390
+    },
+    {
+      "id": "MANAGER-HORIZONTAL-UI:manager-b:clients",
+      "status": "PASS"
+    },
+    {
+      "id": "MANAGER-HORIZONTAL-UI:manager-b:staff",
+      "status": "PASS"
+    },
+    {
+      "id": "MANAGER-HORIZONTAL-READ:manager-b:clients",
+      "status": "PASS",
+      "http": 200
+    },
+    {
+      "id": "MANAGER-HORIZONTAL-READ:manager-b:staff",
+      "status": "PASS",
+      "http": 200
+    },
+    {
+      "id": "MANAGER-HORIZONTAL-READ:manager-b:appointments",
+      "status": "PASS",
+      "http": 200
+    },
+    {
+      "id": "MANAGER-HORIZONTAL-READ:manager-b:profiles",
+      "status": "PASS",
+      "http": 200
+    },
+    {
+      "id": "MANAGER-HORIZONTAL-READ:manager-b:conversations",
+      "status": "PASS",
+      "http": 200
+    },
+    {
+      "id": "MANAGER-OWN-CLIENT:manager-b",
+      "status": "PASS"
+    },
+    {
+      "id": "MANAGER-HORIZONTAL-UPDATE:manager-b",
+      "status": "PASS",
+      "http": 200
+    },
+    {
+      "id": "MANAGER-OWNER-CONFIG-DENIED:manager-b",
+      "status": "PASS",
+      "http": 200
+    },
+    {
+      "id": "MANAGER-PRIVILEGED-RPC:manager-b:manager-a:set_clinic_member_role",
+      "status": "PASS",
+      "http": 403
+    },
+    {
+      "id": "MANAGER-PRIVILEGED-RPC:manager-b:manager-a:revoke_clinic_member",
+      "status": "PASS",
+      "http": 403
+    },
+    {
+      "id": "MANAGER-PRIVILEGED-RPC:manager-b:manager-a:reactivate_clinic_member",
+      "status": "PASS",
+      "http": 403
+    },
+    {
+      "id": "MANAGER-PRIVILEGED-RPC:manager-b:staff-a:set_clinic_member_role",
+      "status": "PASS",
+      "http": 403
+    },
+    {
+      "id": "MANAGER-PRIVILEGED-RPC:manager-b:staff-a:revoke_clinic_member",
+      "status": "PASS",
+      "http": 403
+    },
+    {
+      "id": "MANAGER-PRIVILEGED-RPC:manager-b:staff-a:reactivate_clinic_member",
+      "status": "PASS",
+      "http": 403
+    },
+    {
+      "id": "MANAGER-HORIZONTAL-RPC:manager-b",
+      "status": "PASS",
+      "http": 403
+    }
+  ],
+  "page_errors": [],
+  "blocked_requests": [
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    }
+  ],
+  "auth_signins": 2,
+  "auth_refreshes": 0,
+  "session_cleanup": [
+    {
+      "label": "manager-a",
+      "scope": "local",
+      "http": 204
+    },
+    {
+      "label": "manager-b",
+      "scope": "local",
+      "http": 204
+    }
+  ],
+  "recording_transport_interceptions": 0,
+  "audio_transport_interceptions": 0,
+  "provider_requests_forwarded": 0,
+  "recording_scope": "Actual published UI/HTMLAudioElement with generated WAV supplied by browser-only transport; upstream provider/recording retrieval TRANSFERRED",
+  "browser_version": "159.0.8154.6",
+  "finished_at": "2026-11-25T13:14:13.201Z",
+  "pass": 104,
+  "fail": 0
+}

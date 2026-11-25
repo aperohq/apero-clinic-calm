@@ -1,0 +1,106 @@
+{
+  "run_id": "apero-closure-20261125T084139Z",
+  "mode": "recording",
+  "started_at": "2026-11-25T13:14:08.078Z",
+  "tests": [
+    {
+      "id": "MANAGER-LOGIN:manager-a",
+      "status": "PASS"
+    },
+    {
+      "id": "MANAGER-IDENTITY:manager-a",
+      "status": "PASS"
+    },
+    {
+      "id": "RECORDING-GENERATED-METADATA",
+      "status": "PASS"
+    },
+    {
+      "id": "RECORDING-NATIVE-PLAY-PROGRESS",
+      "status": "PASS"
+    },
+    {
+      "id": "RECORDING-NATIVE-PAUSE",
+      "status": "PASS"
+    },
+    {
+      "id": "RECORDING-NATIVE-SEEK",
+      "status": "PASS"
+    },
+    {
+      "id": "RECORDING-NATIVE-ENDED",
+      "status": "PASS"
+    },
+    {
+      "id": "RECORDING-SAFE-MEDIA-ERROR",
+      "status": "PASS"
+    },
+    {
+      "id": "RECORDING-RETRY-RECOVERS",
+      "status": "PASS"
+    },
+    {
+      "id": "RECORDING-TRANSPORT-BOUNDARY",
+      "status": "PASS"
+    },
+    {
+      "id": "RECORDING-OWN-CLINIC",
+      "status": "PASS"
+    }
+  ],
+  "page_errors": [],
+  "blocked_requests": [
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    },
+    {
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents",
+      "method": "POST"
+    }
+  ],
+  "auth_signins": 1,
+  "auth_refreshes": 0,
+  "session_cleanup": [
+    {
+      "label": "manager-a",
+      "scope": "local",
+      "http": 204
+    }
+  ],
+  "recording_transport_interceptions": 3,
+  "audio_transport_interceptions": 3,
+  "provider_requests_forwarded": 0,
+  "recording_scope": "Actual published UI/HTMLAudioElement with generated WAV supplied by browser-only transport; upstream provider/recording retrieval TRANSFERRED",
+  "browser_version": "159.0.8154.6",
+  "finished_at": "2026-11-25T13:14:17.824Z",
+  "pass": 11,
+  "fail": 0
+}

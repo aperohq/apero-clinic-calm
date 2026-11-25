@@ -1,0 +1,15 @@
+{
+  "run_id": "apero-closure-20261125T084139Z",
+  "mode": "policy",
+  "started_at": "2026-11-25T13:09:59.785Z",
+  "tests": [],
+  "business_scope": "Exact new synthetic IDs only",
+  "emails": 0,
+  "calendar_writes": 0,
+  "retell_operations": 0,
+  "status": "COMPLETE",
+  "http": 200,
+  "server_minimum": 8,
+  "auth_session_cleanup": [],
+  "finished_at": "2026-11-25T13:10:01.674Z"
+}

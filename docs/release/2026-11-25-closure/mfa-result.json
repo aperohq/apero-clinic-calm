@@ -1,0 +1,56 @@
+{
+  "run_id": "apero-closure-20261125T084139Z",
+  "mode": "mfa",
+  "started_at": "2026-11-25T13:11:56.697Z",
+  "tests": [
+    {
+      "id": "PASSWORD-SERVER-REJECTS-SEVEN",
+      "status": "PASS",
+      "http": 422
+    },
+    {
+      "id": "PASSWORD-SERVER-ACCEPTS-STRONG",
+      "status": "PASS"
+    },
+    {
+      "id": "HOSTED-MFA-INVALID-CODE-DENIED",
+      "status": "PASS"
+    },
+    {
+      "id": "HOSTED-MFA-PRIMARY-AAL2",
+      "status": "PASS"
+    },
+    {
+      "id": "HOSTED-MFA-FIRST-FACTOR-AAL1",
+      "status": "PASS"
+    },
+    {
+      "id": "HOSTED-MFA-AAL1-CANNOT-REMOVE-FACTOR",
+      "status": "PASS"
+    },
+    {
+      "id": "HOSTED-MFA-BACKUP-RECOVERY",
+      "status": "PASS"
+    }
+  ],
+  "business_scope": "Exact new synthetic IDs only",
+  "emails": 0,
+  "calendar_writes": 0,
+  "retell_operations": 0,
+  "status": "COMPLETE",
+  "auth_session_cleanup": [
+    {
+      "local": true,
+      "success": true
+    },
+    {
+      "local": true,
+      "success": true
+    },
+    {
+      "local": true,
+      "success": true
+    }
+  ],
+  "finished_at": "2026-11-25T13:12:34.418Z"
+}

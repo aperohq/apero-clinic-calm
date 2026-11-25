@@ -3,7 +3,6 @@ import assert from "node:assert/strict";
 import { readFile, writeFile, mkdir, stat, unlink } from "node:fs/promises";
 import { randomBytes, randomUUID, randomInt, createHmac } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
-import { createClinicUserAdmin } from "../clinic-user-admin.server.mjs";
 
 const REF = "svoybvzvmygszklcmudh",
   URL = `https://${REF}.supabase.co`;
@@ -22,6 +21,7 @@ assert(
     "reschedule",
     "cancel",
     "cleanup",
+    "isolation",
   ].includes(mode),
 );
 const intent = JSON.parse(await readFile(`${ROOT}/operation-intent.json`, "utf8"));
@@ -98,10 +98,17 @@ if (mode === "check") {
     mode === "policy" || (secret && publicKey),
     "Existing modern keys required; never create or rotate keys",
   );
+  // Reuse the existing service-role JWT for the hosted operator SDK, without rotation.
+  const legacy = keys.data.find(
+    (k) => k.name === "service_role" && k.api_key?.startsWith("eyJ"),
+  )?.api_key;
+  assert(mode === "policy" || legacy, "Existing operator execution credential unavailable");
   const admin =
     mode === "policy"
       ? null
-      : createClinicUserAdmin({ SUPABASE_URL: URL, SUPABASE_SECRET_KEY: secret });
+      : createClient(URL, legacy, {
+          auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+        });
   const userClient = () =>
     createClient(URL, publicKey, {
       auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
@@ -131,6 +138,13 @@ if (mode === "check") {
   const persist = () =>
     writeFile(PRIVATE, JSON.stringify(fixture, null, 2) + "\n", { mode: 0o600 });
   const data = (response, label) => {
+    if (response.error)
+      result.operation_error = {
+        stage: label,
+        status: response.error.status,
+        code: response.error.code,
+        name: response.error.name,
+      };
     assert(!response.error, label);
     return response.data;
   };
@@ -570,6 +584,39 @@ if (mode === "check") {
           ).length === 1,
         );
         result.status = "COMPLETE";
+      } else if (mode === "isolation") {
+        const foreign = await login(fixture.accounts.find((a) => a.label === "manager-b"));
+        const select = await foreign
+          .from("appointments")
+          .select("id")
+          .eq("id", fixture.appointment_id);
+        await check(
+          "HOSTED-EXISTING-APPOINTMENT-FOREIGN-READ-DENIED",
+          !select.error && select.data.length === 0,
+        );
+        const update = await foreign
+          .from("appointments")
+          .update({ status: "Cancelled" })
+          .eq("id", fixture.appointment_id)
+          .select("id");
+        await check(
+          "HOSTED-EXISTING-APPOINTMENT-FOREIGN-UPDATE-DENIED",
+          Boolean(update.error) || update.data.length === 0,
+        );
+        const retained = data(
+          await manager
+            .from("appointments")
+            .select("status,start_time")
+            .eq("id", fixture.appointment_id)
+            .single(),
+          "Own appointment retained check failed",
+        );
+        await check(
+          "HOSTED-FOREIGN-REJECTION-PRESERVES-STATE",
+          retained.status === "Booked" &&
+            new Date(retained.start_time).toISOString() === fixture.appointment.start_time,
+        );
+        result.status = "COMPLETE";
       } else if (["book", "reschedule", "cancel"].includes(mode)) {
         if (mode === "book") {
           data(
@@ -747,7 +794,10 @@ if (mode === "check") {
     result.failure = {
       name: error.name,
       stage: mode,
-      reason: "Sanitized operation failure; inspect exact synthetic journal before retry",
+      reason:
+        error.code === "ERR_ASSERTION"
+          ? error.message.split("\n")[0]
+          : "Sanitized operation failure; inspect exact synthetic journal before retry",
     };
     process.exitCode = 1;
   } finally {

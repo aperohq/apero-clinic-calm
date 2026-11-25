@@ -1,0 +1,23 @@
+{
+  "run_id": "apero-closure-20261125T084139Z",
+  "observed_at": "2026-11-25T13:25:33.440150+00:00",
+  "status": "COMPLETE",
+  "remaining": {
+    "clinics": 0,
+    "profiles": 0,
+    "practitioners": 0,
+    "clients": 0,
+    "appointments": 0,
+    "conversations": 0,
+    "onboarding_payloads": 0,
+    "calendar_connections": 0,
+    "integration_credentials": 0,
+    "auth_users": 0,
+    "auth_sessions": 0,
+    "mfa_factors": 0
+  },
+  "identifier_only_provisioned_audits_preserved": 2,
+  "private_fixture_credentials_removed": true,
+  "production_writes": 0,
+  "patient_record_fields_read": 0
+}
