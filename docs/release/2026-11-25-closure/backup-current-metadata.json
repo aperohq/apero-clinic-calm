@@ -1,0 +1,60 @@
+{
+  "observed_at": "2026-11-25T08:43:32.401683+00:00",
+  "project_ref": "svoybvzvmygszklcmudh",
+  "github_environment": {
+    "variable_names": ["BACKUP_AWS_REGION", "BACKUP_DB_NAME", "BACKUP_DB_PORT"],
+    "secret_names": [],
+    "backups_enabled": "UNSET"
+  },
+  "managed_backup_http": 200,
+  "managed_backup_metadata": {
+    "walg_enabled": true,
+    "pitr_enabled": false,
+    "region": "ap-northeast-1",
+    "backups": [],
+    "physical_backup_data": {}
+  },
+  "database_metadata_http": 201,
+  "database_metadata": [
+    {
+      "metadata": {
+        "database": "postgres",
+        "server_version": "17.6",
+        "read_only": "on",
+        "migration_count": 30,
+        "onboarding_migrations": [
+          {
+            "version": "20261124100000",
+            "name": "clinic_onboarding",
+            "sha256": "60e880e7b8b2761199da1a1c9634fb699c1aceb7456a5f345eb4d4b797c0899b"
+          },
+          {
+            "version": "20261124102000",
+            "name": "clinic_activation",
+            "sha256": "f701ef8c464ed8dc3f894d4b6c058af00f5b6623c9582d38a920f7b65e2fe5c9"
+          },
+          {
+            "version": "20261124110000",
+            "name": "clinic_member_reactivation",
+            "sha256": "effc1e3c9539cd95a7fac4d5cfcd0b6c3e432ed233c26516d68d623c1a90d4a6"
+          },
+          {
+            "version": "20261124111000",
+            "name": "suspended_team_management",
+            "sha256": "26774404d6c8a9936260b11dbd835f00132147cfcaa921b13a3f444c4d781b99"
+          },
+          {
+            "version": "20261124112000",
+            "name": "integration_access_lifecycle",
+            "sha256": "ecf7c84936ba2dab20ce2e26a02e7a05d73bfe4092afd5486ac5a96d6f1dec9b"
+          }
+        ]
+      }
+    }
+  ],
+  "aws_access_available": false,
+  "aws_configuration_directory_exists": false,
+  "external_writes": 0,
+  "production_writes": 0,
+  "real_record_fields_accessed": 0
+}
