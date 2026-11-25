@@ -1,0 +1,324 @@
+[
+  {
+    "scenario_id": "AC-001",
+    "roadmap_task_ids": [
+      "T-024",
+      "T-035",
+      "T-073"
+    ],
+    "requirement": "Trusted intake atomically creates clinic, verified existing Owner association, practitioners and schedules; no orphaned records",
+    "priority": "P1",
+    "environment": "Isolated native/PGlite/React runtime",
+    "preconditions": "Verified main cd858f5; isolated synthetic two-clinic fixtures; no external requests",
+    "expected_outcome": "Trusted intake atomically creates clinic, verified existing Owner association, practitioners and schedules; no orphaned records",
+    "actual_outcome": "Trusted intake atomically creates clinic, verified existing Owner association, practitioners and schedules; no orphaned records",
+    "status": "PASS",
+    "evidence_reference": "account-security.md; P transactional provisioning; N trusted intake",
+    "remaining_dependency": null
+  },
+  {
+    "scenario_id": "AC-002",
+    "roadmap_task_ids": [
+      "T-024",
+      "T-035"
+    ],
+    "requirement": "Same stable-key retry returns same clinic; changed payload/duplicate normalized phone/owner rejected; late staff failure rolls back and corrected retry succeeds",
+    "priority": "P1",
+    "environment": "Isolated native/PGlite/React runtime",
+    "preconditions": "Verified main cd858f5; isolated synthetic two-clinic fixtures; no external requests",
+    "expected_outcome": "Same stable-key retry returns same clinic; changed payload/duplicate normalized phone/owner rejected; late staff failure rolls back and corrected retry succeeds",
+    "actual_outcome": "Same stable-key retry returns same clinic; changed payload/duplicate normalized phone/owner rejected; late staff failure rolls back and corrected retry succeeds",
+    "status": "PASS",
+    "evidence_reference": "account-security.md; P transactional, interrupted staff, duplicate contacts; N native retry",
+    "remaining_dependency": null
+  },
+  {
+    "scenario_id": "AC-003",
+    "roadmap_task_ids": [
+      "T-024",
+      "T-035"
+    ],
+    "requirement": "English/Arabic valid Unicode retained; blank names, malformed hours/timezone/phone/date, unsupported/duplicate services and invalid durations rejected without partial persistence",
+    "priority": "P1",
+    "environment": "Isolated native/PGlite/React runtime",
+    "preconditions": "Verified main cd858f5; isolated synthetic two-clinic fixtures; no external requests",
+    "expected_outcome": "English/Arabic valid Unicode retained; blank names, malformed hours/timezone/phone/date, unsupported/duplicate services and invalid durations rejected without partial persistence",
+    "actual_outcome": "English/Arabic valid Unicode retained; blank names, malformed hours/timezone/phone/date, unsupported/duplicate services and invalid durations rejected without partial persistence",
+    "status": "PASS",
+    "evidence_reference": "account-security.md; P Unicode/malformed cases; F blank English/Arabic",
+    "remaining_dependency": null
+  },
+  {
+    "scenario_id": "AC-004",
+    "roadmap_task_ids": [
+      "T-024",
+      "T-063"
+    ],
+    "requirement": "Synthetic Manager/Staff memberships persist; Owner changes role; unauthorized/foreign/self/Owner changes fail; audit remains tenant scoped",
+    "priority": "P1",
+    "environment": "Isolated native/PGlite/React runtime",
+    "preconditions": "Verified main cd858f5; isolated synthetic two-clinic fixtures; no external requests",
+    "expected_outcome": "Synthetic Manager/Staff memberships persist; Owner changes role; unauthorized/foreign/self/Owner changes fail; audit remains tenant scoped",
+    "actual_outcome": "Synthetic Manager/Staff memberships persist; Owner changes role; unauthorized/foreign/self/Owner changes fail; audit remains tenant scoped",
+    "status": "PASS",
+    "evidence_reference": "account-security.md; A real profile guard/audit; P Owner provisioning; Team UI invitation/role assertions",
+    "remaining_dependency": null
+  },
+  {
+    "scenario_id": "AC-005",
+    "roadmap_task_ids": [
+      "T-063",
+      "T-073"
+    ],
+    "requirement": "Both clinics' Managers have own operational reads/scheduling management; foreign rows invisible, foreign updates affect zero rows, direct privileged RPC/role/config changes denied",
+    "priority": "P0",
+    "environment": "Isolated native/PGlite/React runtime",
+    "preconditions": "Verified main cd858f5; isolated synthetic two-clinic fixtures; no external requests",
+    "expected_outcome": "Both clinics' Managers have own operational reads/scheduling management; foreign rows invisible, foreign updates affect zero rows, direct privileged RPC/role/config changes denied",
+    "actual_outcome": "Both clinics' Managers have own operational reads/scheduling management; foreign rows invisible, foreign updates affect zero rows, direct privileged RPC/role/config changes denied",
+    "status": "PASS",
+    "evidence_reference": "account-security.md; F Manager two-clinic and own schedule tests; A escalation denials",
+    "remaining_dependency": null
+  },
+  {
+    "scenario_id": "AC-006",
+    "roadmap_task_ids": [
+      "T-063",
+      "T-064"
+    ],
+    "requirement": "Revoked Manager's retained claims immediately lose client/availability access; verified Owner restores same role; pending/unconfirmed/foreign/banned identities cannot restore",
+    "priority": "P0",
+    "environment": "Isolated native/PGlite/React runtime",
+    "preconditions": "Verified main cd858f5; isolated synthetic two-clinic fixtures; no external requests",
+    "expected_outcome": "Revoked Manager's retained claims immediately lose client/availability access; verified Owner restores same role; pending/unconfirmed/foreign/banned identities cannot restore",
+    "actual_outcome": "Revoked Manager's retained claims immediately lose client/availability access; verified Owner restores same role; pending/unconfirmed/foreign/banned identities cannot restore",
+    "status": "PASS",
+    "evidence_reference": "account-security.md; F Manager retained claims/restoration; member-reactivation suite",
+    "remaining_dependency": null
+  },
+  {
+    "scenario_id": "AC-007",
+    "roadmap_task_ids": [
+      "T-024",
+      "T-064",
+      "T-072"
+    ],
+    "requirement": "Suspension/closure/offboarding denies retained Owner/Manager/Staff authorization, API credentials and team mutation; other clinic remains unaffected",
+    "priority": "P0",
+    "environment": "Isolated native/PGlite/React runtime",
+    "preconditions": "Verified main cd858f5; isolated synthetic two-clinic fixtures; no external requests",
+    "expected_outcome": "Suspension/closure/offboarding denies retained Owner/Manager/Staff authorization, API credentials and team mutation; other clinic remains unaffected",
+    "actual_outcome": "Suspension/closure/offboarding denies retained Owner/Manager/Staff authorization, API credentials and team mutation; other clinic remains unaffected",
+    "status": "PASS",
+    "evidence_reference": "account-security.md; L all-role offboarding; A suspended team/invitations; I lifecycle credentials",
+    "remaining_dependency": null
+  },
+  {
+    "scenario_id": "AC-008",
+    "roadmap_task_ids": [
+      "T-024",
+      "T-073"
+    ],
+    "requirement": "Native lifecycle/API/config/team races recheck authorization after lock waits, prevent inversion and stale-RLS writes",
+    "priority": "P1",
+    "environment": "Isolated native/PGlite/React runtime",
+    "preconditions": "Verified main cd858f5; isolated synthetic two-clinic fixtures; no external requests",
+    "expected_outcome": "Native lifecycle/API/config/team races recheck authorization after lock waits, prevent inversion and stale-RLS writes",
+    "actual_outcome": "Native lifecycle/API/config/team races recheck authorization after lock waits, prevent inversion and stale-RLS writes",
+    "status": "PASS",
+    "evidence_reference": "account-security.md; N nine native subtests",
+    "remaining_dependency": null
+  },
+  {
+    "scenario_id": "AC-009",
+    "roadmap_task_ids": [
+      "T-063",
+      "T-064"
+    ],
+    "requirement": "Anonymous callers cannot discover availability, mutate membership, provision or invoke restricted internals; forged metadata cannot grant authority",
+    "priority": "P0",
+    "environment": "Isolated native/PGlite/React runtime",
+    "preconditions": "Verified main cd858f5; isolated synthetic two-clinic fixtures; no external requests",
+    "expected_outcome": "Anonymous callers cannot discover availability, mutate membership, provision or invoke restricted internals; forged metadata cannot grant authority",
+    "actual_outcome": "Anonymous callers cannot discover availability, mutate membership, provision or invoke restricted internals; forged metadata cannot grant authority",
+    "status": "PASS",
+    "evidence_reference": "account-security.md; F anonymous; A grants/escalation; I anonymous",
+    "remaining_dependency": null
+  },
+  {
+    "scenario_id": "AC-010",
+    "roadmap_task_ids": [
+      "T-063"
+    ],
+    "requirement": "Restricted recording URL column cannot be selected by clinic roles; metadata remains tenant scoped",
+    "priority": "P1",
+    "environment": "Isolated native/PGlite/React runtime",
+    "preconditions": "Verified main cd858f5; isolated synthetic two-clinic fixtures; no external requests",
+    "expected_outcome": "Restricted recording URL column cannot be selected by clinic roles; metadata remains tenant scoped",
+    "actual_outcome": "Restricted recording URL column cannot be selected by clinic roles; metadata remains tenant scoped",
+    "status": "PASS",
+    "evidence_reference": "account-security.md; A recording metadata/column-grant test; no media/provider retrieval",
+    "remaining_dependency": null
+  },
+  {
+    "scenario_id": "AP-001",
+    "roadmap_task_ids": [
+      "T-073",
+      "T-074"
+    ],
+    "requirement": "Owner, Manager and Staff discover Kuwait 09:00 as 06:00Z, create one linked appointment, move it preserving state and cancel successfully",
+    "priority": "P1",
+    "environment": "Isolated native/PGlite/React runtime",
+    "preconditions": "Verified main cd858f5; isolated synthetic two-clinic fixtures; no external requests",
+    "expected_outcome": "Owner, Manager and Staff discover Kuwait 09:00 as 06:00Z, create one linked appointment, move it preserving state and cancel successfully",
+    "actual_outcome": "Owner, Manager and Staff discover Kuwait 09:00 as 06:00Z, create one linked appointment, move it preserving state and cancel successfully",
+    "status": "PASS",
+    "evidence_reference": "account-security.md; F three role booking subtests",
+    "remaining_dependency": null
+  },
+  {
+    "scenario_id": "AP-002",
+    "roadmap_task_ids": [
+      "T-073",
+      "T-074"
+    ],
+    "requirement": "Duplicate/conflicting request, unsupported service and foreign practitioner/client writes fail without extra appointment records",
+    "priority": "P1",
+    "environment": "Isolated native/PGlite/React runtime",
+    "preconditions": "Verified main cd858f5; isolated synthetic two-clinic fixtures; no external requests",
+    "expected_outcome": "Duplicate/conflicting request, unsupported service and foreign practitioner/client writes fail without extra appointment records",
+    "actual_outcome": "Duplicate/conflicting request, unsupported service and foreign practitioner/client writes fail without extra appointment records",
+    "status": "PASS",
+    "evidence_reference": "account-security.md; F three role booking subtests; persisted count assertions",
+    "remaining_dependency": null
+  },
+  {
+    "scenario_id": "AP-003",
+    "roadmap_task_ids": [
+      "T-073",
+      "T-074"
+    ],
+    "requirement": "Two real concurrent dashboard transactions targeting one practitioner/slot produce exactly one persisted winner",
+    "priority": "P0",
+    "environment": "Isolated native/PGlite/React runtime",
+    "preconditions": "Verified main cd858f5; isolated synthetic two-clinic fixtures; no external requests",
+    "expected_outcome": "Two real concurrent dashboard transactions targeting one practitioner/slot produce exactly one persisted winner",
+    "actual_outcome": "Two real concurrent dashboard transactions targeting one practitioner/slot produce exactly one persisted winner",
+    "status": "PASS",
+    "evidence_reference": "account-security.md; F native simultaneous booking",
+    "remaining_dependency": null
+  },
+  {
+    "scenario_id": "AP-004",
+    "roadmap_task_ids": [
+      "T-063",
+      "T-073"
+    ],
+    "requirement": "Cross-clinic availability RPC denied to Managers; foreign clinical row access/mutation denied",
+    "priority": "P1",
+    "environment": "Isolated native/PGlite/React runtime",
+    "preconditions": "Verified main cd858f5; isolated synthetic two-clinic fixtures; no external requests",
+    "expected_outcome": "Cross-clinic availability RPC denied to Managers; foreign clinical row access/mutation denied",
+    "actual_outcome": "Cross-clinic availability RPC denied to Managers; foreign clinical row access/mutation denied",
+    "status": "PASS",
+    "evidence_reference": "account-security.md; F two-clinic Manager; A tenant boundaries",
+    "remaining_dependency": null
+  },
+  {
+    "scenario_id": "AT-001",
+    "roadmap_task_ids": [
+      "T-035",
+      "T-072",
+      "T-073"
+    ],
+    "requirement": "Incomplete/configuration/technical/external/activated states require explicit authorization; synthetic clinics never activate",
+    "priority": "P1",
+    "environment": "Isolated native/PGlite/React runtime",
+    "preconditions": "Verified main cd858f5; isolated synthetic two-clinic fixtures; no external requests",
+    "expected_outcome": "Incomplete/configuration/technical/external/activated states require explicit authorization; synthetic clinics never activate",
+    "actual_outcome": "Incomplete/configuration/technical/external/activated states require explicit authorization; synthetic clinics never activate",
+    "status": "PASS",
+    "evidence_reference": "account-security.md; P activation fail-closed/synthetic cases",
+    "remaining_dependency": null
+  },
+  {
+    "scenario_id": "AT-002",
+    "roadmap_task_ids": [
+      "T-024",
+      "T-072"
+    ],
+    "requirement": "Configuration/data changes invalidate prior technical/cleanup review; disabled RLS or unsafe grants prevents readiness; normal clinical operations preserve established activation",
+    "priority": "P1",
+    "environment": "Isolated native/PGlite/React runtime",
+    "preconditions": "Verified main cd858f5; isolated synthetic two-clinic fixtures; no external requests",
+    "expected_outcome": "Configuration/data changes invalidate prior technical/cleanup review; disabled RLS or unsafe grants prevents readiness; normal clinical operations preserve established activation",
+    "actual_outcome": "Configuration/data changes invalidate prior technical/cleanup review; disabled RLS or unsafe grants prevents readiness; normal clinical operations preserve established activation",
+    "status": "PASS",
+    "evidence_reference": "account-security.md; P readiness drift, cleanup review, enforcement tests",
+    "remaining_dependency": null
+  },
+  {
+    "scenario_id": "AT-003",
+    "roadmap_task_ids": [
+      "T-024",
+      "T-035",
+      "T-072"
+    ],
+    "requirement": "Isolated demo FK/notes/legal-hold/erasure behavior preserves durable audit and other tenant; cleanup does not broadly delete actual clinics",
+    "priority": "P1",
+    "environment": "Isolated native/PGlite/React runtime",
+    "preconditions": "Verified main cd858f5; isolated synthetic two-clinic fixtures; no external requests",
+    "expected_outcome": "Isolated demo FK/notes/legal-hold/erasure behavior preserves durable audit and other tenant; cleanup does not broadly delete actual clinics",
+    "actual_outcome": "Isolated demo FK/notes/legal-hold/erasure behavior preserves durable audit and other tenant; cleanup does not broadly delete actual clinics",
+    "status": "PASS",
+    "evidence_reference": "account-security.md; N demo/notes/erasure; L retention/audit",
+    "remaining_dependency": null
+  },
+  {
+    "scenario_id": "AU-001",
+    "roadmap_task_ids": [
+      "T-064"
+    ],
+    "requirement": "Hosted MFA enrollment, actual challenge/step-up, loss/recovery and token/session behavior proven",
+    "priority": "P1",
+    "environment": "Hosted Apero MFA (not modified); separate native Auth protocol runtime completed",
+    "preconditions": "Explicit approval for designated hosted Owner factor/account changes; none supplied",
+    "expected_outcome": "Hosted MFA enrollment, actual challenge/step-up, loss/recovery and token/session behavior proven",
+    "actual_outcome": "21 actual native Auth v2.198.0 assertions passed, including enrollment/challenge/backup-factor recovery; hosted Apero flows and real Owner recovery remain unverified",
+    "status": "BLOCKED",
+    "evidence_reference": "account-security.md;mfa-runtime.md;evidence/mfa-runtime.json",
+    "remaining_dependency": "F-04: approved hosted Owner enrollment/challenge/recovery and applicable Apero flow/enforcement; no production factor/account change authorized"
+  },
+  {
+    "scenario_id": "AU-002",
+    "roadmap_task_ids": [
+      "T-064",
+      "T-073"
+    ],
+    "requirement": "Real invitation/recovery email delivered and consumed safely",
+    "priority": "P1",
+    "environment": "Hosted synthetic acceptance / genuine clinic approval",
+    "preconditions": "Founder-approved designated synthetic users and controlled actions; genuine clinic representative for AT-004",
+    "expected_outcome": "Real invitation/recovery email delivered and consumed safely",
+    "actual_outcome": "Not executed: UI success/error/retry tested; no email sent. Founder-approved synthetic recipient and production account actions required",
+    "status": "BLOCKED",
+    "evidence_reference": "account-security.md; UI success/error/retry tested; no email sent. Founder-approved synthetic recipient and production account actions required",
+    "remaining_dependency": "UI success/error/retry tested; no email sent. Founder-approved synthetic recipient and production account actions required"
+  },
+  {
+    "scenario_id": "AT-004",
+    "roadmap_task_ids": [
+      "T-072",
+      "T-075"
+    ],
+    "requirement": "Genuine clinic consent, practitioner schedule/service-duration approval, representative UAT and real clinic activation decision",
+    "priority": "P1",
+    "environment": "Hosted synthetic acceptance / genuine clinic approval",
+    "preconditions": "Founder-approved designated synthetic users and controlled actions; genuine clinic representative for AT-004",
+    "expected_outcome": "Genuine clinic consent, practitioner schedule/service-duration approval, representative UAT and real clinic activation decision",
+    "actual_outcome": "Not executed: Human attestations cannot be fabricated; no real clinic activated",
+    "status": "BLOCKED",
+    "evidence_reference": "account-security.md; Human attestations cannot be fabricated; no real clinic activated",
+    "remaining_dependency": "Human attestations cannot be fabricated; no real clinic activated"
+  }
+]

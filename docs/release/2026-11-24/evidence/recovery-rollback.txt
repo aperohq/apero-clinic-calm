@@ -1,0 +1,26 @@
+{
+  "results": [
+    {
+      "scenario": "REC-SOURCE-01",
+      "status": "PASS",
+      "restored_source_files": 4,
+      "scope": "isolated source artifacts, not hosting or Edge deployment"
+    },
+    {
+      "scenario": "REC-CONFIG-01",
+      "status": "PASS",
+      "scope": "synthetic local configuration restore; no production configuration"
+    },
+    {
+      "scenario": "REC-MIGRATION-01",
+      "status": "PASS",
+      "migrations": 33,
+      "failed_transaction_rolled_back": true,
+      "tenant_and_unbound_identity_denial_after_recovery": true,
+      "auth_issuance": "synthetic claims; hosted Auth not exercised"
+    }
+  ],
+  "production_modified": false,
+  "external_operations": 0,
+  "synthetic_cleanup_completed": true
+}

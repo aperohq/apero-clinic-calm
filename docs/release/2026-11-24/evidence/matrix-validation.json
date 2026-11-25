@@ -1,0 +1,44 @@
+{
+  "rows": 341,
+  "statuses": {
+    "PASS": 327,
+    "BLOCKED": 11,
+    "FAIL": 1,
+    "NOT APPLICABLE": 1,
+    "UNVERIFIED": 1
+  },
+  "assigned_tasks": [
+    "T-024",
+    "T-031",
+    "T-035",
+    "T-063",
+    "T-064",
+    "T-065",
+    "T-066",
+    "T-072",
+    "T-073",
+    "T-074",
+    "T-075",
+    "T-076",
+    "T-077",
+    "T-078",
+    "T-079"
+  ],
+  "unique_ids": true,
+  "all_required_fields_present": true,
+  "superseded_harness_assertions": [
+    {
+      "id": "HOSTED-LOGOUT:owner-a",
+      "reason": "Premature DOM count before login hydration; corrected focused runtime check passed",
+      "original_evidence": "browser-hosted-results.json",
+      "replacement": "browser-hosted-logout-focus.json"
+    },
+    {
+      "id": "HOSTED-LOGOUT:staff-a",
+      "reason": "Premature DOM count before login hydration; corrected focused runtime check passed",
+      "original_evidence": "browser-hosted-results.json",
+      "replacement": "browser-hosted-logout-focus.json"
+    }
+  ],
+  "note": "Matrix rows include grouped acceptance, individual browser assertions, historical evidence and gaps. They are not additive unit-test counts."
+}

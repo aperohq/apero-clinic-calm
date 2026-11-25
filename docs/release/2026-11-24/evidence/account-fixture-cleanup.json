@@ -1,0 +1,22 @@
+{
+  "checked_at_utc": "2026-11-24T20:16:29.521154+00:00",
+  "failed_setup_fixtures": [
+    {
+      "fixture": "apero-native-BXHuEW",
+      "postmaster_pid_absent": true,
+      "removed": true
+    },
+    {
+      "fixture": "apero-native-JwFG2v",
+      "postmaster_pid_absent": true,
+      "removed": true
+    },
+    {
+      "fixture": "apero-native-Y8oDZc",
+      "postmaster_pid_absent": true,
+      "removed": true
+    }
+  ],
+  "successful_suites": "helper stops server and removes its exact temporary root in finally",
+  "production_deleted": false
+}

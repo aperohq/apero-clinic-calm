@@ -1,0 +1,6 @@
+{
+  "observed_at": "2026-11-25T07:14:27.000313+00:00",
+  "http_status": 200,
+  "auth_service_version": "v2.198.0",
+  "scope": "Public project Auth health endpoint; no login, factor or account mutation"
+}

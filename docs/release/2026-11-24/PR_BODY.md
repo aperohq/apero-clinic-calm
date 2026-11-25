@@ -1,0 +1,11 @@
+# Prepare verified database backup recovery input and final acceptance evidence
+
+The scheduled database-backup entrypoint cannot supply the encrypted integration settings required by the current schema. With a valid approved settings envelope present, the original synthetic CI reproduction still failed at `private_path_required`. The database path now validates the existing v1 envelope, encrypts it for the custodian and run-specific verifier, and passes only a private ciphertext file into the existing archive workflow. Missing or malformed input still fails closed. Scheduling, production credentials and configuration remain unchanged.
+
+The branch also adds bounded native Manager/appointment, browser, read-only inventory and isolated recovery harnesses, plus the final roadmap/evidence packet. No dashboard redesign, application dependency, migration, provider or voice change is included.
+
+Validation: the original CI reproduction fails before the fix and passes afterward;37/37 backup safety/regression tests pass with no skips, including genuine dual-recipient age decryption. Current native lifecycle and Manager/appointment suites pass10/10 each; isolated route browser155/155; production anonymous30/30; actual synthetic Owner/Staff routes60/60 plus corrected focused logout10/10. TypeScript/build/focused lint and workflow YAML checks pass. The final packet records remaining hosted MFA, consent/UAT and backup operation gates without claiming release approval.
+
+Review `docs/release/2026-11-24/README.md`, `recovery.md`, the critical matrix and the final handoff for exact versions, source hashes, count definitions and any later completed session/MFA checks. The original hosted run retains two timing assertions superseded by the corrected focused logout checks; they are not represented as product failures or silently changed to passes.
+
+Publication prerequisites: current application PR CI automatically executes explicitly excluded voice suites. This body is prepared locally; no PR was opened or workflow dispatched by this assignment. Coordinate protected review/required checks with the appropriately authorized owner. Do not bypass protection, merge, deploy, install secrets, enable backup scheduling or activate a clinic merely to publish this evidence.

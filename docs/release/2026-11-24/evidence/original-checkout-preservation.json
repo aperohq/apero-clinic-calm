@@ -1,0 +1,11 @@
+{
+  "observed_at": "2026-11-25T07:03:52.131946+00:00",
+  "original_checkout": "/home/nour/apero-clinic-calm",
+  "head": "8b47787ce607ee156b94cbbe8e16039b2ed5a404",
+  "branch": "feat/api-calendar-integrations",
+  "original_head_matches_initial_observation": true,
+  "staged_env_deletion_preserved": true,
+  "tracked_dirty_entries": 115,
+  "untracked_entries": 205,
+  "scope": "Metadata preservation check, not a before/after byte-hash proof. All assignment writes occurred in isolated worktree or test temp paths; original source files were not edited."
+}

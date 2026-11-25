@@ -1,0 +1,14 @@
+[
+  {
+    "file": "quality-build.txt",
+    "original_sha256": "1c353e280a00ed6a3118f96f230a8b1409391b47612c552efc9c14cc81d16ee6",
+    "packet_sha256": "e74cd637e6cde9caef5a48518a4234ea9cceb44214c7250f762e336d5c45e6c3",
+    "normalization": "Trailing whitespace and extra blank EOF only; original retained under/tmp; test/build content and outcomes unchanged"
+  },
+  {
+    "file": "quality-typecheck.txt",
+    "original_sha256": "78ba8bf4ec6bffe2c2f7087c4e39baa0ed75c768cf75c7d899e15f9fffac3185",
+    "packet_sha256": "9dedf5aa85dcb1dedcc1932c16b339f4940f23dbb049d48c14b80a7cb124cba9",
+    "normalization": "Trailing whitespace and extra blank EOF only; original retained under/tmp; test/build content and outcomes unchanged"
+  }
+]

@@ -1,0 +1,18 @@
+{
+  "observed_at": "2026-11-25T06:51:21.579771+00:00",
+  "scope": "Existing private manifest exact clinic/client/practitioner/Auth ID allowlists; metadata booleans only, no clinical fields read/exported",
+  "checks": {
+    "clinic_present": true,
+    "clients_match_manifest": true,
+    "practitioners_match_manifest": true,
+    "members_match_manifest": true,
+    "active_auth_matches": true,
+    "appointments_only_manifest_references": true,
+    "conversations_empty": true,
+    "requests_empty": true,
+    "notes_empty": true,
+    "notifications_empty": true
+  },
+  "admitted": true,
+  "production_business_writes": 0
+}

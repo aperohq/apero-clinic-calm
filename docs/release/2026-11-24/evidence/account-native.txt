@@ -1,0 +1,72 @@
+TAP version 13
+# Native PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); 33 local migrations applied
+# Subtest: Native onboarding migrations and concurrent lifecycle admission
+    # Subtest: Complete migration chain applies to real PostgreSQL
+    ok 1 - Complete migration chain applies to real PostgreSQL
+      ---
+      duration_ms: 4.651197
+      type: 'test'
+      ...
+    # Subtest: Trusted intake provisions atomically with native retry and Unicode preservation
+    ok 2 - Trusted intake provisions atomically with native retry and Unicode preservation
+      ---
+      duration_ms: 103.331307
+      type: 'test'
+      ...
+    # Subtest: Owner-first lifecycle locks avoid inversion with an in-flight team role change
+    ok 3 - Owner-first lifecycle locks avoid inversion with an in-flight team role change
+      ---
+      duration_ms: 84.905076
+      type: 'test'
+      ...
+    # Subtest: In-flight API mutation finishes before suspension without deadlock
+    ok 4 - In-flight API mutation finishes before suspension without deadlock
+      ---
+      duration_ms: 65.061181
+      type: 'test'
+      ...
+    # Subtest: API mutation waiting behind suspension rechecks revoked credential
+    ok 5 - API mutation waiting behind suspension rechecks revoked credential
+      ---
+      duration_ms: 68.781376
+      type: 'test'
+      ...
+    # Subtest: Authenticated configuration write rechecks lifecycle after stale RLS snapshot
+    ok 6 - Authenticated configuration write rechecks lifecycle after stale RLS snapshot
+      ---
+      duration_ms: 49.382853
+      type: 'test'
+      ...
+    # Subtest: Operator invitation waiting behind suspension cannot reserve identity
+    ok 7 - Operator invitation waiting behind suspension cannot reserve identity
+      ---
+      duration_ms: 65.459775
+      type: 'test'
+      ...
+    # Subtest: Legacy offboarding denies active identities, operator enrollment and in-flight API admission
+    ok 8 - Legacy offboarding denies active identities, operator enrollment and in-flight API admission
+      ---
+      duration_ms: 35.523597
+      type: 'test'
+      ...
+    # Subtest: Demo FKs, note attribution and approved erasure preserve new audits
+    ok 9 - Demo FKs, note attribution and approved erasure preserve new audits
+      ---
+      duration_ms: 193.531141
+      type: 'test'
+      ...
+    1..9
+ok 1 - Native onboarding migrations and concurrent lifecycle admission
+  ---
+  duration_ms: 3306.121539
+  type: 'test'
+  ...
+1..1
+# tests 10
+# suites 0
+# pass 10
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3434.565495

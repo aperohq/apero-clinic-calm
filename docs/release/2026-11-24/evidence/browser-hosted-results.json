@@ -1,0 +1,1260 @@
+{
+  "checked_at": "2026-11-24T20:25:46.501Z",
+  "scope": "Actual published dashboard and hosted Auth; admitted synthetic Owner/Staff only",
+  "tests": [
+    {
+      "id": "HOSTED-LOGIN:owner-a",
+      "status": "PASS",
+      "role": "owner"
+    },
+    {
+      "id": "HOSTED-PROFILE:owner-a",
+      "status": "PASS",
+      "role": "owner"
+    },
+    {
+      "id": "HOSTED-ROUTE:owner-a:1440:/home",
+      "status": "PASS",
+      "role": "owner",
+      "width": 1440,
+      "path": "/home",
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 1440,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:owner-a:1440:/calendar",
+      "status": "PASS",
+      "role": "owner",
+      "width": 1440,
+      "path": "/calendar",
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 1440,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:owner-a:1440:/clients",
+      "status": "PASS",
+      "role": "owner",
+      "width": 1440,
+      "path": "/clients",
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 1440,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:owner-a:1440:/staff",
+      "status": "PASS",
+      "role": "owner",
+      "width": 1440,
+      "path": "/staff",
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 1440,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:owner-a:1440:/conversations",
+      "status": "PASS",
+      "role": "owner",
+      "width": 1440,
+      "path": "/conversations",
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 1440,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:owner-a:1440:/requests",
+      "status": "PASS",
+      "role": "owner",
+      "width": 1440,
+      "path": "/requests",
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 1440,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:owner-a:1440:/analytics",
+      "status": "PASS",
+      "role": "owner",
+      "width": 1440,
+      "path": "/analytics",
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 1440,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:owner-a:1440:/account",
+      "status": "PASS",
+      "role": "owner",
+      "width": 1440,
+      "path": "/account",
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 1440,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:owner-a:1440:/account/team",
+      "status": "PASS",
+      "role": "owner",
+      "width": 1440,
+      "path": "/account/team",
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 1440,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:owner-a:1440:/account/settings",
+      "status": "PASS",
+      "role": "owner",
+      "width": 1440,
+      "path": "/account/settings",
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 1440,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:owner-a:768:/home",
+      "status": "PASS",
+      "role": "owner",
+      "width": 768,
+      "path": "/home",
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 768,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:owner-a:768:/calendar",
+      "status": "PASS",
+      "role": "owner",
+      "width": 768,
+      "path": "/calendar",
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 768,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:owner-a:768:/clients",
+      "status": "PASS",
+      "role": "owner",
+      "width": 768,
+      "path": "/clients",
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 768,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:owner-a:768:/staff",
+      "status": "PASS",
+      "role": "owner",
+      "width": 768,
+      "path": "/staff",
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 768,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:owner-a:768:/conversations",
+      "status": "PASS",
+      "role": "owner",
+      "width": 768,
+      "path": "/conversations",
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 768,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:owner-a:768:/requests",
+      "status": "PASS",
+      "role": "owner",
+      "width": 768,
+      "path": "/requests",
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 768,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:owner-a:768:/analytics",
+      "status": "PASS",
+      "role": "owner",
+      "width": 768,
+      "path": "/analytics",
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 768,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:owner-a:768:/account",
+      "status": "PASS",
+      "role": "owner",
+      "width": 768,
+      "path": "/account",
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 768,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:owner-a:768:/account/team",
+      "status": "PASS",
+      "role": "owner",
+      "width": 768,
+      "path": "/account/team",
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 768,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:owner-a:768:/account/settings",
+      "status": "PASS",
+      "role": "owner",
+      "width": 768,
+      "path": "/account/settings",
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 768,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:owner-a:390:/home",
+      "status": "PASS",
+      "role": "owner",
+      "width": 390,
+      "path": "/home",
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 390,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:owner-a:390:/calendar",
+      "status": "PASS",
+      "role": "owner",
+      "width": 390,
+      "path": "/calendar",
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 390,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:owner-a:390:/clients",
+      "status": "PASS",
+      "role": "owner",
+      "width": 390,
+      "path": "/clients",
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 390,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:owner-a:390:/staff",
+      "status": "PASS",
+      "role": "owner",
+      "width": 390,
+      "path": "/staff",
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 390,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:owner-a:390:/conversations",
+      "status": "PASS",
+      "role": "owner",
+      "width": 390,
+      "path": "/conversations",
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 390,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:owner-a:390:/requests",
+      "status": "PASS",
+      "role": "owner",
+      "width": 390,
+      "path": "/requests",
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 390,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:owner-a:390:/analytics",
+      "status": "PASS",
+      "role": "owner",
+      "width": 390,
+      "path": "/analytics",
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 390,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:owner-a:390:/account",
+      "status": "PASS",
+      "role": "owner",
+      "width": 390,
+      "path": "/account",
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 390,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:owner-a:390:/account/team",
+      "status": "PASS",
+      "role": "owner",
+      "width": 390,
+      "path": "/account/team",
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 390,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:owner-a:390:/account/settings",
+      "status": "PASS",
+      "role": "owner",
+      "width": 390,
+      "path": "/account/settings",
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 390,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-LOGOUT:owner-a",
+      "status": "FAIL"
+    },
+    {
+      "id": "HOSTED-AFTER-LOGOUT:owner-a",
+      "status": "PASS"
+    },
+    {
+      "id": "HOSTED-REVOKED-REFRESH:owner-a",
+      "status": "PASS",
+      "http": 400
+    },
+    {
+      "id": "HOSTED-LOGIN:staff-a",
+      "status": "PASS",
+      "role": "staff"
+    },
+    {
+      "id": "HOSTED-PROFILE:staff-a",
+      "status": "PASS",
+      "role": "staff"
+    },
+    {
+      "id": "HOSTED-ROUTE:staff-a:1440:/home",
+      "status": "PASS",
+      "role": "staff",
+      "width": 1440,
+      "path": "/home",
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 1440,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:staff-a:1440:/calendar",
+      "status": "PASS",
+      "role": "staff",
+      "width": 1440,
+      "path": "/calendar",
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 1440,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:staff-a:1440:/clients",
+      "status": "PASS",
+      "role": "staff",
+      "width": 1440,
+      "path": "/clients",
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 1440,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:staff-a:1440:/staff",
+      "status": "PASS",
+      "role": "staff",
+      "width": 1440,
+      "path": "/staff",
+      "expectedDenied": true,
+      "denied": true,
+      "scrollWidth": 1440,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:staff-a:1440:/conversations",
+      "status": "PASS",
+      "role": "staff",
+      "width": 1440,
+      "path": "/conversations",
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 1440,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:staff-a:1440:/requests",
+      "status": "PASS",
+      "role": "staff",
+      "width": 1440,
+      "path": "/requests",
+      "expectedDenied": true,
+      "denied": true,
+      "scrollWidth": 1440,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:staff-a:1440:/analytics",
+      "status": "PASS",
+      "role": "staff",
+      "width": 1440,
+      "path": "/analytics",
+      "expectedDenied": true,
+      "denied": true,
+      "scrollWidth": 1440,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:staff-a:1440:/account",
+      "status": "PASS",
+      "role": "staff",
+      "width": 1440,
+      "path": "/account",
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 1440,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:staff-a:1440:/account/team",
+      "status": "PASS",
+      "role": "staff",
+      "width": 1440,
+      "path": "/account/team",
+      "expectedDenied": true,
+      "denied": true,
+      "scrollWidth": 1440,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:staff-a:1440:/account/settings",
+      "status": "PASS",
+      "role": "staff",
+      "width": 1440,
+      "path": "/account/settings",
+      "expectedDenied": true,
+      "denied": true,
+      "scrollWidth": 1440,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:staff-a:768:/home",
+      "status": "PASS",
+      "role": "staff",
+      "width": 768,
+      "path": "/home",
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 768,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:staff-a:768:/calendar",
+      "status": "PASS",
+      "role": "staff",
+      "width": 768,
+      "path": "/calendar",
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 768,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:staff-a:768:/clients",
+      "status": "PASS",
+      "role": "staff",
+      "width": 768,
+      "path": "/clients",
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 768,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:staff-a:768:/staff",
+      "status": "PASS",
+      "role": "staff",
+      "width": 768,
+      "path": "/staff",
+      "expectedDenied": true,
+      "denied": true,
+      "scrollWidth": 768,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:staff-a:768:/conversations",
+      "status": "PASS",
+      "role": "staff",
+      "width": 768,
+      "path": "/conversations",
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 768,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:staff-a:768:/requests",
+      "status": "PASS",
+      "role": "staff",
+      "width": 768,
+      "path": "/requests",
+      "expectedDenied": true,
+      "denied": true,
+      "scrollWidth": 768,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:staff-a:768:/analytics",
+      "status": "PASS",
+      "role": "staff",
+      "width": 768,
+      "path": "/analytics",
+      "expectedDenied": true,
+      "denied": true,
+      "scrollWidth": 768,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:staff-a:768:/account",
+      "status": "PASS",
+      "role": "staff",
+      "width": 768,
+      "path": "/account",
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 768,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:staff-a:768:/account/team",
+      "status": "PASS",
+      "role": "staff",
+      "width": 768,
+      "path": "/account/team",
+      "expectedDenied": true,
+      "denied": true,
+      "scrollWidth": 768,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:staff-a:768:/account/settings",
+      "status": "PASS",
+      "role": "staff",
+      "width": 768,
+      "path": "/account/settings",
+      "expectedDenied": true,
+      "denied": true,
+      "scrollWidth": 768,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:staff-a:390:/home",
+      "status": "PASS",
+      "role": "staff",
+      "width": 390,
+      "path": "/home",
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 390,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:staff-a:390:/calendar",
+      "status": "PASS",
+      "role": "staff",
+      "width": 390,
+      "path": "/calendar",
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 390,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:staff-a:390:/clients",
+      "status": "PASS",
+      "role": "staff",
+      "width": 390,
+      "path": "/clients",
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 390,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:staff-a:390:/staff",
+      "status": "PASS",
+      "role": "staff",
+      "width": 390,
+      "path": "/staff",
+      "expectedDenied": true,
+      "denied": true,
+      "scrollWidth": 390,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:staff-a:390:/conversations",
+      "status": "PASS",
+      "role": "staff",
+      "width": 390,
+      "path": "/conversations",
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 390,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:staff-a:390:/requests",
+      "status": "PASS",
+      "role": "staff",
+      "width": 390,
+      "path": "/requests",
+      "expectedDenied": true,
+      "denied": true,
+      "scrollWidth": 390,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:staff-a:390:/analytics",
+      "status": "PASS",
+      "role": "staff",
+      "width": 390,
+      "path": "/analytics",
+      "expectedDenied": true,
+      "denied": true,
+      "scrollWidth": 390,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:staff-a:390:/account",
+      "status": "PASS",
+      "role": "staff",
+      "width": 390,
+      "path": "/account",
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 390,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:staff-a:390:/account/team",
+      "status": "PASS",
+      "role": "staff",
+      "width": 390,
+      "path": "/account/team",
+      "expectedDenied": true,
+      "denied": true,
+      "scrollWidth": 390,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-ROUTE:staff-a:390:/account/settings",
+      "status": "PASS",
+      "role": "staff",
+      "width": 390,
+      "path": "/account/settings",
+      "expectedDenied": true,
+      "denied": true,
+      "scrollWidth": 390,
+      "dataFailure": false,
+      "rootFailure": false
+    },
+    {
+      "id": "HOSTED-LOGOUT:staff-a",
+      "status": "FAIL"
+    },
+    {
+      "id": "HOSTED-AFTER-LOGOUT:staff-a",
+      "status": "PASS"
+    },
+    {
+      "id": "HOSTED-REVOKED-REFRESH:staff-a",
+      "status": "PASS",
+      "http": 400
+    }
+  ],
+  "page_errors": [],
+  "http_errors": [
+    {
+      "label": "owner-a",
+      "status": 400,
+      "host": "svoybvzvmygszklcmudh.supabase.co",
+      "path": "/auth/v1/token"
+    },
+    {
+      "label": "staff-a",
+      "status": 400,
+      "host": "svoybvzvmygszklcmudh.supabase.co",
+      "path": "/auth/v1/token"
+    }
+  ],
+  "blocked_requests": [
+    {
+      "label": "owner-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "owner-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "owner-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "owner-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "owner-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "owner-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "owner-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "owner-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "owner-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "owner-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "owner-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "owner-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "owner-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "owner-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "owner-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "owner-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "owner-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "owner-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "owner-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "owner-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "owner-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "owner-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "owner-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "owner-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "owner-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "owner-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "owner-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "owner-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "owner-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "owner-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "owner-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "owner-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "owner-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "owner-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "owner-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "owner-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "owner-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "staff-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "staff-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "staff-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "staff-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "staff-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "staff-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "staff-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "staff-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "staff-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "staff-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "staff-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "staff-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "staff-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "staff-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "staff-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "staff-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "staff-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "staff-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "staff-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "staff-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "staff-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "staff-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "staff-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "staff-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "staff-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "staff-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "staff-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "staff-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "staff-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "staff-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "staff-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "staff-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "staff-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "staff-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "staff-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "staff-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "staff-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "staff-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    }
+  ],
+  "auth_sessions_issued": 2,
+  "auth_refreshes_issued": 0,
+  "session_cleanup": [
+    {
+      "label": "owner-a",
+      "scope": "local",
+      "ui_logout_completed": true,
+      "refresh_rejected": true
+    },
+    {
+      "label": "staff-a",
+      "scope": "local",
+      "ui_logout_completed": true,
+      "refresh_rejected": true
+    }
+  ],
+  "business_writes": 0,
+  "provider_operations": 0,
+  "retell_operations": 0,
+  "browser_version": "159.0.8154.6",
+  "finished_at": "2026-11-24T20:28:51.383Z"
+}

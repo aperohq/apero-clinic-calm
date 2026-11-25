@@ -1,0 +1,31 @@
+{
+  "observed_at": "2026-11-25T06:57:51.509066+00:00",
+  "roadmap_task": "T-065",
+  "before": {
+    "test": "test_ci_materializes_reviewed_runtime_for_ephemeral_verification",
+    "result": "FAIL",
+    "error": "private_path_required",
+    "evidence": "recovery-ci-before.txt"
+  },
+  "after": {
+    "targeted_tests": 8,
+    "existing_safety_tests": 29,
+    "combined_tests": 37,
+    "pass": 37,
+    "fail": 0,
+    "skipped": 0,
+    "evidence": "recovery-ci-combined-regression.txt",
+    "genuine_age_dual_recipient_decryption": true
+  },
+  "source_sha256": {
+    "scripts/operations/ci_backup.py": "f633aa40b84f8a2cce746e6097532f4daa12f3b39754fa69a853ee20bd758748",
+    "scripts/operations/test_ci_database_runtime.py": "f143d2ad3144f1a7b468531ed0957378f25746038679fd9b2510413f6e72ba9e",
+    ".github/workflows/_production-backup.yml": "76f9edaa3a7bdd5c030f2d921fffee505321be45c66ec9c2a4f41429746a3ab8"
+  },
+  "production_configuration_or_schedule_changes": 0,
+  "live_secret_capture": 0,
+  "external_writes": 0,
+  "spending": 0,
+  "publication": "LOCAL PREPARATION ONLY",
+  "limitation": "Validated supplied envelope is not independent proof of current live values; founder-approved current capture/comparison required."
+}

@@ -1,0 +1,11 @@
+
+> typecheck
+> tsc --noEmit
+
+
+> typecheck:clinic-users-edge
+> tsc --noEmit -p tests/tsconfig.clinic-users-edge.json
+
+
+> typecheck:integrations
+> tsc --noEmit -p tests/tsconfig.integrations.json

@@ -1,0 +1,41 @@
+{
+  "native_postgresql": true,
+  "supabase_auth_shim": true,
+  "production_data": false,
+  "modes": [
+    {
+      "mode": "fresh",
+      "migrations": 33,
+      "cron_extension": true,
+      "cron_background_execution": true,
+      "tenant_rls": true,
+      "existing_rows_preserved": false
+    },
+    {
+      "mode": "existing-upgrade",
+      "migrations": 33,
+      "cron_extension": true,
+      "cron_background_execution": true,
+      "tenant_rls": true,
+      "existing_rows_preserved": true
+    },
+    {
+      "mode": "restricted-owner",
+      "migrations": 33,
+      "cron_extension": true,
+      "cron_background_execution": true,
+      "tenant_rls": true,
+      "existing_rows_preserved": false
+    }
+  ],
+  "postgresql_version": "16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)",
+  "genuine_synthetic_restore": {
+    "extension_schemas": [
+      "public",
+      "extensions"
+    ],
+    "encrypted": true,
+    "plaintext_dump_written": false
+  },
+  "recovery_history_preserved_after_user_and_clinic_deletion": true
+}
