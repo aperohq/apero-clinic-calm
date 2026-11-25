@@ -1,0 +1,6 @@
+{
+  "yaml_parsed": true,
+  "database_only_runtime_secret_reference": true,
+  "existing_protected_environment_preserved": true,
+  "scope": "Local YAML parse and expression/control assertion; no GitHub workflow dispatch"
+}

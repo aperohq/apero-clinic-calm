@@ -1,0 +1,117 @@
+{
+  "historical_validated_revision": "284e600b3f5d0e6f813f647c2d5345ee4835f1f6",
+  "current_baseline": "cd858f56cf87269e0bc70e25fceaca0dd8602c98",
+  "matching_sources": 27,
+  "sources_checked": 27,
+  "results": [
+    {
+      "file": ".github/workflows/clinic-onboarding-checks.yml",
+      "matches": true
+    },
+    {
+      "file": "scripts/onboarding/prepare-intake.mjs",
+      "matches": true
+    },
+    {
+      "file": "scripts/onboarding/test-local.mjs",
+      "matches": true
+    },
+    {
+      "file": "src/components/account-access-panel.tsx",
+      "matches": true
+    },
+    {
+      "file": "src/components/clinic-readiness-panel.tsx",
+      "matches": true
+    },
+    {
+      "file": "src/lib/clinic-readiness.ts",
+      "matches": true
+    },
+    {
+      "file": "src/lib/db-types.ts",
+      "matches": true
+    },
+    {
+      "file": "src/routes/account.tsx",
+      "matches": true
+    },
+    {
+      "file": "supabase/migrations/20261124100000_clinic_onboarding.sql",
+      "matches": true
+    },
+    {
+      "file": "supabase/migrations/20261124102000_clinic_activation.sql",
+      "matches": true
+    },
+    {
+      "file": "supabase/migrations/20261124110000_clinic_member_reactivation.sql",
+      "matches": true
+    },
+    {
+      "file": "supabase/migrations/20261124111000_suspended_team_management.sql",
+      "matches": true
+    },
+    {
+      "file": "supabase/migrations/20261124112000_integration_access_lifecycle.sql",
+      "matches": true
+    },
+    {
+      "file": "tests/clinic-readiness-ui.test.mjs",
+      "matches": true
+    },
+    {
+      "file": "tests/member-reactivation.test.mjs",
+      "matches": true
+    },
+    {
+      "file": "tests/onboarding-access.test.mjs",
+      "matches": true
+    },
+    {
+      "file": "tests/onboarding-cli.test.mjs",
+      "matches": true
+    },
+    {
+      "file": "tests/onboarding-e2e.test.mjs",
+      "matches": true
+    },
+    {
+      "file": "tests/onboarding-integration-boundaries.test.mjs",
+      "matches": true
+    },
+    {
+      "file": "tests/onboarding-lifecycle.test.mjs",
+      "matches": true
+    },
+    {
+      "file": "tests/onboarding-native.test.mjs",
+      "matches": true
+    },
+    {
+      "file": "tests/onboarding-provisioning.test.mjs",
+      "matches": true
+    },
+    {
+      "file": "tests/onboarding-responsive.test.mjs",
+      "matches": true
+    },
+    {
+      "file": "tests/run-clinic-permission-tests.mjs",
+      "matches": true
+    },
+    {
+      "file": "tests/team-management-ui.test.tsx",
+      "matches": true
+    },
+    {
+      "file": "package.json",
+      "matches": true
+    },
+    {
+      "file": "package-lock.json",
+      "matches": true
+    }
+  ],
+  "scope": "Source continuity supports reuse of historical local native/browser/SDK E2E at recorded scope; does not expand it to hosted Auth."
+}

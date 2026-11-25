@@ -1,0 +1,77 @@
+{
+  "observed_at": "2026-11-25T07:56:30.589727+00:00",
+  "production_writes": 0,
+  "auth_config_http": 200,
+  "auth_policy": {
+    "site_url": "https://aperodashboard.lovable.app",
+    "uri_allow_list": "https://aperodashboard.lovable.app/reset-password,https://aperodashboard.lovable.app/account,https://aperodashboard.lovable.app/account/setup",
+    "disable_signup": false,
+    "external_email_enabled": true,
+    "mailer_autoconfirm": false,
+    "password_min_length": 6,
+    "password_required_characters": null,
+    "security_refresh_token_rotation_enabled": null,
+    "security_refresh_token_reuse_interval": 10,
+    "jwt_exp": 3600,
+    "mfa_totp_enroll_enabled": true,
+    "mfa_totp_verify_enabled": true,
+    "mfa_max_enrolled_factors": 10,
+    "sessions_timebox": 0,
+    "sessions_inactivity_timeout": 0,
+    "sessions_single_per_user": false,
+    "security_captcha_enabled": false
+  },
+  "custom_smtp_configured": false,
+  "password_hibp_enabled": false,
+  "functions_http": 200,
+  "functions": [
+    {
+      "slug": "google-calendar-webhook",
+      "version": 2,
+      "status": "ACTIVE",
+      "updated_at": 1795463984854,
+      "verify_jwt": false,
+      "ezbr_sha256": "fb7fec00ca661e918358d04aabb0fe8be471d6bbedecdc7c48586befcb8dfe8e"
+    },
+    {
+      "slug": "manage-clinic-users",
+      "version": 10,
+      "status": "ACTIVE",
+      "updated_at": 1791229229507,
+      "verify_jwt": false,
+      "ezbr_sha256": "180c78288e57380c0f97e67169f66d0e197a0acf2703870bdf34f1fba7e944d1"
+    },
+    {
+      "slug": "recording-access",
+      "version": 10,
+      "status": "ACTIVE",
+      "updated_at": 1791229223054,
+      "verify_jwt": false,
+      "ezbr_sha256": "0416213b921c6f95e461947807d4808c572bcb003a13988a8c8875556818250a"
+    },
+    {
+      "slug": "integration-worker",
+      "version": 3,
+      "status": "ACTIVE",
+      "updated_at": 1795467506616,
+      "verify_jwt": false,
+      "ezbr_sha256": "9e315fe060d0415176580a566549ec3cc337693142bb407685bc52639d7a99de"
+    },
+    {
+      "slug": "integration-api",
+      "version": 3,
+      "status": "ACTIVE",
+      "updated_at": 1795467499532,
+      "verify_jwt": false,
+      "ezbr_sha256": "82d72b8ce6fdda2c2b886872fafe5343828ab4299f618b2c87fc145eae6b3466"
+    },
+    {
+      "slug": "provision-clinic-user",
+      "version": 13,
+      "status": "ACTIVE",
+      "updated_at": 1791229233950,
+      "verify_jwt": false,
+      "ezbr_sha256": "58410732a35164ba2907fd80fed3c203ba177b1aa3ccb348d014750f9afb87f8"
+    }
+  ]
+}

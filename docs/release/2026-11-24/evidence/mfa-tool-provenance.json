@@ -1,0 +1,24 @@
+{
+  "recorded_at": "2026-11-25T07:16:31.191555+00:00",
+  "release_tag": "v2.198.0",
+  "official_release": "https://github.com/supabase/auth/releases/tag/v2.198.0",
+  "official_asset": "https://github.com/supabase/auth/releases/download/v2.198.0/auth-v2.198.0-amd64.tar.xz",
+  "github_reported_archive_digest": "sha256:4abe9134d7615faa9149cab514acada8e7133cd69d2ccd96fdcef0d795c05171",
+  "sha256": {
+    "/tmp/apero-mfa-tools/auth.tar.xz": "4abe9134d7615faa9149cab514acada8e7133cd69d2ccd96fdcef0d795c05171",
+    "/tmp/apero-mfa-tools/auth": "77d5009ee8501fb380fe4ad0c42cfdeb3da8ac0e5660e59bf8d736ccb457a6c6",
+    "scripts/acceptance/isolated-mfa-runtime.mjs": "b4c65cac5315a71873d7715c4112741f18412e064861b87fa5d918935f471d85"
+  },
+  "archive_matches_official_digest": true,
+  "standalone_auth_migrations_applied": 77,
+  "assertions": 21,
+  "pass": 21,
+  "fail": 0,
+  "smtp_connections": 0,
+  "outbound_routes": 0,
+  "schema_and_auth_fixtures_in_tmpfs": true,
+  "production_writes": 0,
+  "production_configuration_unchanged": true,
+  "production_version_evidence": "production-auth-version.json",
+  "version_parity_limit": "Public production health identifies same version tag; not full-binary/configuration parity or hosted MFA acceptance."
+}

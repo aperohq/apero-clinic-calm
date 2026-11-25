@@ -1,0 +1,14 @@
+{
+  "state": "PUBLISHED BY FOUNDER / LIVE ACCEPTANCE PARTIAL",
+  "approval": "Publication performed by founder; no additional publish action requested",
+  "revision": "cd858f56cf87269e0bc70e25fceaca0dd8602c98",
+  "url": "https://aperodashboard.lovable.app",
+  "lovable_sync": "Founder confirmed main / In sync / exact merge SHA",
+  "production_migrations": "DEPLOYED / VERIFIED",
+  "pr_merge": "COMPLETE / VERIFIED",
+  "main_ci": "ALL FIVE PASS",
+  "live_authenticated_acceptance": "PASS for existing synthetic Owners/Staff; Manager/MFA/write scopes remain UNVERIFIED",
+  "scope": "Frontend publication plus bounded read-only/synthetic acceptance; no account mutations/provider changes",
+  "publication_confirmation": "Founder states published approved revision cd858f56cf87269e0bc70e25fceaca0dd8602c98",
+  "latest_evidence": "../production-acceptance-20261124/FINAL_ACCEPTANCE_REPORT.md"
+}

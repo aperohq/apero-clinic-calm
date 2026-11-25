@@ -1,0 +1,86 @@
+{
+  "checked_at": "2026-11-24T20:10:10.941Z",
+  "baseline": "cd858f56cf87269e0bc70e25fceaca0dd8602c98",
+  "scope": "Actual page components, RouteShell, AppLayout and TanStack router; synthetic auth/database responses. File-route generation/SSR/hosted Auth not certified.",
+  "tests": [
+    {
+      "id": "mobile-menu-open",
+      "status": "PASS"
+    },
+    {
+      "id": "mobile-menu-navigation",
+      "status": "PASS"
+    },
+    {
+      "id": "auth-state:loading",
+      "status": "PASS"
+    },
+    {
+      "id": "auth-state:auth-error",
+      "status": "PASS"
+    },
+    {
+      "id": "auth-state:unlinked",
+      "status": "PASS"
+    },
+    {
+      "id": "anonymous-route-redirect",
+      "status": "PASS"
+    },
+    {
+      "id": "login-form-navigation",
+      "status": "PASS"
+    },
+    {
+      "id": "appointment-dialog-mobile",
+      "status": "PASS"
+    },
+    {
+      "id": "appointment-dialog-close",
+      "status": "PASS"
+    },
+    {
+      "id": "analytics-range-control",
+      "status": "PASS"
+    },
+    {
+      "id": "settings-discard-confirmation",
+      "status": "PASS"
+    },
+    {
+      "id": "settings-discard-reverts",
+      "status": "PASS"
+    },
+    {
+      "id": "populated:/clients",
+      "status": "PASS"
+    },
+    {
+      "id": "populated:/staff",
+      "status": "PASS"
+    },
+    {
+      "id": "populated:/calendar",
+      "status": "PASS"
+    },
+    {
+      "id": "analytics-error-sanitized",
+      "status": "PASS"
+    },
+    {
+      "id": "analytics-retry",
+      "status": "PASS"
+    },
+    {
+      "id": "integrations-refresh-error",
+      "status": "PASS"
+    },
+    {
+      "id": "recording-denied-error",
+      "status": "PASS"
+    }
+  ],
+  "errors": [],
+  "external_requests": [],
+  "browser_version": "159.0.8154.6"
+}

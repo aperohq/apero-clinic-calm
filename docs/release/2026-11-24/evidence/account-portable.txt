@@ -1,0 +1,43 @@
+✔ tests/member-reactivation.test.mjs (6321.086616ms)
+✔ tests/onboarding-access.test.mjs (4869.872477ms)
+✔ tests/onboarding-cli.test.mjs (2749.165032ms)
+✔ tests/onboarding-integration-boundaries.test.mjs (3272.286768ms)
+✔ tests/onboarding-lifecycle.test.mjs (22236.183133ms)
+✔ tests/onboarding-provisioning.test.mjs (52386.266709ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 91876.901744
+PASS readiness RPC contract, error/loading/retry states, owner-only access, revocation, external dependencies, Unicode and responsive DOM structure (375/768/1440)
+▶ Team UI uses real Auth context, SDK, Owner controls and explicit revocation confirmation
+  ✔ Owner sees only own clinic accounts, statuses and no Owner/self actions (1.955704ms)
+  ✔ Owner MFA readiness reports missing and enrolled factors without claiming recovery completion (32.996803ms)
+  ✔ Owner invites manager with no practitioner creation (125.759807ms)
+  ✔ Owner invites staff with no practitioner creation (62.982808ms)
+  ✔ Duplicate invitation shows safe pending message without raw provider diagnostics (75.353249ms)
+  ✔ Safe invite_recent message keeps the invite dialog usable (71.90442ms)
+  ✔ Safe rate_limited message keeps the invite dialog usable (73.790461ms)
+  ✔ Email failure is recoverable and resend is available for pending/expired links (110.796147ms)
+  ✔ Accepted invitation status removes resend action (14.41154ms)
+  ✔ Owner changes Staff/Manager both ways through role RPC (39.334915ms)
+  ✔ Revocation requires confirmation; cancel does not send a mutation (30.807659ms)
+  ✔ Revocation failure stays open with a generic error and permits retry (64.918396ms)
+  ✔ Owner restoration requires confirmation and preserves revoked state on failure (93.018695ms)
+  ✔ Loading, empty and directory error states remain usable (43.995342ms)
+  ✔ Full roster loads beyond the provider's single-response limit (5.585297ms)
+  ✔ Manager sees a read-only directory without invite/revoke/role controls (33.538415ms)
+  ✔ Staff cannot enter Team and sees no private directory on Account (61.797272ms)
+  ✔ Revoked retained session loses clinic association and cached clinic data on refresh (15.306423ms)
+✔ Team UI uses real Auth context, SDK, Owner controls and explicit revocation confirmation (1120.617824ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1138.930738

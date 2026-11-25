@@ -1,0 +1,78 @@
+{
+  "status": "PUBLISHED / BOUNDED LIVE ACCEPTANCE PASSED / FULL ACCEPTANCE INCOMPLETE",
+  "approved_merge_revision": "cd858f56cf87269e0bc70e25fceaca0dd8602c98",
+  "url": "https://aperodashboard.lovable.app",
+  "publication_source": "Founder confirmed Lovable publication of approved merge revision",
+  "observed_at_utc": "2026-11-24T19:20:27.033402+00:00",
+  "primary_live_assertions_passed": 50,
+  "focused_followup_assertions_passed": 9,
+  "assertion_count_note": "Follow-up includes repeated authentication setup; counts are not distinct feature counts.",
+  "observed_product_failures": 0,
+  "matrix": [
+    {
+      "area": "Published release / runtime",
+      "status": "PASS",
+      "evidence": "HTTP 200; changed build asset identifiers; actual lazy Account/Team chunks contain onboarding, MFA, restore and confirmation markers; authenticated routes render with zero JS page errors.",
+      "limit": "Exact merge revision is founder-attested; public server exposes no Git-SHA attestation header."
+    },
+    {
+      "area": "Live authentication",
+      "status": "PASS",
+      "evidence": "Existing owner-a, owner-b and staff-a sign in through the live form/hosted Auth and land in their expected clinic/role; unsigned team route redirects to login.",
+      "limit": "No password reset/recovery email or new-account signup tested."
+    },
+    {
+      "area": "MFA readiness",
+      "status": "PASS",
+      "evidence": "Live Owner MFA panel matches hosted Auth: fixture Owner has zero verified factors, AAL1, and UI truthfully warns MFA is not configured.",
+      "limit": "Actual MFA enrollment, challenge, recovery and real founder-owner MFA readiness are UNVERIFIED; no factor or credential was changed."
+    },
+    {
+      "area": "Clinic permissions",
+      "status": "PASS \u2014 tested Owner/Staff scope",
+      "evidence": "Owner sees and can read account/team controls; Staff Team/Settings routes denied; Staff team/readiness RPCs return 403/42501 with real JWT.",
+      "limit": "Manager browser/session coverage UNVERIFIED; existing production SQL-claims Manager coverage is reused, not relabeled as browser testing."
+    },
+    {
+      "area": "Tenant isolation",
+      "status": "PASS",
+      "evidence": "15 real-JWT cross-clinic reads across two synthetic clinics (Owners A/B and Staff A) returned no foreign profiles, staff, clients, appointments or clinic settings.",
+      "limit": "No cross-tenant writes attempted. Prior native/CI mutation-denial evidence is retained separately."
+    },
+    {
+      "area": "Appointments",
+      "status": "PASS \u2014 read-only scope",
+      "evidence": "Owner and Staff live Calendar routes load; Owner reads its one existing synthetic appointment; clinic timezone Asia/Kuwait. Cancelled 2026-11-30 fixture is outside displayed 2026-11-22\u201328 week, matching empty calendar.",
+      "limit": "Active-event rendering and create/move/cancel/conflict writes UNVERIFIED in production; fixture data was not changed."
+    },
+    {
+      "area": "Account management",
+      "status": "PASS \u2014 reads/dialogs",
+      "evidence": "Owner Account and Team render, team RPC returns data, Invite dialog opens/cancels, labeled revoke confirmation opens and Keep access closes it without mutation. Legacy readiness reports onboarding incomplete.",
+      "limit": "Committed profile/role/invite/revoke/restore/suspension/ownership changes UNVERIFIED in live production. No invitation email was sent."
+    },
+    {
+      "area": "Responsive UI",
+      "status": "PASS",
+      "evidence": "Actual published Login, Account, Team and Calendar tested at 375/768/1440 where applicable; no horizontal overflow. Mobile Invite/Revoke dialogs fit; mobile and desktop screenshots visually inspected.",
+      "limit": "Focused affected-route smoke, not a complete browser/device/accessibility matrix."
+    }
+  ],
+  "unverified": [
+    "Manager real-JWT browser session",
+    "MFA-enrolled Owner challenge and recovery; actual real Owner enrollment/assurance",
+    "Live committed account lifecycle/profile/invitation mutations",
+    "Live appointment create/reschedule/cancel/conflict and active event rendering",
+    "Real clinic representative UAT and external activation dependencies"
+  ],
+  "test_sessions_signed_out_locally": 5,
+  "business_or_credential_mutations": false,
+  "schema_migrations_or_ledger_writes": false,
+  "retell_sip_billing_changes": false,
+  "new_paid_resources": false,
+  "all_critical_functionality_unqualified_completion_claimed": false,
+  "retained_prior_evidence": [
+    "database-deployment-20261124-client-tls/DATABASE_DEPLOYMENT_REPORT.md",
+    "pr11-merge-20261124/MERGE_REPORT.md"
+  ]
+}

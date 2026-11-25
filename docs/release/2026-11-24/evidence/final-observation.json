@@ -1,0 +1,7 @@
+{
+  "observed_at": "2026-11-25T06:57:43.139382+00:00",
+  "github_main": "cd858f56cf87269e0bc70e25fceaca0dd8602c98",
+  "acceptance_harness_commit": "1f2e9f4215d5e5a9928a4e62a84877560997b1c7",
+  "baseline_unchanged": true,
+  "production_deployment_performed": false
+}

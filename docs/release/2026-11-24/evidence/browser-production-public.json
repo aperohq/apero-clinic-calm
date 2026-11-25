@@ -1,0 +1,440 @@
+{
+  "checked_at": "2026-11-24T20:08:53.851Z",
+  "scope": "Fresh unauthenticated browser only; all non-GET and Supabase/provider requests blocked; no credentials entered",
+  "tests": [
+    {
+      "id": "PROD-UNAUTH:1440:/login",
+      "path": "/login",
+      "width": 1440,
+      "status": "PASS",
+      "landed": "/login",
+      "scrollWidth": 1440
+    },
+    {
+      "id": "PROD-UNAUTH:1440:/home",
+      "path": "/home",
+      "width": 1440,
+      "status": "PASS",
+      "landed": "/login",
+      "scrollWidth": 1440
+    },
+    {
+      "id": "PROD-UNAUTH:1440:/calendar",
+      "path": "/calendar",
+      "width": 1440,
+      "status": "PASS",
+      "landed": "/login",
+      "scrollWidth": 1440
+    },
+    {
+      "id": "PROD-UNAUTH:1440:/clients",
+      "path": "/clients",
+      "width": 1440,
+      "status": "PASS",
+      "landed": "/login",
+      "scrollWidth": 1440
+    },
+    {
+      "id": "PROD-UNAUTH:1440:/conversations",
+      "path": "/conversations",
+      "width": 1440,
+      "status": "PASS",
+      "landed": "/login",
+      "scrollWidth": 1440
+    },
+    {
+      "id": "PROD-UNAUTH:1440:/requests",
+      "path": "/requests",
+      "width": 1440,
+      "status": "PASS",
+      "landed": "/login",
+      "scrollWidth": 1440
+    },
+    {
+      "id": "PROD-UNAUTH:1440:/analytics",
+      "path": "/analytics",
+      "width": 1440,
+      "status": "PASS",
+      "landed": "/login",
+      "scrollWidth": 1440
+    },
+    {
+      "id": "PROD-UNAUTH:1440:/account",
+      "path": "/account",
+      "width": 1440,
+      "status": "PASS",
+      "landed": "/login",
+      "scrollWidth": 1440
+    },
+    {
+      "id": "PROD-UNAUTH:1440:/account/team",
+      "path": "/account/team",
+      "width": 1440,
+      "status": "PASS",
+      "landed": "/login",
+      "scrollWidth": 1440
+    },
+    {
+      "id": "PROD-UNAUTH:1440:/account/settings",
+      "path": "/account/settings",
+      "width": 1440,
+      "status": "PASS",
+      "landed": "/login",
+      "scrollWidth": 1440
+    },
+    {
+      "id": "PROD-UNAUTH:768:/login",
+      "path": "/login",
+      "width": 768,
+      "status": "PASS",
+      "landed": "/login",
+      "scrollWidth": 768
+    },
+    {
+      "id": "PROD-UNAUTH:768:/home",
+      "path": "/home",
+      "width": 768,
+      "status": "PASS",
+      "landed": "/login",
+      "scrollWidth": 768
+    },
+    {
+      "id": "PROD-UNAUTH:768:/calendar",
+      "path": "/calendar",
+      "width": 768,
+      "status": "PASS",
+      "landed": "/login",
+      "scrollWidth": 768
+    },
+    {
+      "id": "PROD-UNAUTH:768:/clients",
+      "path": "/clients",
+      "width": 768,
+      "status": "PASS",
+      "landed": "/login",
+      "scrollWidth": 768
+    },
+    {
+      "id": "PROD-UNAUTH:768:/conversations",
+      "path": "/conversations",
+      "width": 768,
+      "status": "PASS",
+      "landed": "/login",
+      "scrollWidth": 768
+    },
+    {
+      "id": "PROD-UNAUTH:768:/requests",
+      "path": "/requests",
+      "width": 768,
+      "status": "PASS",
+      "landed": "/login",
+      "scrollWidth": 768
+    },
+    {
+      "id": "PROD-UNAUTH:768:/analytics",
+      "path": "/analytics",
+      "width": 768,
+      "status": "PASS",
+      "landed": "/login",
+      "scrollWidth": 768
+    },
+    {
+      "id": "PROD-UNAUTH:768:/account",
+      "path": "/account",
+      "width": 768,
+      "status": "PASS",
+      "landed": "/login",
+      "scrollWidth": 768
+    },
+    {
+      "id": "PROD-UNAUTH:768:/account/team",
+      "path": "/account/team",
+      "width": 768,
+      "status": "PASS",
+      "landed": "/login",
+      "scrollWidth": 768
+    },
+    {
+      "id": "PROD-UNAUTH:768:/account/settings",
+      "path": "/account/settings",
+      "width": 768,
+      "status": "PASS",
+      "landed": "/login",
+      "scrollWidth": 768
+    },
+    {
+      "id": "PROD-UNAUTH:390:/login",
+      "path": "/login",
+      "width": 390,
+      "status": "PASS",
+      "landed": "/login",
+      "scrollWidth": 390
+    },
+    {
+      "id": "PROD-UNAUTH:390:/home",
+      "path": "/home",
+      "width": 390,
+      "status": "PASS",
+      "landed": "/login",
+      "scrollWidth": 390
+    },
+    {
+      "id": "PROD-UNAUTH:390:/calendar",
+      "path": "/calendar",
+      "width": 390,
+      "status": "PASS",
+      "landed": "/login",
+      "scrollWidth": 390
+    },
+    {
+      "id": "PROD-UNAUTH:390:/clients",
+      "path": "/clients",
+      "width": 390,
+      "status": "PASS",
+      "landed": "/login",
+      "scrollWidth": 390
+    },
+    {
+      "id": "PROD-UNAUTH:390:/conversations",
+      "path": "/conversations",
+      "width": 390,
+      "status": "PASS",
+      "landed": "/login",
+      "scrollWidth": 390
+    },
+    {
+      "id": "PROD-UNAUTH:390:/requests",
+      "path": "/requests",
+      "width": 390,
+      "status": "PASS",
+      "landed": "/login",
+      "scrollWidth": 390
+    },
+    {
+      "id": "PROD-UNAUTH:390:/analytics",
+      "path": "/analytics",
+      "width": 390,
+      "status": "PASS",
+      "landed": "/login",
+      "scrollWidth": 390
+    },
+    {
+      "id": "PROD-UNAUTH:390:/account",
+      "path": "/account",
+      "width": 390,
+      "status": "PASS",
+      "landed": "/login",
+      "scrollWidth": 390
+    },
+    {
+      "id": "PROD-UNAUTH:390:/account/team",
+      "path": "/account/team",
+      "width": 390,
+      "status": "PASS",
+      "landed": "/login",
+      "scrollWidth": 390
+    },
+    {
+      "id": "PROD-UNAUTH:390:/account/settings",
+      "path": "/account/settings",
+      "width": 390,
+      "status": "PASS",
+      "landed": "/login",
+      "scrollWidth": 390
+    }
+  ],
+  "errors": [],
+  "blocked_requests": [
+    {
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    }
+  ],
+  "browser_version": "159.0.8154.6"
+}

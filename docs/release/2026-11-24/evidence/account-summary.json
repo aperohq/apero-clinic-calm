@@ -1,0 +1,50 @@
+{
+  "baseline": "cd858f56cf87269e0bc70e25fceaca0dd8602c98",
+  "recorded_at_utc": "2026-11-24T20:17:28.623941+00:00",
+  "native_postgres": "16.15",
+  "isolated_runtime": [
+    {
+      "evidence": "account-native.txt",
+      "node_test_total": 10,
+      "acceptance_subtests": 9,
+      "wrappers": 1,
+      "pass": 10,
+      "fail": 0
+    },
+    {
+      "evidence": "account-final-native.txt",
+      "node_test_total": 10,
+      "acceptance_subtests": 9,
+      "wrappers": 1,
+      "pass": 10,
+      "fail": 0
+    }
+  ],
+  "portable": {
+    "file_wrappers_passed": 6,
+    "team_ui_node_test_total": 19,
+    "team_ui_assertion_subtests": 18,
+    "team_ui_wrappers": 1,
+    "readiness_contract_script": "PASS; one script, multiple assertions; no invented test count"
+  },
+  "sha256": {
+    "tests/final-account-acceptance.test.mjs": "0ddbbdf708be5010e8791b531c732d2d915b2053e06a64dcdc391b4a97ce62b8",
+    "tests/onboarding-native.test.mjs": "a5689516e6bff92383a81fb57b782db904ae34c0684ac3f08601bb97205aa925",
+    "scripts/onboarding/test-local.mjs": "fed05f1cd7bdcacb8ca4724a1e92c3c81a0f6d5c44e5b2e913ff9c71afd7b081",
+    "tests/onboarding-provisioning.test.mjs": "07365a3e4eea67cc70a19bedd338334f7f1846bbcc06a518f6c09518cae3d4b5",
+    "tests/onboarding-access.test.mjs": "a9e98e27dbdcf156b3d04c79ef3eeffedf4a7cef0bcb1273056a075a1084f4f5",
+    "tests/onboarding-lifecycle.test.mjs": "2a72d06556cc3deec1d2c269a02be524d66737b614f23c3950a19a5260cd6b2e",
+    "tests/member-reactivation.test.mjs": "67b6bb26443c8c2f80c7ed0f42f35035fd958e8a9bfda6c49a3b4ed7e4c699ba",
+    "tests/onboarding-integration-boundaries.test.mjs": "19d24c6fe56dce8932f9622a62094d076c2d7d151b4538758dd5b987f4f285e1",
+    "tests/team-management-ui.test.tsx": "60344266aea3f00f3f79b8b209306d63a4993860ae942073453cd407de9096aa",
+    "src/components/account-access-panel.tsx": "a366f4be1b7d8d53544076d8131f4304e58edc1015f8680dadfc342edf42388f"
+  },
+  "excluded_operations": {
+    "production_writes": 0,
+    "external_calendar_writes": 0,
+    "real_data_access": 0,
+    "retell_operations": 0,
+    "emails_sent": 0,
+    "spending": 0
+  }
+}

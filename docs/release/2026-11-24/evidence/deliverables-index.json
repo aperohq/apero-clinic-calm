@@ -1,0 +1,60 @@
+{
+  "1 Consolidated acceptance matrix": [
+    "matrix.csv",
+    "matrix.json"
+  ],
+  "2 Account/clinic lifecycle evidence": [
+    "account-security.md",
+    "evidence/account-summary.json"
+  ],
+  "3 Dashboard responsive/functional evidence": [
+    "dashboard.md",
+    "evidence/browser-results.json",
+    "evidence/browser-hosted-results.json"
+  ],
+  "4 Auth/permissions evidence": [
+    "account-security.md",
+    "evidence/production-metadata.json",
+    "evidence/production-rpc-grants.json",
+    "mfa-runtime.md",
+    "evidence/mfa-runtime.json"
+  ],
+  "5 Appointment/data evidence": [
+    "account-security.md",
+    "evidence/account-final-native.txt"
+  ],
+  "6 Activation/consent/synthetic cleanup": [
+    "activation-cleanup.md"
+  ],
+  "7 Representative UAT/signatures": [
+    "UAT.md"
+  ],
+  "8 Backup/recovery report": [
+    "recovery.md",
+    "evidence/recovery-ci-fix-summary.json"
+  ],
+  "9 Deployment inventory": [
+    "deployment-inventory.md"
+  ],
+  "10 Rollback procedures/rehearsal": [
+    "recovery.md",
+    "evidence/recovery-runtime.txt",
+    "evidence/recovery-rollback.txt"
+  ],
+  "11 P0/P1 register": [
+    "release-gates.md"
+  ],
+  "12 Release freeze checklist": [
+    "release-gates.md"
+  ],
+  "13 Final readiness report": [
+    "README.md"
+  ],
+  "14 All15 roadmap statuses": [
+    "README.md",
+    "matrix.csv"
+  ],
+  "15 Consolidated founder actions": [
+    "release-gates.md"
+  ]
+}

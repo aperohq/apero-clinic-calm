@@ -1,0 +1,52 @@
+{
+  "results": [
+    {
+      "scenario": "REC-FRONTEND-RUNTIME-01",
+      "status": "PASS",
+      "broken_http": 503,
+      "restored_routes": [
+        {
+          "path": "/login",
+          "status": 200,
+          "html": true
+        },
+        {
+          "path": "/home",
+          "status": 200,
+          "html": true
+        },
+        {
+          "path": "/account",
+          "status": 200,
+          "html": true
+        },
+        {
+          "path": "/calendar",
+          "status": 200,
+          "html": true
+        }
+      ],
+      "compiled_stylesheet_served": true,
+      "scope": "actual built Cloudflare fetch handler served through localhost HTTP; no hosted deployment"
+    },
+    {
+      "scenario": "REC-EDGE-RUNTIME-integration-api",
+      "status": "PASS",
+      "damaged_module_failed": true,
+      "restored_unauthenticated_status": 401,
+      "transport_calls": 0,
+      "scope": "actual bundled handler factory with synthetic settings; not hosted Deno control plane"
+    },
+    {
+      "scenario": "REC-EDGE-RUNTIME-integration-worker",
+      "status": "PASS",
+      "damaged_module_failed": true,
+      "restored_unauthenticated_status": 401,
+      "transport_calls": 0,
+      "scope": "actual bundled handler factory with synthetic settings; not hosted Deno control plane"
+    }
+  ],
+  "external_network_attempts": 0,
+  "production_modified": false,
+  "synthetic_cleanup_completed": true
+}

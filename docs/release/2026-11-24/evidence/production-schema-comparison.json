@@ -1,0 +1,107 @@
+{
+  "migrations": [
+    {
+      "version": "20261124100000",
+      "name": "clinic_onboarding",
+      "statement_count": 1,
+      "source_sha256": "60e880e7b8b2761199da1a1c9634fb699c1aceb7456a5f345eb4d4b797c0899b",
+      "repository_file": "supabase/migrations/20261124100000_clinic_onboarding.sql",
+      "matches_main_source": true
+    },
+    {
+      "version": "20261124102000",
+      "name": "clinic_activation",
+      "statement_count": 1,
+      "source_sha256": "f701ef8c464ed8dc3f894d4b6c058af00f5b6623c9582d38a920f7b65e2fe5c9",
+      "repository_file": "supabase/migrations/20261124102000_clinic_activation.sql",
+      "matches_main_source": true
+    },
+    {
+      "version": "20261124110000",
+      "name": "clinic_member_reactivation",
+      "statement_count": 1,
+      "source_sha256": "effc1e3c9539cd95a7fac4d5cfcd0b6c3e432ed233c26516d68d623c1a90d4a6",
+      "repository_file": "supabase/migrations/20261124110000_clinic_member_reactivation.sql",
+      "matches_main_source": true
+    },
+    {
+      "version": "20261124111000",
+      "name": "suspended_team_management",
+      "statement_count": 1,
+      "source_sha256": "26774404d6c8a9936260b11dbd835f00132147cfcaa921b13a3f444c4d781b99",
+      "repository_file": "supabase/migrations/20261124111000_suspended_team_management.sql",
+      "matches_main_source": true
+    },
+    {
+      "version": "20261124112000",
+      "name": "integration_access_lifecycle",
+      "statement_count": 1,
+      "source_sha256": "ecf7c84936ba2dab20ce2e26a02e7a05d73bfe4092afd5486ac5a96d6f1dec9b",
+      "repository_file": "supabase/migrations/20261124112000_integration_access_lifecycle.sql",
+      "matches_main_source": true
+    }
+  ],
+  "tables": [
+    {
+      "name": "appointments",
+      "rls": true,
+      "anon_table_access": false,
+      "anon_column_access": false
+    },
+    {
+      "name": "calendar_connections",
+      "rls": true,
+      "anon_table_access": false,
+      "anon_column_access": false
+    },
+    {
+      "name": "clients",
+      "rls": true,
+      "anon_table_access": false,
+      "anon_column_access": false
+    },
+    {
+      "name": "clinic_membership_audit",
+      "rls": true,
+      "anon_table_access": false,
+      "anon_column_access": false
+    },
+    {
+      "name": "clinic_onboarding",
+      "rls": true,
+      "anon_table_access": false,
+      "anon_column_access": false
+    },
+    {
+      "name": "clinic_onboarding_audit",
+      "rls": true,
+      "anon_table_access": false,
+      "anon_column_access": false
+    },
+    {
+      "name": "clinics",
+      "rls": true,
+      "anon_table_access": false,
+      "anon_column_access": false
+    },
+    {
+      "name": "conversations",
+      "rls": true,
+      "anon_table_access": false,
+      "anon_column_access": false
+    },
+    {
+      "name": "profiles",
+      "rls": true,
+      "anon_table_access": false,
+      "anon_column_access": false
+    },
+    {
+      "name": "staff",
+      "rls": true,
+      "anon_table_access": false,
+      "anon_column_access": false
+    }
+  ],
+  "verification": "PASS: five exact ledger source hashes match main; ten selected tables RLS enabled and anonymous table/column access denied"
+}

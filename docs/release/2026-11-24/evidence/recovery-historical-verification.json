@@ -1,0 +1,73 @@
+{
+  "observed_at_utc": "2026-11-24T20:09:38.222677+00:00",
+  "historical_snapshot_utc": "2026-11-24T18:05:23.564321+00:00",
+  "new_decryption_or_restore_of_real_data": false,
+  "ciphertext_metadata_verification": {
+    "database.dump.age": {
+      "bytes": 720018,
+      "sha256": "f4ddf556eedeff06e4061d457dba1b6e4ca9d051333ef5c8afcde2eff6c96c53",
+      "private": true,
+      "matches_historical": true
+    },
+    "roles.sql.age": {
+      "bytes": 6862,
+      "sha256": "19e64b8eb6d0bee319298f7aa2e50b81cd4de550018504e4c8c7639941bbeb1a",
+      "private": true,
+      "matches_historical": true
+    },
+    "integration-settings.json.age": {
+      "bytes": 1315,
+      "sha256": "e57a64bcf22004663d9f1bd5e67dd0ffad89f3709fd7981d79c8be8a2f05251e",
+      "private": true,
+      "matches_historical": true
+    }
+  },
+  "historical_restore": {
+    "restore_completed": true,
+    "same_snapshot_row_counts_match": true,
+    "tables_verified": 74,
+    "columns_verified": 747,
+    "exact_logical_column_sequence_and_properties_match": true,
+    "ordinal_differences_explained_only_by_recorded_source_dropped_slots": true,
+    "structure_and_effective_acl_match": true,
+    "functions_verified": 119,
+    "policies_verified": 28,
+    "constraints_verified": 275,
+    "tcp_disabled": true,
+    "data_in_tmpfs": true,
+    "database_restore_and_row_count_seconds": 2.77,
+    "restore_and_full_verification_seconds": 3.09,
+    "initialization_restore_and_verification_seconds": 4.77,
+    "restored_server": {
+      "server_version": "17.12 (Ubuntu 17.12-1.pgdg24.04+1)",
+      "preload_libraries": "",
+      "listen_addresses": "",
+      "network_address": null,
+      "cron_installed": false,
+      "network_extension_installed": false
+    },
+    "network_namespace_isolated": true,
+    "network_interfaces": [
+      "lo"
+    ],
+    "network_routes": 0,
+    "all_ciphertexts_authenticated_with_existing_recovery_key": true,
+    "additional_security_counts": {
+      "rls": 74,
+      "triggers": 49,
+      "indexes": 223,
+      "column_acls": 37
+    },
+    "measured_at_utc": "2026-11-24T18:08:13.710272+00:00",
+    "scope": "Local PostgreSQL logical restore; not full replacement Supabase project cutover RTO",
+    "independent_custody_demonstrated": false
+  },
+  "historical_cleanup": {
+    "stopped": true,
+    "plaintext_tmpfs_removed": true,
+    "network_namespace_used": true,
+    "encrypted_bundle_retained": true
+  },
+  "independent_storage_or_custodian_verified": false,
+  "metadata_source": "/home/nour/apero-onboarding-release-20261124/fresh-recovery-20261124T180523Z/RECOVERY_RESULT.json"
+}

@@ -1,0 +1,1350 @@
+{
+  "checked_at": "2026-11-24T20:14:24.297Z",
+  "baseline": "cd858f56cf87269e0bc70e25fceaca0dd8602c98",
+  "scope": "Actual page components, RouteShell, AppLayout and TanStack router; synthetic auth/database responses. File-route generation/SSR/hosted Auth not certified.",
+  "tests": [
+    {
+      "id": "route:owner:1440:/home",
+      "status": "PASS",
+      "role": "owner",
+      "path": "/home",
+      "width": 1440,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 1440
+    },
+    {
+      "id": "route:owner:1440:/calendar",
+      "status": "PASS",
+      "role": "owner",
+      "path": "/calendar",
+      "width": 1440,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 1440
+    },
+    {
+      "id": "route:owner:1440:/clients",
+      "status": "PASS",
+      "role": "owner",
+      "path": "/clients",
+      "width": 1440,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 1440
+    },
+    {
+      "id": "route:owner:1440:/staff",
+      "status": "PASS",
+      "role": "owner",
+      "path": "/staff",
+      "width": 1440,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 1440
+    },
+    {
+      "id": "route:owner:1440:/conversations",
+      "status": "PASS",
+      "role": "owner",
+      "path": "/conversations",
+      "width": 1440,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 1440
+    },
+    {
+      "id": "route:owner:1440:/requests",
+      "status": "PASS",
+      "role": "owner",
+      "path": "/requests",
+      "width": 1440,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 1440
+    },
+    {
+      "id": "route:owner:1440:/analytics",
+      "status": "PASS",
+      "role": "owner",
+      "path": "/analytics",
+      "width": 1440,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 1440
+    },
+    {
+      "id": "route:owner:1440:/account",
+      "status": "PASS",
+      "role": "owner",
+      "path": "/account",
+      "width": 1440,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 1440
+    },
+    {
+      "id": "route:owner:1440:/account/team",
+      "status": "PASS",
+      "role": "owner",
+      "path": "/account/team",
+      "width": 1440,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 1440
+    },
+    {
+      "id": "route:owner:1440:/account/settings",
+      "status": "PASS",
+      "role": "owner",
+      "path": "/account/settings",
+      "width": 1440,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 1440
+    },
+    {
+      "id": "route:manager:1440:/home",
+      "status": "PASS",
+      "role": "manager",
+      "path": "/home",
+      "width": 1440,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 1440
+    },
+    {
+      "id": "route:manager:1440:/calendar",
+      "status": "PASS",
+      "role": "manager",
+      "path": "/calendar",
+      "width": 1440,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 1440
+    },
+    {
+      "id": "route:manager:1440:/clients",
+      "status": "PASS",
+      "role": "manager",
+      "path": "/clients",
+      "width": 1440,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 1440
+    },
+    {
+      "id": "route:manager:1440:/staff",
+      "status": "PASS",
+      "role": "manager",
+      "path": "/staff",
+      "width": 1440,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 1440
+    },
+    {
+      "id": "route:manager:1440:/conversations",
+      "status": "PASS",
+      "role": "manager",
+      "path": "/conversations",
+      "width": 1440,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 1440
+    },
+    {
+      "id": "route:manager:1440:/requests",
+      "status": "PASS",
+      "role": "manager",
+      "path": "/requests",
+      "width": 1440,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 1440
+    },
+    {
+      "id": "route:manager:1440:/analytics",
+      "status": "PASS",
+      "role": "manager",
+      "path": "/analytics",
+      "width": 1440,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 1440
+    },
+    {
+      "id": "route:manager:1440:/account",
+      "status": "PASS",
+      "role": "manager",
+      "path": "/account",
+      "width": 1440,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 1440
+    },
+    {
+      "id": "route:manager:1440:/account/team",
+      "status": "PASS",
+      "role": "manager",
+      "path": "/account/team",
+      "width": 1440,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 1440
+    },
+    {
+      "id": "route:manager:1440:/account/settings",
+      "status": "PASS",
+      "role": "manager",
+      "path": "/account/settings",
+      "width": 1440,
+      "expectedDenied": true,
+      "denied": true,
+      "scrollWidth": 1440
+    },
+    {
+      "id": "route:staff:1440:/home",
+      "status": "PASS",
+      "role": "staff",
+      "path": "/home",
+      "width": 1440,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 1440
+    },
+    {
+      "id": "route:staff:1440:/calendar",
+      "status": "PASS",
+      "role": "staff",
+      "path": "/calendar",
+      "width": 1440,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 1440
+    },
+    {
+      "id": "route:staff:1440:/clients",
+      "status": "PASS",
+      "role": "staff",
+      "path": "/clients",
+      "width": 1440,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 1440
+    },
+    {
+      "id": "route:staff:1440:/staff",
+      "status": "PASS",
+      "role": "staff",
+      "path": "/staff",
+      "width": 1440,
+      "expectedDenied": true,
+      "denied": true,
+      "scrollWidth": 1440
+    },
+    {
+      "id": "route:staff:1440:/conversations",
+      "status": "PASS",
+      "role": "staff",
+      "path": "/conversations",
+      "width": 1440,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 1440
+    },
+    {
+      "id": "route:staff:1440:/requests",
+      "status": "PASS",
+      "role": "staff",
+      "path": "/requests",
+      "width": 1440,
+      "expectedDenied": true,
+      "denied": true,
+      "scrollWidth": 1440
+    },
+    {
+      "id": "route:staff:1440:/analytics",
+      "status": "PASS",
+      "role": "staff",
+      "path": "/analytics",
+      "width": 1440,
+      "expectedDenied": true,
+      "denied": true,
+      "scrollWidth": 1440
+    },
+    {
+      "id": "route:staff:1440:/account",
+      "status": "PASS",
+      "role": "staff",
+      "path": "/account",
+      "width": 1440,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 1440
+    },
+    {
+      "id": "route:staff:1440:/account/team",
+      "status": "PASS",
+      "role": "staff",
+      "path": "/account/team",
+      "width": 1440,
+      "expectedDenied": true,
+      "denied": true,
+      "scrollWidth": 1440
+    },
+    {
+      "id": "route:staff:1440:/account/settings",
+      "status": "PASS",
+      "role": "staff",
+      "path": "/account/settings",
+      "width": 1440,
+      "expectedDenied": true,
+      "denied": true,
+      "scrollWidth": 1440
+    },
+    {
+      "id": "route:owner:768:/home",
+      "status": "PASS",
+      "role": "owner",
+      "path": "/home",
+      "width": 768,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 768
+    },
+    {
+      "id": "route:owner:768:/calendar",
+      "status": "PASS",
+      "role": "owner",
+      "path": "/calendar",
+      "width": 768,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 768
+    },
+    {
+      "id": "route:owner:768:/clients",
+      "status": "PASS",
+      "role": "owner",
+      "path": "/clients",
+      "width": 768,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 768
+    },
+    {
+      "id": "route:owner:768:/staff",
+      "status": "PASS",
+      "role": "owner",
+      "path": "/staff",
+      "width": 768,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 768
+    },
+    {
+      "id": "route:owner:768:/conversations",
+      "status": "PASS",
+      "role": "owner",
+      "path": "/conversations",
+      "width": 768,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 768
+    },
+    {
+      "id": "route:owner:768:/requests",
+      "status": "PASS",
+      "role": "owner",
+      "path": "/requests",
+      "width": 768,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 768
+    },
+    {
+      "id": "route:owner:768:/analytics",
+      "status": "PASS",
+      "role": "owner",
+      "path": "/analytics",
+      "width": 768,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 768
+    },
+    {
+      "id": "route:owner:768:/account",
+      "status": "PASS",
+      "role": "owner",
+      "path": "/account",
+      "width": 768,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 768
+    },
+    {
+      "id": "route:owner:768:/account/team",
+      "status": "PASS",
+      "role": "owner",
+      "path": "/account/team",
+      "width": 768,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 768
+    },
+    {
+      "id": "route:owner:768:/account/settings",
+      "status": "PASS",
+      "role": "owner",
+      "path": "/account/settings",
+      "width": 768,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 768
+    },
+    {
+      "id": "route:manager:768:/home",
+      "status": "PASS",
+      "role": "manager",
+      "path": "/home",
+      "width": 768,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 768
+    },
+    {
+      "id": "route:manager:768:/calendar",
+      "status": "PASS",
+      "role": "manager",
+      "path": "/calendar",
+      "width": 768,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 768
+    },
+    {
+      "id": "route:manager:768:/clients",
+      "status": "PASS",
+      "role": "manager",
+      "path": "/clients",
+      "width": 768,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 768
+    },
+    {
+      "id": "route:manager:768:/staff",
+      "status": "PASS",
+      "role": "manager",
+      "path": "/staff",
+      "width": 768,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 768
+    },
+    {
+      "id": "route:manager:768:/conversations",
+      "status": "PASS",
+      "role": "manager",
+      "path": "/conversations",
+      "width": 768,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 768
+    },
+    {
+      "id": "route:manager:768:/requests",
+      "status": "PASS",
+      "role": "manager",
+      "path": "/requests",
+      "width": 768,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 768
+    },
+    {
+      "id": "route:manager:768:/analytics",
+      "status": "PASS",
+      "role": "manager",
+      "path": "/analytics",
+      "width": 768,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 768
+    },
+    {
+      "id": "route:manager:768:/account",
+      "status": "PASS",
+      "role": "manager",
+      "path": "/account",
+      "width": 768,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 768
+    },
+    {
+      "id": "route:manager:768:/account/team",
+      "status": "PASS",
+      "role": "manager",
+      "path": "/account/team",
+      "width": 768,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 768
+    },
+    {
+      "id": "route:manager:768:/account/settings",
+      "status": "PASS",
+      "role": "manager",
+      "path": "/account/settings",
+      "width": 768,
+      "expectedDenied": true,
+      "denied": true,
+      "scrollWidth": 768
+    },
+    {
+      "id": "route:staff:768:/home",
+      "status": "PASS",
+      "role": "staff",
+      "path": "/home",
+      "width": 768,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 768
+    },
+    {
+      "id": "route:staff:768:/calendar",
+      "status": "PASS",
+      "role": "staff",
+      "path": "/calendar",
+      "width": 768,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 768
+    },
+    {
+      "id": "route:staff:768:/clients",
+      "status": "PASS",
+      "role": "staff",
+      "path": "/clients",
+      "width": 768,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 768
+    },
+    {
+      "id": "route:staff:768:/staff",
+      "status": "PASS",
+      "role": "staff",
+      "path": "/staff",
+      "width": 768,
+      "expectedDenied": true,
+      "denied": true,
+      "scrollWidth": 768
+    },
+    {
+      "id": "route:staff:768:/conversations",
+      "status": "PASS",
+      "role": "staff",
+      "path": "/conversations",
+      "width": 768,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 768
+    },
+    {
+      "id": "route:staff:768:/requests",
+      "status": "PASS",
+      "role": "staff",
+      "path": "/requests",
+      "width": 768,
+      "expectedDenied": true,
+      "denied": true,
+      "scrollWidth": 768
+    },
+    {
+      "id": "route:staff:768:/analytics",
+      "status": "PASS",
+      "role": "staff",
+      "path": "/analytics",
+      "width": 768,
+      "expectedDenied": true,
+      "denied": true,
+      "scrollWidth": 768
+    },
+    {
+      "id": "route:staff:768:/account",
+      "status": "PASS",
+      "role": "staff",
+      "path": "/account",
+      "width": 768,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 768
+    },
+    {
+      "id": "route:staff:768:/account/team",
+      "status": "PASS",
+      "role": "staff",
+      "path": "/account/team",
+      "width": 768,
+      "expectedDenied": true,
+      "denied": true,
+      "scrollWidth": 768
+    },
+    {
+      "id": "route:staff:768:/account/settings",
+      "status": "PASS",
+      "role": "staff",
+      "path": "/account/settings",
+      "width": 768,
+      "expectedDenied": true,
+      "denied": true,
+      "scrollWidth": 768
+    },
+    {
+      "id": "route:owner:390:/home",
+      "status": "PASS",
+      "role": "owner",
+      "path": "/home",
+      "width": 390,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 390
+    },
+    {
+      "id": "route:owner:390:/calendar",
+      "status": "PASS",
+      "role": "owner",
+      "path": "/calendar",
+      "width": 390,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 390
+    },
+    {
+      "id": "route:owner:390:/clients",
+      "status": "PASS",
+      "role": "owner",
+      "path": "/clients",
+      "width": 390,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 390
+    },
+    {
+      "id": "route:owner:390:/staff",
+      "status": "PASS",
+      "role": "owner",
+      "path": "/staff",
+      "width": 390,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 390
+    },
+    {
+      "id": "route:owner:390:/conversations",
+      "status": "PASS",
+      "role": "owner",
+      "path": "/conversations",
+      "width": 390,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 390
+    },
+    {
+      "id": "route:owner:390:/requests",
+      "status": "PASS",
+      "role": "owner",
+      "path": "/requests",
+      "width": 390,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 390
+    },
+    {
+      "id": "route:owner:390:/analytics",
+      "status": "PASS",
+      "role": "owner",
+      "path": "/analytics",
+      "width": 390,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 390
+    },
+    {
+      "id": "route:owner:390:/account",
+      "status": "PASS",
+      "role": "owner",
+      "path": "/account",
+      "width": 390,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 390
+    },
+    {
+      "id": "route:owner:390:/account/team",
+      "status": "PASS",
+      "role": "owner",
+      "path": "/account/team",
+      "width": 390,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 390
+    },
+    {
+      "id": "route:owner:390:/account/settings",
+      "status": "PASS",
+      "role": "owner",
+      "path": "/account/settings",
+      "width": 390,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 390
+    },
+    {
+      "id": "route:manager:390:/home",
+      "status": "PASS",
+      "role": "manager",
+      "path": "/home",
+      "width": 390,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 390
+    },
+    {
+      "id": "route:manager:390:/calendar",
+      "status": "PASS",
+      "role": "manager",
+      "path": "/calendar",
+      "width": 390,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 390
+    },
+    {
+      "id": "route:manager:390:/clients",
+      "status": "PASS",
+      "role": "manager",
+      "path": "/clients",
+      "width": 390,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 390
+    },
+    {
+      "id": "route:manager:390:/staff",
+      "status": "PASS",
+      "role": "manager",
+      "path": "/staff",
+      "width": 390,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 390
+    },
+    {
+      "id": "route:manager:390:/conversations",
+      "status": "PASS",
+      "role": "manager",
+      "path": "/conversations",
+      "width": 390,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 390
+    },
+    {
+      "id": "route:manager:390:/requests",
+      "status": "PASS",
+      "role": "manager",
+      "path": "/requests",
+      "width": 390,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 390
+    },
+    {
+      "id": "route:manager:390:/analytics",
+      "status": "PASS",
+      "role": "manager",
+      "path": "/analytics",
+      "width": 390,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 390
+    },
+    {
+      "id": "route:manager:390:/account",
+      "status": "PASS",
+      "role": "manager",
+      "path": "/account",
+      "width": 390,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 390
+    },
+    {
+      "id": "route:manager:390:/account/team",
+      "status": "PASS",
+      "role": "manager",
+      "path": "/account/team",
+      "width": 390,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 390
+    },
+    {
+      "id": "route:manager:390:/account/settings",
+      "status": "PASS",
+      "role": "manager",
+      "path": "/account/settings",
+      "width": 390,
+      "expectedDenied": true,
+      "denied": true,
+      "scrollWidth": 390
+    },
+    {
+      "id": "route:staff:390:/home",
+      "status": "PASS",
+      "role": "staff",
+      "path": "/home",
+      "width": 390,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 390
+    },
+    {
+      "id": "route:staff:390:/calendar",
+      "status": "PASS",
+      "role": "staff",
+      "path": "/calendar",
+      "width": 390,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 390
+    },
+    {
+      "id": "route:staff:390:/clients",
+      "status": "PASS",
+      "role": "staff",
+      "path": "/clients",
+      "width": 390,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 390
+    },
+    {
+      "id": "route:staff:390:/staff",
+      "status": "PASS",
+      "role": "staff",
+      "path": "/staff",
+      "width": 390,
+      "expectedDenied": true,
+      "denied": true,
+      "scrollWidth": 390
+    },
+    {
+      "id": "route:staff:390:/conversations",
+      "status": "PASS",
+      "role": "staff",
+      "path": "/conversations",
+      "width": 390,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 390
+    },
+    {
+      "id": "route:staff:390:/requests",
+      "status": "PASS",
+      "role": "staff",
+      "path": "/requests",
+      "width": 390,
+      "expectedDenied": true,
+      "denied": true,
+      "scrollWidth": 390
+    },
+    {
+      "id": "route:staff:390:/analytics",
+      "status": "PASS",
+      "role": "staff",
+      "path": "/analytics",
+      "width": 390,
+      "expectedDenied": true,
+      "denied": true,
+      "scrollWidth": 390
+    },
+    {
+      "id": "route:staff:390:/account",
+      "status": "PASS",
+      "role": "staff",
+      "path": "/account",
+      "width": 390,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 390
+    },
+    {
+      "id": "route:staff:390:/account/team",
+      "status": "PASS",
+      "role": "staff",
+      "path": "/account/team",
+      "width": 390,
+      "expectedDenied": true,
+      "denied": true,
+      "scrollWidth": 390
+    },
+    {
+      "id": "route:staff:390:/account/settings",
+      "status": "PASS",
+      "role": "staff",
+      "path": "/account/settings",
+      "width": 390,
+      "expectedDenied": true,
+      "denied": true,
+      "scrollWidth": 390
+    },
+    {
+      "id": "route:owner:320:/home",
+      "status": "PASS",
+      "role": "owner",
+      "path": "/home",
+      "width": 320,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 320
+    },
+    {
+      "id": "route:owner:320:/calendar",
+      "status": "PASS",
+      "role": "owner",
+      "path": "/calendar",
+      "width": 320,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 320
+    },
+    {
+      "id": "route:owner:320:/clients",
+      "status": "PASS",
+      "role": "owner",
+      "path": "/clients",
+      "width": 320,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 320
+    },
+    {
+      "id": "route:owner:320:/staff",
+      "status": "PASS",
+      "role": "owner",
+      "path": "/staff",
+      "width": 320,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 320
+    },
+    {
+      "id": "route:owner:320:/conversations",
+      "status": "PASS",
+      "role": "owner",
+      "path": "/conversations",
+      "width": 320,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 320
+    },
+    {
+      "id": "route:owner:320:/requests",
+      "status": "PASS",
+      "role": "owner",
+      "path": "/requests",
+      "width": 320,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 320
+    },
+    {
+      "id": "route:owner:320:/analytics",
+      "status": "PASS",
+      "role": "owner",
+      "path": "/analytics",
+      "width": 320,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 320
+    },
+    {
+      "id": "route:owner:320:/account",
+      "status": "PASS",
+      "role": "owner",
+      "path": "/account",
+      "width": 320,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 320
+    },
+    {
+      "id": "route:owner:320:/account/team",
+      "status": "PASS",
+      "role": "owner",
+      "path": "/account/team",
+      "width": 320,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 320
+    },
+    {
+      "id": "route:owner:320:/account/settings",
+      "status": "PASS",
+      "role": "owner",
+      "path": "/account/settings",
+      "width": 320,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 320
+    },
+    {
+      "id": "route:manager:320:/home",
+      "status": "PASS",
+      "role": "manager",
+      "path": "/home",
+      "width": 320,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 320
+    },
+    {
+      "id": "route:manager:320:/calendar",
+      "status": "PASS",
+      "role": "manager",
+      "path": "/calendar",
+      "width": 320,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 320
+    },
+    {
+      "id": "route:manager:320:/clients",
+      "status": "PASS",
+      "role": "manager",
+      "path": "/clients",
+      "width": 320,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 320
+    },
+    {
+      "id": "route:manager:320:/staff",
+      "status": "PASS",
+      "role": "manager",
+      "path": "/staff",
+      "width": 320,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 320
+    },
+    {
+      "id": "route:manager:320:/conversations",
+      "status": "PASS",
+      "role": "manager",
+      "path": "/conversations",
+      "width": 320,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 320
+    },
+    {
+      "id": "route:manager:320:/requests",
+      "status": "PASS",
+      "role": "manager",
+      "path": "/requests",
+      "width": 320,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 320
+    },
+    {
+      "id": "route:manager:320:/analytics",
+      "status": "PASS",
+      "role": "manager",
+      "path": "/analytics",
+      "width": 320,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 320
+    },
+    {
+      "id": "route:manager:320:/account",
+      "status": "PASS",
+      "role": "manager",
+      "path": "/account",
+      "width": 320,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 320
+    },
+    {
+      "id": "route:manager:320:/account/team",
+      "status": "PASS",
+      "role": "manager",
+      "path": "/account/team",
+      "width": 320,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 320
+    },
+    {
+      "id": "route:manager:320:/account/settings",
+      "status": "PASS",
+      "role": "manager",
+      "path": "/account/settings",
+      "width": 320,
+      "expectedDenied": true,
+      "denied": true,
+      "scrollWidth": 320
+    },
+    {
+      "id": "route:staff:320:/home",
+      "status": "PASS",
+      "role": "staff",
+      "path": "/home",
+      "width": 320,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 320
+    },
+    {
+      "id": "route:staff:320:/calendar",
+      "status": "PASS",
+      "role": "staff",
+      "path": "/calendar",
+      "width": 320,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 320
+    },
+    {
+      "id": "route:staff:320:/clients",
+      "status": "PASS",
+      "role": "staff",
+      "path": "/clients",
+      "width": 320,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 320
+    },
+    {
+      "id": "route:staff:320:/staff",
+      "status": "PASS",
+      "role": "staff",
+      "path": "/staff",
+      "width": 320,
+      "expectedDenied": true,
+      "denied": true,
+      "scrollWidth": 320
+    },
+    {
+      "id": "route:staff:320:/conversations",
+      "status": "PASS",
+      "role": "staff",
+      "path": "/conversations",
+      "width": 320,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 320
+    },
+    {
+      "id": "route:staff:320:/requests",
+      "status": "PASS",
+      "role": "staff",
+      "path": "/requests",
+      "width": 320,
+      "expectedDenied": true,
+      "denied": true,
+      "scrollWidth": 320
+    },
+    {
+      "id": "route:staff:320:/analytics",
+      "status": "PASS",
+      "role": "staff",
+      "path": "/analytics",
+      "width": 320,
+      "expectedDenied": true,
+      "denied": true,
+      "scrollWidth": 320
+    },
+    {
+      "id": "route:staff:320:/account",
+      "status": "PASS",
+      "role": "staff",
+      "path": "/account",
+      "width": 320,
+      "expectedDenied": false,
+      "denied": false,
+      "scrollWidth": 320
+    },
+    {
+      "id": "route:staff:320:/account/team",
+      "status": "PASS",
+      "role": "staff",
+      "path": "/account/team",
+      "width": 320,
+      "expectedDenied": true,
+      "denied": true,
+      "scrollWidth": 320
+    },
+    {
+      "id": "route:staff:320:/account/settings",
+      "status": "PASS",
+      "role": "staff",
+      "path": "/account/settings",
+      "width": 320,
+      "expectedDenied": true,
+      "denied": true,
+      "scrollWidth": 320
+    },
+    {
+      "id": "mobile-menu-open",
+      "status": "PASS"
+    },
+    {
+      "id": "mobile-menu-navigation",
+      "status": "PASS"
+    },
+    {
+      "id": "auth-state:loading",
+      "status": "PASS"
+    },
+    {
+      "id": "auth-state:auth-error",
+      "status": "PASS"
+    },
+    {
+      "id": "auth-state:unlinked",
+      "status": "PASS"
+    },
+    {
+      "id": "anonymous-route-redirect",
+      "status": "PASS"
+    },
+    {
+      "id": "login-form-navigation",
+      "status": "PASS"
+    },
+    {
+      "id": "appointment-dialog-mobile",
+      "status": "PASS"
+    },
+    {
+      "id": "appointment-dialog-close",
+      "status": "PASS"
+    },
+    {
+      "id": "analytics-range-control",
+      "status": "PASS"
+    },
+    {
+      "id": "settings-discard-confirmation",
+      "status": "PASS"
+    },
+    {
+      "id": "settings-discard-reverts",
+      "status": "PASS"
+    },
+    {
+      "id": "populated:/clients",
+      "status": "PASS"
+    },
+    {
+      "id": "populated:/staff",
+      "status": "PASS"
+    },
+    {
+      "id": "populated:/calendar",
+      "status": "PASS"
+    },
+    {
+      "id": "analytics-error-sanitized",
+      "status": "PASS"
+    },
+    {
+      "id": "analytics-retry",
+      "status": "PASS"
+    },
+    {
+      "id": "readiness-incomplete-rendered",
+      "status": "PASS"
+    },
+    {
+      "id": "integrations-refresh-error",
+      "status": "PASS"
+    },
+    {
+      "id": "recording-denied-error",
+      "status": "PASS"
+    },
+    {
+      "id": "data-loading:/home",
+      "status": "PASS"
+    },
+    {
+      "id": "data-error-sanitized:/home",
+      "status": "PASS"
+    },
+    {
+      "id": "data-retry:/home",
+      "status": "PASS"
+    },
+    {
+      "id": "data-loading:/calendar",
+      "status": "PASS"
+    },
+    {
+      "id": "data-error-sanitized:/calendar",
+      "status": "PASS"
+    },
+    {
+      "id": "data-retry:/calendar",
+      "status": "PASS"
+    },
+    {
+      "id": "data-loading:/clients",
+      "status": "PASS"
+    },
+    {
+      "id": "data-error-sanitized:/clients",
+      "status": "PASS"
+    },
+    {
+      "id": "data-retry:/clients",
+      "status": "PASS"
+    },
+    {
+      "id": "data-loading:/staff",
+      "status": "PASS"
+    },
+    {
+      "id": "data-error-sanitized:/staff",
+      "status": "PASS"
+    },
+    {
+      "id": "data-retry:/staff",
+      "status": "PASS"
+    },
+    {
+      "id": "data-loading:/conversations",
+      "status": "PASS"
+    },
+    {
+      "id": "data-error-sanitized:/conversations",
+      "status": "PASS"
+    },
+    {
+      "id": "data-retry:/conversations",
+      "status": "PASS"
+    }
+  ],
+  "errors": [],
+  "external_requests": [],
+  "browser_version": "159.0.8154.6"
+}

@@ -1,0 +1,8 @@
+test_extension_schema_from_manifest_and_legacy_default (test_restore_prerequisites.RestorePrerequisites.test_extension_schema_from_manifest_and_legacy_default) ... ok
+test_restore_order (test_restore_prerequisites.RestorePrerequisites.test_restore_order) ... ok
+test_untrusted_extension_schema_refused (test_restore_prerequisites.RestorePrerequisites.test_untrusted_extension_schema_refused) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.001s
+
+OK

@@ -1,0 +1,163 @@
+{
+  "checked_at": "2026-11-25T06:52:01.552Z",
+  "scope": "Actual published dashboard and hosted Auth; admitted synthetic Owner/Staff only",
+  "logout_only": true,
+  "tests": [
+    {
+      "id": "HOSTED-LOGIN:owner-a",
+      "status": "PASS",
+      "role": "owner"
+    },
+    {
+      "id": "HOSTED-PROFILE:owner-a",
+      "status": "PASS",
+      "role": "owner"
+    },
+    {
+      "id": "HOSTED-LOGOUT:owner-a",
+      "status": "PASS"
+    },
+    {
+      "id": "HOSTED-AFTER-LOGOUT:owner-a",
+      "status": "PASS"
+    },
+    {
+      "id": "HOSTED-REVOKED-REFRESH:owner-a",
+      "status": "PASS",
+      "http": 400
+    },
+    {
+      "id": "HOSTED-LOGIN:staff-a",
+      "status": "PASS",
+      "role": "staff"
+    },
+    {
+      "id": "HOSTED-PROFILE:staff-a",
+      "status": "PASS",
+      "role": "staff"
+    },
+    {
+      "id": "HOSTED-LOGOUT:staff-a",
+      "status": "PASS"
+    },
+    {
+      "id": "HOSTED-AFTER-LOGOUT:staff-a",
+      "status": "PASS"
+    },
+    {
+      "id": "HOSTED-REVOKED-REFRESH:staff-a",
+      "status": "PASS",
+      "http": 400
+    }
+  ],
+  "page_errors": [],
+  "http_errors": [
+    {
+      "label": "owner-a",
+      "status": 400,
+      "host": "svoybvzvmygszklcmudh.supabase.co",
+      "path": "/auth/v1/token"
+    },
+    {
+      "label": "staff-a",
+      "status": 400,
+      "host": "svoybvzvmygszklcmudh.supabase.co",
+      "path": "/auth/v1/token"
+    }
+  ],
+  "blocked_requests": [
+    {
+      "label": "owner-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "owner-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "owner-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "owner-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "owner-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "owner-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "staff-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "staff-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "staff-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "staff-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "staff-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    },
+    {
+      "label": "staff-a",
+      "method": "POST",
+      "host": "aperodashboard.lovable.app",
+      "path": "/__l5e/trackevents"
+    }
+  ],
+  "auth_sessions_issued": 2,
+  "auth_refreshes_issued": 0,
+  "session_cleanup": [
+    {
+      "label": "owner-a",
+      "scope": "local",
+      "ui_logout_completed": true,
+      "refresh_rejected": true
+    },
+    {
+      "label": "staff-a",
+      "scope": "local",
+      "ui_logout_completed": true,
+      "refresh_rejected": true
+    }
+  ],
+  "business_writes": 0,
+  "provider_operations": 0,
+  "retell_operations": 0,
+  "browser_version": "159.0.8154.6",
+  "finished_at": "2026-11-25T06:52:19.976Z"
+}

@@ -1,0 +1,26 @@
+[
+  {
+    "source": "/home/nour/apero-onboarding-release-20261124/production-acceptance-20261124/FINAL_ACCEPTANCE_RESULT.json",
+    "copy": "historical-live-acceptance.json",
+    "sha256": "df66af0e874c341efed5663e14ddfc7fe8e71f62441294d0bde6d0783af58ebe",
+    "scope": "Historical evidence reused; no new production mutations"
+  },
+  {
+    "source": "/home/nour/apero-onboarding-release-20261124/production-acceptance-20261124/loaded-route-release-markers.json",
+    "copy": "historical-live-markers.json",
+    "sha256": "62e265f1a3c81885368c40d307248c319af83e52bda2ec36f4b18b60f23849d7",
+    "scope": "Historical evidence reused; no new production mutations"
+  },
+  {
+    "source": "/home/nour/apero-onboarding-release-20261124/dashboard-publication/PUBLICATION_STATE.json",
+    "copy": "historical-publication.json",
+    "sha256": "61765b2eeafdf12e4565aa5a172b6d056f5d9df4ea74c06705c120954b0b55da",
+    "scope": "Historical evidence reused; no new production mutations"
+  },
+  {
+    "source": "/home/nour/apero-onboarding-release-20261124/database-deployment-20261124-client-tls/DATABASE_DEPLOYMENT_REPORT.md",
+    "copy": "historical-db-deployment.md",
+    "sha256": "fa768e1d6a788ed918256d927963046ef54da39a6e2782256db009ea27a39d1e",
+    "scope": "Historical evidence reused; no new production mutations"
+  }
+]

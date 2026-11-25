@@ -1,0 +1,5 @@
+{"category": "backup_integrity_verified", "state": "success", "restore_tested": false}
+{"native_synthetic_restore": [{"extension_schema": "public", "pg_dump_age_pg_restore": true, "structure_and_acl_match": true, "arabic_rows": 2, "tenant_rls": true, "gist_exclusion_enforced": true}, {"extension_schema": "extensions", "pg_dump_age_pg_restore": true, "structure_and_acl_match": true, "arabic_rows": 2, "tenant_rls": true, "gist_exclusion_enforced": true}], "production_backup_used": false, "plaintext_dump_written": false}
+PASS native migrations and pg_cron: fresh
+PASS native migrations and pg_cron: existing-upgrade
+PASS native migrations and pg_cron: restricted-owner

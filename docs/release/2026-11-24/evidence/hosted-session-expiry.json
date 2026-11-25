@@ -1,0 +1,44 @@
+{
+  "started_at": "2026-11-25T06:54:24.839Z",
+  "phase": "passed",
+  "checks": [
+    {
+      "id": "EXP-IDENTITY",
+      "status": "PASS",
+      "jwt_lifetime_seconds": 3600
+    },
+    {
+      "id": "EXP-BEFORE",
+      "status": "PASS",
+      "http": 200
+    },
+    {
+      "id": "EXP-ELAPSED-DENIAL",
+      "status": "PASS",
+      "http": 401,
+      "elapsed_seconds_since_issue": 3698
+    },
+    {
+      "id": "EXP-REFRESH",
+      "status": "PASS",
+      "http": 200
+    },
+    {
+      "id": "EXP-RECOVERY",
+      "status": "PASS",
+      "http": 200
+    }
+  ],
+  "auth_sessions_issued": 1,
+  "auth_refreshes_issued": 1,
+  "production_business_writes": 0,
+  "provider_operations": 0,
+  "expected_probe_at": "2026-11-25T07:55:31.000Z",
+  "heartbeat_at": "2026-11-25T07:55:58.395Z",
+  "cleanup": {
+    "scope": "local",
+    "http": 204,
+    "refresh_rejected": true
+  },
+  "finished_at": "2026-11-25T07:56:06.867Z"
+}

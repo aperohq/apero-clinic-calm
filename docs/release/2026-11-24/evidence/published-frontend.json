@@ -1,0 +1,58 @@
+{
+  "observed_at": "2026-11-25T07:56:30.589727+00:00",
+  "login_http": 200,
+  "html_sha256": "736d5e242471ea0b51d82330f6b4940f1a2e69e2c79671649cd577110248b9b6",
+  "frontend_commit_sha": "UNVERIFIED: no authoritative Lovable publication provenance available",
+  "assets": [
+    {
+      "path": "/assets/Match-CHa8TYZv.js",
+      "http": 200,
+      "sha256": "b2f5f1e684b55be26a0d74fe19e714e85e4e3cd3369f6c86327d357d9db2cda2"
+    },
+    {
+      "path": "/assets/clinic-pages-8fIWf4b1.js",
+      "http": 200,
+      "sha256": "bdbd603737e8f601c7565aaa8ad2002b00f96356fed3704c7a2cea9d61e04d70"
+    },
+    {
+      "path": "/assets/index-CQOLo1Lq.js",
+      "http": 200,
+      "sha256": "790d89b42318d3e193d0a1884dd4eb9368b583fecced2f572c08676bb0334009"
+    },
+    {
+      "path": "/assets/link-DmrkHdbY.js",
+      "http": 200,
+      "sha256": "f4b1c629df8557873e2ca29cf4947197335ac6703f3e24a05cf871adfe2277d6"
+    },
+    {
+      "path": "/assets/login-BqW_CyrW.js",
+      "http": 200,
+      "sha256": "98c0038f2dcd0d1e8918032d61dc8855aac24f32bf476d8300015b1f1a85571f"
+    },
+    {
+      "path": "/assets/rolldown-runtime-hePW80VL.js",
+      "http": 200,
+      "sha256": "580ad8c58061a4dde99bde0a56905e382f0568516ee2f5b84dbfb52085709021"
+    },
+    {
+      "path": "/assets/root-DLTE-HSj.js",
+      "http": 200,
+      "sha256": "2eb1d17f334d79f5c2b7c68aa45a2b50b46a7b2416a9a0f5e7de6ff7f2430322"
+    },
+    {
+      "path": "/assets/styles-CNzIWwIJ.css",
+      "http": 200,
+      "sha256": "b615bd49776a37c2c3c87457e661d255ee8da7513f2c076da131bc7b8829eb02"
+    },
+    {
+      "path": "/assets/useMatch-8NA6CzYb.js",
+      "http": 200,
+      "sha256": "1e4eeb3290008214e6ba086bdb4eeddb955e1d2c7a78d241da5b607b9a5fcbad"
+    },
+    {
+      "path": "/assets/useRouter-BP8vT1kh.js",
+      "http": 200,
+      "sha256": "108de00eea9d037b6450f82b926700d685c3dbc1803c7acaaf732e61af936850"
+    }
+  ]
+}

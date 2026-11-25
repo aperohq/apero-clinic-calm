@@ -1,0 +1,31 @@
+{
+  "checked_at_utc": "2026-11-24T19:11:16.266060+00:00",
+  "routes": [
+    {
+      "path": "/assets/account-access-panel-DBAgZrnI.js",
+      "sha256": "9b768e2dd69ceac7adaddca36a0ba227a0d9493c5184d959feb0beaf3a81bb2c",
+      "markers": {
+        "Clinic activation readiness": false,
+        "Owner MFA readiness": true,
+        "Restore clinic access?": true,
+        "reactivate_clinic_member": true,
+        "Revoke clinic access?": true,
+        "Revoke access for": true
+      }
+    },
+    {
+      "path": "/assets/account-bOw-76X_.js",
+      "sha256": "c49cea140a859c2c478e148f56e4e03ec8aae1c587093b23ed19380647ae0caa",
+      "markers": {
+        "Clinic activation readiness": true,
+        "Owner MFA readiness": false,
+        "Restore clinic access?": false,
+        "reactivate_clinic_member": false,
+        "Revoke clinic access?": false,
+        "Revoke access for": false
+      }
+    }
+  ],
+  "all_release_markers_present_across_loaded_routes": true,
+  "initial_entry_marker_absence_explained": "Account and Team are separate lazy-loaded route chunks, not initial HTML scripts."
+}

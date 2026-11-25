@@ -1,0 +1,32 @@
+{
+  "baseline": "cd858f56cf87269e0bc70e25fceaca0dd8602c98",
+  "sha256": {
+    "scripts/acceptance/dashboard-browser.mjs": "7ead95e5fd8aeffbe3a36ef05a15d786b495ff18346fe3f604b4b56b731ff753",
+    "scripts/acceptance/public-dashboard-browser.mjs": "54f96b5de35303c03257752567fed71e3f764cb0da2fa605336d82f30573babc",
+    "src/components/clinic-pages.tsx": "5931eec5c7e7976b2dee58a00380326de413bed613498fc60a28263ae0f02c7c",
+    "src/components/app-layout.tsx": "e6af2933d0c4fe3c1ac4932ab6b6863b152d174241f34b734757ad3f4b508199",
+    "src/components/route-shell.tsx": "d15a295f438d4f8c0c364abcac2c6dadc39fff63b7ab0ed9c154da3814621a43",
+    "src/components/requests.tsx": "3cfb765d07cd537bfef61018df713386476b6ba59c16881d14684592a6c11d9e",
+    "src/components/recording-player.tsx": "0d67b1811a4f8f63683d6aa50e4436546dd02bdfde5adb8831d32011d9d3f5a4",
+    "src/components/clinic-readiness-panel.tsx": "25b5af294d46daf65f1a0a454afa5f10dca3fe2f928f43e35767a50bbf76b942",
+    "src/components/clinic-settings-panel.tsx": "092e1448857bb6cd40fd0b1ec04f4e57bfbc02ba0c120b4bc6ff0ae01351d29b",
+    "src/components/account-access-panel.tsx": "a366f4be1b7d8d53544076d8131f4304e58edc1015f8680dadfc342edf42388f",
+    "src/components/integrations-panel.tsx": "6d6547a05116e88c261b467d15cf678b8752ae173950562f001d8a3c7f2c56d9",
+    "src/components/analytics-page.tsx": "2dd1260457bc6aee25b4b35f8fd479588da7418c7f459ae826e4848c64b6203d",
+    "src/lib/apero-store.ts": "e7815495fcd69a297e3d48392e56e3457ceac28e4d94eb6a74c5d845612dde57",
+    "src/lib/permissions.ts": "e8f67d0a5ec793d73a3bca1c6e87f9ad1fbedc49aa4daa0b25d7de4d2bc808eb",
+    "src/lib/clinic-readiness.ts": "20502a9e360ccd6e833dd2ed6bc868a75aacbc3e0a9afa182e6da36137d37c4a",
+    "src/styles.css": "0e8f5a120bd5776cf499d5e3251433dcbd49b5a25899d72ad7a6fdff4d6b3405",
+    "src/routes/home.tsx": "14859e8a86ce8789ea3fc1e88296725df804e942da34b0cbfefdf969154b72ce",
+    "src/routes/calendar.tsx": "2cde52bc12e088ea5a1649aef4488861979ae49c58c5d13e3f5bc3f884893804",
+    "src/routes/clients.index.tsx": "1ae80399439e46319cce7dac70733be8ceef995e4fd255afb007268923480e3c",
+    "src/routes/staff.index.tsx": "8d38ef0f0879b7644eec70390f755714b6d656245c59490c8bbaa21d7127b4a3",
+    "src/routes/conversations.index.tsx": "7afc02ea4d9c1771ff5ae370f0a21a4b299326d01afe6dc248eeb52604256802",
+    "src/routes/requests.tsx": "76203a620dcbc29f5bea3345c8c0ce0a05ca036eb4e96b98b75ed8234f6506aa",
+    "src/routes/analytics.tsx": "ced2b1d27fc0da9632c846f830263faaf8bcaafe781b288177cc44c29d0987fb",
+    "src/routes/account.tsx": "3b57cc34108e4a189e0ead2c11a4e4f2cb10bd5fdde7c0f6a10c34077cc27c78",
+    "src/routes/account_.team.tsx": "c95341075607bd1b49d343f057e8f50d68c406f369ab6cf27a865cd6ef5969d8",
+    "src/routes/account_.settings.tsx": "226909148d04a3df7e550a5360e696e2434c906318e6e23325902800128dfa1e",
+    "src/routes/login.tsx": "389c6eb733df3cb816db8c650391412a1a5057d73b8c53909624c80e788561e5"
+  }
+}

@@ -1,0 +1,35 @@
+test_ci_materializes_reviewed_runtime_for_ephemeral_verification (test_ci_database_runtime.DatabaseRuntimeCI.test_ci_materializes_reviewed_runtime_for_ephemeral_verification) ... ERROR
+
+======================================================================
+ERROR: test_ci_materializes_reviewed_runtime_for_ephemeral_verification (test_ci_database_runtime.DatabaseRuntimeCI.test_ci_materializes_reviewed_runtime_for_ephemeral_verification)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/apero-final-acceptance/scripts/operations/test_ci_database_runtime.py", line 112, in test_ci_materializes_reviewed_runtime_for_ephemeral_verification
+    self.run_database()
+  File "/tmp/apero-final-acceptance/scripts/operations/test_ci_database_runtime.py", line 104, in run_database
+    ci.run('database')
+  File "/tmp/apero-final-acceptance/scripts/operations/ci_backup.py", line 93, in run
+    bundle=db.backup(output,recipients,snapshot,catalog)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/unittest/mock.py", line 1134, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/unittest/mock.py", line 1138, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/unittest/mock.py", line 1199, in _execute_mock_call
+    result = effect(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/apero-final-acceptance/scripts/operations/test_ci_database_runtime.py", line 70, in backup
+    config = ci.db.integration_recovery_config(os.environ.get('INTEGRATION_RECOVERY_CONFIG', ''))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/apero-final-acceptance/scripts/operations/database_backup.py", line 38, in integration_recovery_config
+    private(config)
+  File "/tmp/apero-final-acceptance/scripts/operations/database_backup.py", line 53, in private
+    raise ValueError('private_path_required')
+ValueError: private_path_required
+
+----------------------------------------------------------------------
+Ran 1 test in 0.012s
+
+FAILED (errors=1)

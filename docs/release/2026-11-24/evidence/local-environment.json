@@ -1,0 +1,20 @@
+{
+  "observed_at": "2026-11-24T20:14:59.977747+00:00",
+  "node": "v24.21.0",
+  "python": "Python 3.12.3",
+  "docker_on_path": false,
+  "supabase_on_path": false,
+  "hosted_auth_service_started": false,
+  "mfa_local_runtime_limit": "Initial inspection had no Docker/local Auth. Subsequent official native Auth runtime completed21 protocol assertions. Hosted Apero factors/recovery still require explicit approval.",
+  "dependency_lock_matches_reused_modules_checkout": true,
+  "original_checkout": "/home/nour/apero-clinic-calm",
+  "isolated_checkout": "/tmp/apero-final-acceptance",
+  "baseline": "cd858f56cf87269e0bc70e25fceaca0dd8602c98",
+  "subsequent_standalone_auth_runtime": {
+    "version": "v2.198.0",
+    "executed": true,
+    "tests_passed": 21,
+    "evidence": "mfa-runtime.json",
+    "scope": "Native Auth and actual PostgreSQL in no-egress namespace; not hosted Apero MFA"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "baseline": "cd858f56cf87269e0bc70e25fceaca0dd8602c98",
+  "source_commits": [
+    "1f2e9f4",
+    "3e5fc52",
+    "630b18a"
+  ],
+  "source_file_count": 14,
+  "changed_source_files": {
+    ".github/workflows/_production-backup.yml": "76f9edaa3a7bdd5c030f2d921fffee505321be45c66ec9c2a4f41429746a3ab8",
+    "scripts/acceptance/admit-synthetic-browser.py": "2582a6bff104cbdd8d28b07ad05cf1e64d0a40fa786eacc151f5e0c79b660c87",
+    "scripts/acceptance/build-release-matrix.py": "e05d8658ed5229cfd38154a2ab26c01ca899e4f8e7e0afddb71555f91e1a4d79",
+    "scripts/acceptance/dashboard-browser.mjs": "7ead95e5fd8aeffbe3a36ef05a15d786b495ff18346fe3f604b4b56b731ff753",
+    "scripts/acceptance/hosted-dashboard-browser.mjs": "69052ea2f062f1738134f9446d6d89f0765fa5f6618db4e7a97e9a8fbce4873b",
+    "scripts/acceptance/hosted-session-expiry.mjs": "11a0afd5e201d2734849fa31692d0138b91874dfb057f5a119f384d88f3e8754",
+    "scripts/acceptance/isolated-mfa-runtime.mjs": "b4c65cac5315a71873d7715c4112741f18412e064861b87fa5d918935f471d85",
+    "scripts/acceptance/public-dashboard-browser.mjs": "54f96b5de35303c03257752567fed71e3f764cb0da2fa605336d82f30573babc",
+    "scripts/operations/ci_backup.py": "f633aa40b84f8a2cce746e6097532f4daa12f3b39754fa69a853ee20bd758748",
+    "scripts/operations/final-release-readonly.py": "468460891c9262f35adb17f3cfcb15f8ffe9c5b39671f8812e6d991be315a0cb",
+    "scripts/operations/rehearse-release-recovery.mjs": "40bf70b672cc6c1556dffcde49c78367c6687a255a582e2d54212505ae90ba97",
+    "scripts/operations/rehearse-runtime-recovery.mjs": "faa8c354a17709f9b18d6c58265783aa441af5191491187c37e3aed18032839a",
+    "scripts/operations/test_ci_database_runtime.py": "f143d2ad3144f1a7b468531ed0957378f25746038679fd9b2510413f6e72ba9e",
+    "tests/final-account-acceptance.test.mjs": "0ddbbdf708be5010e8791b531c732d2d915b2053e06a64dcdc391b4a97ce62b8"
+  },
+  "dashboard_application_sources_changed": false,
+  "retell_sources_changed": false,
+  "production_migrations_changed": false,
+  "new_application_dependency_names": []
+}

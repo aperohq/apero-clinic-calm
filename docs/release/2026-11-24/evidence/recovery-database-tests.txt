@@ -1,0 +1,15 @@
+test_bundle_scope_checksum_and_no_overwrite (test_database_backup.BackupSafetyTests.test_bundle_scope_checksum_and_no_overwrite) ... ok
+test_new_persistent_schema_requires_review (test_database_backup.BackupSafetyTests.test_new_persistent_schema_requires_review) ... ok
+test_pipeline_failure_cleans_partial_and_logs_no_secrets (test_database_backup.BackupSafetyTests.test_pipeline_failure_cleans_partial_and_logs_no_secrets) ... ok
+test_real_pipeline_checks_upstream_failure (test_database_backup.BackupSafetyTests.test_real_pipeline_checks_upstream_failure) ... ok
+test_real_pipeline_refuses_overwrite (test_database_backup.BackupSafetyTests.test_real_pipeline_refuses_overwrite) ... ok
+test_reviewed_runtime_bundle_manifest_covers_encrypted_configuration (test_database_backup.BackupSafetyTests.test_reviewed_runtime_bundle_manifest_covers_encrypted_configuration) ... ok
+test_tampered_ciphertext_refused_before_decrypt (test_database_backup.BackupSafetyTests.test_tampered_ciphertext_refused_before_decrypt) ... ok
+test_unapproved_destination_refused (test_database_backup.BackupSafetyTests.test_unapproved_destination_refused) ... ok
+test_unsafe_password_file_refused (test_database_backup.BackupSafetyTests.test_unsafe_password_file_refused) ... ok
+test_unverified_tls_refused (test_database_backup.BackupSafetyTests.test_unverified_tls_refused) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 0.178s
+
+OK

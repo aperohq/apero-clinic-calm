@@ -1,0 +1,48 @@
+{
+  "verified_at": "2026-11-25T08:00:57.728610+00:00",
+  "matrix_rows": 341,
+  "matrix_statuses": {
+    "PASS": 327,
+    "BLOCKED": 11,
+    "FAIL": 1,
+    "NOT APPLICABLE": 1,
+    "UNVERIFIED": 1
+  },
+  "roadmap_tasks": {
+    "T-024": "COMPLETE",
+    "T-031": "PARTIAL",
+    "T-035": "COMPLETE",
+    "T-063": "PARTIAL",
+    "T-064": "FAILED",
+    "T-065": "BLOCKED",
+    "T-066": "PARTIAL",
+    "T-072": "BLOCKED",
+    "T-073": "PARTIAL",
+    "T-074": "COMPLETE",
+    "T-075": "BLOCKED",
+    "T-076": "COMPLETE",
+    "T-077": "COMPLETE",
+    "T-078": "COMPLETE",
+    "T-079": "COMPLETE"
+  },
+  "uat_scenarios_with_all_result_fields": 17,
+  "changed_source_files": 14,
+  "hosted_expiry_terminal_pass": true,
+  "hosted_test_sessions_cleaned": 5,
+  "hosted_refreshes_issued": 1,
+  "isolated_mfa_assertions": 21,
+  "backup_regression_tests": 37,
+  "markdown_links_valid": true,
+  "new_source_hashes_match_executed_evidence": true,
+  "raw_credential_pattern_candidates": 0,
+  "note": "Consistency verification supplements executed/runtime evidence and manual scope review; file existence alone is not acceptance.",
+  "completed_at": "2026-11-25T08:02:57.535893+00:00",
+  "final_matrix_statuses": {
+    "PASS": 327,
+    "BLOCKED": 11,
+    "FAIL": 1,
+    "NOT APPLICABLE": 1,
+    "UNVERIFIED": 1
+  },
+  "completion_scope": "Independent work complete; technical/customer release NOT READY"
+}
